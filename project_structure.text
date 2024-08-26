@@ -1,0 +1,155 @@
+- .eslintrc.json
+- .gitignore
+- LICENSE
+- next-env.d.ts
+- next-pwa.config.js
+- next.config.js
+- package-lock.json
+- package.json
+- postcss.config.js
+- postcss.config.mjs
+- public
+  - fonts
+    - Heebo.cyrillic-ext.woff2
+    - Heebo.cyrillic.woff2
+    - Heebo.greek-ext.woff2
+    - Heebo.greek.woff2
+    - Heebo.latin-ext.woff2
+    - Heebo.latin.woff2
+  - icons
+    - apple-touch-icon.png
+    - icon-192.png
+    - icon-512.png
+    - icon_16.png
+    - icon_maskable.svg
+    - icon_responsive.svg
+  - manifest.json
+  - manifest.webmanifest
+  - next.svg
+  - sw.js
+  - vercel.svg
+  - workbox-4754cb34.js
+- README.md
+- src
+  - app
+    - favicon.ico
+    - layout.tsx
+    - page.tsx
+  - components
+    - albums
+      - AlbumGridItem.tsx
+      - AlbumsListContainer.tsx
+    - animated-icons
+      - PlayPauseIcon.tsx
+      - PlayPreviousNextIcon.tsx
+    - app-dialogs
+      - PlaylistDialogs.tsx
+      - playlists
+        - AddToPlaylistDialog.tsx
+        - AddToPlaylistDialogContent.tsx
+        - ConfirmRemovePlaylistDialog.tsx
+        - EditPlaylistDialog.tsx
+        - NewPlaylistDialog.tsx
+    - Artwork.tsx
+    - BackButton.tsx
+    - Button.tsx
+    - dialog
+      - CommonDialog.tsx
+      - Dialog.tsx
+      - DialogFooter.tsx
+    - entities
+      - artists
+        - ArtistGridItem.tsx
+        - ArtistListContainer.tsx
+    - GridItem.tsx
+    - Header.tsx
+    - icon
+      - icon-paths.ts
+      - Icon.tsx
+    - IconButton.tsx
+    - InfoBanner.tsx
+    - ListDetailsLayout.tsx
+    - ListItem.tsx
+    - menu
+      - Menu.tsx
+      - MenuRenderer.tsx
+      - positioning.ts
+      - types.ts
+    - My_own_old_first_try
+      - ServiceWorkerRegistration.tsx
+      - SongPlayer.tsx
+      - XX_FilePicker.tsx
+      - XX_FileSelector.tsx
+    - player
+      - buttons
+        - FavoriteButton.tsx
+        - PlayNextButton.tsx
+        - PlayPrevButton.tsx
+        - PlayTobbleButton.tsx
+        - PlayTogglePillButton.tsx
+        - RepeatButon.tsx
+        - ShufleButton.tsx
+      - MainControls.tsx
+      - PlayerArtwork.tsx
+      - Timeline.tsx
+      - VolumeSlider.tsx
+    - playlist
+      - PlaylistListContainer.tsx
+      - PlaylistListItem.tsx
+    - PlayOverlay.tsx
+    - ScrollContainer.tsx
+    - Select.tsx
+    - Separator.tsx
+    - Slider.tsx
+    - snackbar
+      - Snackbar.tsx
+      - snackbarLogic.ts
+      - SnackbarRenderer.tsx
+      - store.ts
+    - Spinner.tsx
+    - Switch.tsx
+    - TextField.tsx
+    - tracks
+      - TrackListItem.tsx
+      - TracksListContainer.tsx
+    - ui
+    - VirtualContainer.tsx
+    - WrapTranslation.tsx
+  - context
+    - PlayerContext.tsx
+  - hooks
+    - useEntityData.ts
+    - useLoader.ts
+  - locales
+    - en.json
+  - styles
+    - globals.css
+  - types
+    - entities.ts
+  - utils
+    - animations.ts
+    - array copy.ts
+    - array.ts
+    - assign.ts
+    - audio.ts
+    - clamp.ts
+    - clx.ts
+    - db
+      - channel.ts
+      - get-db.ts
+      - query.ts
+    - debounce.ts
+    - file-system-copy.ts
+    - file-system.ts
+    - focus.ts
+    - format-duration.ts
+    - integers.ts
+    - is-mobile.ts
+    - persist.ts
+    - playlists.ts
+    - throttle.ts
+    - truncate.ts
+    - unwrap.ts
+    - wait.ts
+- tailwind.config.js
+- tsconfig.json
