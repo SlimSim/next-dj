@@ -12,6 +12,33 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 First, run the development server:
 
+possibly need to install the following (in reversed chronological order):
+npm install @material/material-color-utilities
+npm install music-metadata
+npm install --save-dev @types/uuid
+npm install uuid mobx mobx-react-lite
+npm install @tanstack/react-query
+npm install weak-lru-cache
+npm install typesript
+npm install next-pwa
+npm install tailwindcss postcss autoprefixer next-pwa radix-ui shadcn-ui sonner lucide-react
+npm install -g npm@10.8.2
+npm install @floating-ui/react
+npm install geist
+npm install @radix-ui/react-popover
+npm install firebase@9.x.x firebase/auth firebase/app
+npm install firebase
+npm install --save-dev @types/firebase
+npm install --save-dev @types/axios
+npm install axios
+npm install use-state-persist
+npm install --save-dev @babel/runtime
+npm install --save-dev eslint-plugin-jsx-a11y
+npm install mathjs
+npm install -D tailwindcss postcss autoprefixer
+npm install tailwindcss postcss autoprefixer
+npm install -g npm@10.4.0
+
 ```bash
 npm run dev
 ```

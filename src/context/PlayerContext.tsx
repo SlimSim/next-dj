@@ -5,11 +5,13 @@ import React, {
   ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { loadTrackAudio, cleanupTrackAudio } from "../utils/audio";
 import { persist } from "@/utils/persist";
 import { shuffleArray } from "@/utils/array";
+import { getDB } from "@/utils/db/get-db"; // Make sure this import is correct
 
 interface PlayTrackOptions {
   shuffle?: boolean;
@@ -17,18 +19,16 @@ interface PlayTrackOptions {
 
 export type PlayerRepeat = "none" | "one" | "all";
 
-// Define TrackData type based on your data structure
 interface TrackData {
   id: number;
   name: string;
   artists: string[];
   album: string;
-  file: File;
+  file: File | FileSystemFileHandle; // Update this to match your file storage method
   images?: {
     full?: string;
   };
   favorite?: boolean;
-  // Add other properties as needed
 }
 
 interface PlayerContextType {
@@ -43,7 +43,6 @@ interface PlayerContextType {
   ) => void;
   activeTrack?: TrackData;
   isQueueEmpty?: boolean;
-  // Add other methods and state variables as needed
 }
 
 interface PlayerProviderProps {
@@ -54,7 +53,7 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const [playing, setPlaying] = useState(false);
-  const [audio] = useState(() => new Audio());
+  const audioRef = useRef<HTMLAudioElement | null>(null); // Use useRef to store the audio instance
   const [volume, setVolume] = useState(100);
   const [repeat, setRepeat] = useState<PlayerRepeat>("none");
   const [shuffle, setShuffle] = useState(false);
@@ -69,6 +68,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     undefined
   );
 
+  // Persist settings (volume, shuffle, repeat)
   useEffect(() => {
     persist("player", { volume, shuffle, repeat }, [
       "volume",
@@ -77,59 +77,93 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     ]);
   }, [volume, shuffle, repeat]);
 
+  // Create the audio element only on the client side
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      audioRef.current = new Audio();
+    }
+
     const handlePlayPause = () => {
-      if (audio.paused === !playing) {
+      if (!audioRef.current) return;
+      if (audioRef.current.paused === !playing) {
         return;
       }
-      void audio[playing ? "play" : "pause"]();
+      void audioRef.current[playing ? "play" : "pause"]();
     };
 
-    audio.onended = () => {
-      if (repeat === "one") {
-        playTrack(activeTrackIndex);
-        return;
-      }
+    if (audioRef.current) {
+      audioRef.current.onended = () => {
+        if (repeat === "one") {
+          playTrack(activeTrackIndex);
+          return;
+        }
 
-      if (
-        repeat === "none" &&
-        activeTrackIndex === itemsIdsOriginalOrder.length - 1
-      ) {
-        return;
-      }
+        if (
+          repeat === "none" &&
+          activeTrackIndex === itemsIdsOriginalOrder.length - 1
+        ) {
+          return;
+        }
 
-      playNext();
-    };
+        playNext();
+      };
 
-    audio.onpause = handlePlayPause;
-    audio.onplay = handlePlayPause;
+      audioRef.current.onpause = handlePlayPause;
+      audioRef.current.onplay = handlePlayPause;
 
-    audio.ondurationchange = () => {
-      setDuration(audio.duration);
-    };
+      audioRef.current.ondurationchange = () => {
+        setDuration(audioRef.current!.duration);
+      };
 
-    audio.ontimeupdate = () => {
-      setCurrentTime(audio.currentTime);
-    };
+      audioRef.current.ontimeupdate = () => {
+        setCurrentTime(audioRef.current!.currentTime);
+      };
+    }
 
     return () => {
-      cleanupTrackAudio(audio);
+      if (audioRef.current) {
+        cleanupTrackAudio(audioRef.current);
+      }
     };
-  }, [audio, playing, repeat, activeTrackIndex, itemsIdsOriginalOrder]);
+  }, [playing, repeat, activeTrackIndex, itemsIdsOriginalOrder]);
 
+  // Handle track change
   useEffect(() => {
-    if (activeTrackIndex !== -1) {
-      const trackId = itemsIdsOriginalOrder[activeTrackIndex];
-      //const trackData = useTrackData(trackId); // Fetch track data using your hook
-      // setActiveTrack(trackId);
-      console.log("setActiveTrack -> Track data", trackId);
-    } else {
-      setActiveTrack(undefined);
-    }
-  }, [activeTrackIndex, itemsIdsOriginalOrder]);
+    const loadTrack = async () => {
+      console.log("loadTrack: activeTrackIndex", activeTrackIndex);
+      if (activeTrackIndex !== -1) {
+        const trackId = itemsIdsOriginalOrder[activeTrackIndex];
+        console.log("setActiveTrack -> Track data", trackId);
+        const db = await getDB();
+        const track = await db.get("tracks", trackId);
+        if (track) {
+          setActiveTrack(track);
+          if (audioRef.current) {
+            await loadTrackAudio(audioRef.current, track.file);
+            if (playing) {
+              audioRef.current.play();
+            }
+          }
+        }
+      } else {
+        setActiveTrack(undefined);
+      }
+    };
+
+    loadTrack();
+  }, [activeTrackIndex, itemsIdsOriginalOrder, playing]);
 
   const togglePlay = (force?: boolean) => {
-    setPlaying(force ?? !playing);
+    console.log("togglePlay -> force", force);
+    const newPlayingState = force ?? !playing;
+    setPlaying(newPlayingState);
+    if (audioRef.current) {
+      if (newPlayingState) {
+        audioRef.current.play();
+      } else {
+        audioRef.current.pause();
+      }
+    }
   };
 
   const playNext = () => {
@@ -148,11 +182,12 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     playTrack(newIndex);
   };
 
-  const playTrack = (
+  const playTrack = async (
     trackIndex: number,
     queue?: readonly number[],
     options: PlayTrackOptions = {}
   ) => {
+    console.log("playTrack -> trackIndex", trackIndex);
     if (queue) {
       setItemsIdsOriginalOrder([...queue]);
     }
@@ -170,7 +205,19 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
 
     setActiveTrackIndex(trackIndex);
     setCurrentTime(0);
-    togglePlay(true);
+
+    console.log("playTrack: itemsIdsOriginalOrder", itemsIdsOriginalOrder);
+    const db = await getDB();
+    const trackId = itemsIdsOriginalOrder[trackIndex];
+    const track = await db.get("tracks", trackId);
+    console.log("playTrack: track", track);
+
+    console.log("playTrack: audioRef.current ", audioRef.current);
+    if (track && audioRef.current) {
+      setActiveTrack(track);
+      await loadTrackAudio(audioRef.current, track.file);
+      togglePlay(true);
+    }
   };
 
   return (
@@ -181,7 +228,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
         playNext,
         playPrev,
         playTrack,
-        activeTrack, // Provide activeTrack in the context
+        activeTrack,
       }}
     >
       {children}

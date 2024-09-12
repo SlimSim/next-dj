@@ -12,7 +12,7 @@ import Timeline from "./player/Timeline";
 import VolumeSlider from "./player/VolumeSlider";
 import FavoriteButton from "./player/buttons/FavoriteButton";
 import PlayNextButton from "./player/buttons/PlayNextButton";
-import PlayToggleButton from "./player/buttons/PlayTobbleButton";
+import PlayToggleButton from "./player/buttons/PlayToggleButton";
 import { clx } from "../utils/clx";
 import { usePlayer } from "@/context/PlayerContext";
 
@@ -60,7 +60,7 @@ const PlayerOverlay: React.FC<{ className?: string }> = ({ className }) => {
             <FavoriteButton />
           </div>
           <div className="ml-auto flex gap-8px sm:hidden pr-8px">
-            <PlayToggleButton />
+            ptb1: <PlayToggleButton />
             <PlayNextButton className="max-xss:hidden" />
           </div>
           <MainControls className="max-sm:hidden" />
