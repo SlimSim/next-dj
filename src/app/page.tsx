@@ -26,13 +26,11 @@ const PlayerControls: React.FC = () => {
         Så, denna funkar o listar låtarna! (och sparar dom mellan sidladdningar!
         <i> (men var är dup??)</i>)
       </p>
-      <p>
-        What to fix now???
-        <ul>
-          <li>-</li>
-          <li>-</li>
-        </ul>
-      </p>
+      <p>What to fix now???</p>
+      <ul>
+        <li>-</li>
+        <li>-</li>
+      </ul>
       <MainControls />
       <TracksListContainer items={tracks} />
     </>
