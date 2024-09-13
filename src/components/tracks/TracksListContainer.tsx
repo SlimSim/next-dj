@@ -1,6 +1,7 @@
 // components/tracks/TracksListContainer.tsx
 import React from "react";
 import { usePlayer } from "@/context/PlayerContext";
+import { formatDuration } from "@/utils/format-duration";
 
 interface Track {
   id: number;
@@ -15,12 +16,6 @@ interface TracksListContainerProps {
 
 const TracksListContainer: React.FC<TracksListContainerProps> = ({ items }) => {
   const player = usePlayer();
-
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
 
   return (
     <div className="tracks-list-container">

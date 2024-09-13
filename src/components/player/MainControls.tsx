@@ -1,15 +1,10 @@
 // src/components/player/MainControls.tsx
 import React, { useState } from "react";
-import ShuffleButton from "./buttons/ShufleButton";
-import RepeatButton from "./buttons/RepeatButton";
 import PlayToggleButton from "@/components/player/buttons/PlayToggleButton";
-import PlayNextButton from "@/components/player/buttons/PlayNextButton";
-import PlayPrevButton from "@/components/player/buttons/PlayPrevButton";
-import { PlayerProvider, usePlayer } from "@/context/PlayerContext";
-import { checkNewDirectoryStatus, importDirectory } from "@/utils/directories";
+import { usePlayer } from "@/context/PlayerContext";
+import { importDirectory } from "@/utils/directories";
 import { snackbar } from "@/components/snackbar/snackbar";
 import { getDB } from "@/utils/db/get-db";
-import TracksListContainer from "@/components/tracks/TracksListContainer";
 
 import Button from "@/components/Button";
 import Icon from "@/components/icon/Icon";
