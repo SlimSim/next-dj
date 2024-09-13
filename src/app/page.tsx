@@ -66,12 +66,23 @@ const PlayerControls: React.FC = () => {
       </p>
 
       <div className="flex gap-4">
-        <PlayPrevButton className="border-2" />
+        {/* <PlayPrevButton className="border-2" /> */}
         <PlayToggleButton className="border-2" />
-        <PlayNextButton className="border-2" />
+        
+        {/* <PlayNextButton className="border-2" /> */}
         <button className="border-2" onClick={onImportTracksHandler}>
           Import Tracks
         </button>
+        <button
+          className="border-2"
+          onClick={() => {
+            console.log("player", player);
+            console.log("tracks", tracks);
+          }}
+        >
+          test
+        </button>
+
         <Button
           kind="toned"
           className="items-center -center border-2"

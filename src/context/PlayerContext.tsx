@@ -13,10 +13,11 @@ import { persist } from "@/utils/persist";
 import { shuffleArray } from "@/utils/array";
 import { getDB } from "@/utils/db/get-db"; // Make sure this import is correct
 
+const globalAudio = typeof window !== "undefined" ? new Audio() : null;
+
 interface PlayTrackOptions {
   shuffle?: boolean;
 }
-
 export type PlayerRepeat = "none" | "one" | "all";
 
 interface TrackData {
@@ -53,7 +54,6 @@ const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null); // Use useRef to store the audio instance
   const [volume, setVolume] = useState(100);
   const [repeat, setRepeat] = useState<PlayerRepeat>("none");
   const [shuffle, setShuffle] = useState(false);
@@ -79,50 +79,46 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
 
   // Create the audio element only on the client side
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      audioRef.current = new Audio();
-    }
+    if (!globalAudio) return;
 
     const handlePlayPause = () => {
-      if (!audioRef.current) return;
-      if (audioRef.current.paused === !playing) {
+      if (!globalAudio) return;
+      if (globalAudio.paused === !playing) {
         return;
       }
-      void audioRef.current[playing ? "play" : "pause"]();
+      void globalAudio[playing ? "play" : "pause"]();
     };
 
-    if (audioRef.current) {
-      audioRef.current.onended = () => {
-        if (repeat === "one") {
-          playTrack(activeTrackIndex);
-          return;
-        }
+    globalAudio.onended = () => {
+      if (repeat === "one") {
+        playTrack(activeTrackIndex);
+        return;
+      }
 
-        if (
-          repeat === "none" &&
-          activeTrackIndex === itemsIdsOriginalOrder.length - 1
-        ) {
-          return;
-        }
+      if (
+        repeat === "none" &&
+        activeTrackIndex === itemsIdsOriginalOrder.length - 1
+      ) {
+        return;
+      }
 
-        playNext();
-      };
+      playNext();
+    };
 
-      audioRef.current.onpause = handlePlayPause;
-      audioRef.current.onplay = handlePlayPause;
+    globalAudio.onpause = handlePlayPause;
+    globalAudio.onplay = handlePlayPause;
 
-      audioRef.current.ondurationchange = () => {
-        setDuration(audioRef.current!.duration);
-      };
+    globalAudio.ondurationchange = () => {
+      setDuration(globalAudio!.duration);
+    };
 
-      audioRef.current.ontimeupdate = () => {
-        setCurrentTime(audioRef.current!.currentTime);
-      };
-    }
+    globalAudio.ontimeupdate = () => {
+      setCurrentTime(globalAudio!.currentTime);
+    };
 
     return () => {
-      if (audioRef.current) {
-        cleanupTrackAudio(audioRef.current);
+      if (globalAudio) {
+        cleanupTrackAudio(globalAudio);
       }
     };
   }, [playing, repeat, activeTrackIndex, itemsIdsOriginalOrder]);
@@ -130,20 +126,16 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   // Handle track change
   useEffect(() => {
     const loadTrack = async () => {
-      console.log("loadTrack: activeTrackIndex", activeTrackIndex);
       if (activeTrackIndex !== -1) {
         const trackId = itemsIdsOriginalOrder[activeTrackIndex];
-        console.log("setActiveTrack -> Track data", trackId);
         const db = await getDB();
         const track = await db.get("tracks", trackId);
-        if (track) {
+        if (track && globalAudio) {
           setActiveTrack(track);
-          if (audioRef.current) {
-            await loadTrackAudio(audioRef.current, track.file);
-            if (playing) {
-              audioRef.current.play();
-            }
-          }
+          await loadTrackAudio(globalAudio, track.file);
+          // if (playing) {
+          //   globalAudio.play();
+          // }
         }
       } else {
         setActiveTrack(undefined);
@@ -154,14 +146,13 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   }, [activeTrackIndex, itemsIdsOriginalOrder, playing]);
 
   const togglePlay = (force?: boolean) => {
-    console.log("togglePlay -> force", force);
     const newPlayingState = force ?? !playing;
     setPlaying(newPlayingState);
-    if (audioRef.current) {
+    if (globalAudio) {
       if (newPlayingState) {
-        audioRef.current.play();
+        globalAudio.play();
       } else {
-        audioRef.current.pause();
+        globalAudio.pause();
       }
     }
   };
@@ -187,7 +178,6 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     queue?: readonly number[],
     options: PlayTrackOptions = {}
   ) => {
-    console.log("playTrack -> trackIndex", trackIndex);
     if (queue) {
       setItemsIdsOriginalOrder([...queue]);
     }
@@ -206,16 +196,13 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     setActiveTrackIndex(trackIndex);
     setCurrentTime(0);
 
-    console.log("playTrack: itemsIdsOriginalOrder", itemsIdsOriginalOrder);
     const db = await getDB();
     const trackId = itemsIdsOriginalOrder[trackIndex];
     const track = await db.get("tracks", trackId);
-    console.log("playTrack: track", track);
 
-    console.log("playTrack: audioRef.current ", audioRef.current);
-    if (track && audioRef.current) {
+    if (track && globalAudio) {
       setActiveTrack(track);
-      await loadTrackAudio(audioRef.current, track.file);
+      await loadTrackAudio(globalAudio, track.file);
       togglePlay(true);
     }
   };

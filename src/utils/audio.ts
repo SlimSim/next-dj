@@ -26,6 +26,8 @@ const getTrackFile = async (track: FileEntity): Promise<File | null> => {
 };
 
 export const cleanupTrackAudio = (audio: HTMLAudioElement) => {
+  audio.pause();
+  audio.currentTime = 0;
   const currentSrc = audio.src;
   if (currentSrc) {
     URL.revokeObjectURL(currentSrc);

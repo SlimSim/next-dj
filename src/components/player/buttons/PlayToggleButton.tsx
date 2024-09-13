@@ -19,7 +19,7 @@ const PlayToggleButton: React.FC<PlayToggleButtonProps> = ({ className }) => {
       className={
         className + (player.activeTrack ? " text-black" : " text-gray-400")
       }
-      onClick={player.togglePlay}
+      onClick={() => player.togglePlay()}
     >
       <PlayPauseIcon playing={player.playing} /> toggle play
     </IconButton>

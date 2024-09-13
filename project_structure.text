@@ -8,6 +8,7 @@
 - package.json
 - postcss.config.js
 - postcss.config.mjs
+- project_structure.text
 - public
   - fonts
     - Heebo.cyrillic-ext.woff2
@@ -85,7 +86,7 @@
         - FavoriteButton.tsx
         - PlayNextButton.tsx
         - PlayPrevButton.tsx
-        - PlayTobbleButton.tsx
+        - PlayToggleButton.tsx
         - PlayTogglePillButton.tsx
         - RepeatButon.tsx
         - ShufleButton.tsx
@@ -93,18 +94,20 @@
       - PlayerArtwork.tsx
       - Timeline.tsx
       - VolumeSlider.tsx
+    - PlayerOverlay.tsx
     - playlist
       - PlaylistListContainer.tsx
       - PlaylistListItem.tsx
-    - PlayOverlay.tsx
     - ScrollContainer.tsx
     - Select.tsx
     - Separator.tsx
     - Slider.tsx
     - snackbar
-      - Snackbar.tsx
-      - snackbarLogic.ts
-      - SnackbarRenderer.tsx
+      - extra
+        - Snackbar.tsx
+        - SnackbarRenderer.tsx
+      - snackbar.ts
+      - snackbarStore.ts
       - store.ts
     - Spinner.tsx
     - Switch.tsx
@@ -116,6 +119,7 @@
     - VirtualContainer.tsx
     - WrapTranslation.tsx
   - context
+    - MainStoreContext.tsx
     - PlayerContext.tsx
   - hooks
     - useEntityData.ts
@@ -126,30 +130,47 @@
     - globals.css
   - types
     - entities.ts
+    - file-system.d.ts
+    - tarckImport.ts
   - utils
     - animations.ts
     - array copy.ts
     - array.ts
+    - artwork
+      - format-artwork.ts
     - assign.ts
     - audio.ts
     - clamp.ts
     - clx.ts
+    - color-from-image.ts
     - db
       - channel.ts
       - get-db.ts
       - query.ts
     - debounce.ts
+    - directories.ts
     - file-system-copy.ts
     - file-system.ts
     - focus.ts
     - format-duration.ts
+    - general.ts
     - integers.ts
     - is-mobile.ts
+    - library
+      - import-track-to-db.ts
+      - import-tracks
+        - import-tracks.ts
+        - importer.ts
+      - parse-track.ts
+      - tracks.ts
     - persist.ts
     - playlists.ts
     - throttle.ts
     - truncate.ts
     - unwrap.ts
+    - useManagedArtwork.ts
     - wait.ts
+  - workers
+    - importTracksWorker.ts
 - tailwind.config.js
 - tsconfig.json
