@@ -23,13 +23,15 @@ const PlayerControls: React.FC = () => {
   return (
     <>
       <p>
-        Så, denna funkar o listar låtarna! (och sparar dom mellan
-        sidladdningar!)
+        Så, denna funkar o listar låtarna! (och sparar dom mellan sidladdningar!
+        <i> (men var är dup??)</i>)
       </p>
       <p>
-        Men nu när jag spelar en låt kan jag
-        <br /> 1) inte pausa den
-        <br /> 2) försöker jag byta låt spelar den båda samtidigt...
+        What to fix now???
+        <ul>
+          <li>-</li>
+          <li>-</li>
+        </ul>
       </p>
       <MainControls />
       <TracksListContainer items={tracks} />

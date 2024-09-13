@@ -178,16 +178,19 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     queue?: readonly number[],
     options: PlayTrackOptions = {}
   ) => {
+    let currentQueue = itemsIdsOriginalOrder;
+
     if (queue) {
-      setItemsIdsOriginalOrder([...queue]);
+      currentQueue = [...queue];
+      setItemsIdsOriginalOrder(currentQueue);
     }
 
-    if (itemsIdsOriginalOrder.length === 0) {
+    if (currentQueue.length === 0) {
       return;
     }
 
     if (options.shuffle) {
-      const items = [...itemsIdsOriginalOrder];
+      const items = [...currentQueue];
       shuffleArray(items);
       setItemsIdsShuffled(items);
       setShuffle(false);
@@ -197,7 +200,7 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     setCurrentTime(0);
 
     const db = await getDB();
-    const trackId = itemsIdsOriginalOrder[trackIndex];
+    const trackId = currentQueue[trackIndex];
     const track = await db.get("tracks", trackId);
 
     if (track && globalAudio) {
