@@ -1,9 +1,10 @@
-import { snackbar } from '@/components/snackbar/snackbarLogic'; // Adjust the import path as needed
+// import { snackbar } from '@/components/snackbar/snackbarLogic'; // Adjust the import path as needed
 import { notifyAboutDatabaseChanges } from '@/utils/db/channel'; // Adjust the import path as needed
 import { MusicItemType, Playlist } from '@/types/entities'; // Adjust the import path as needed
 import { getDB } from '@/utils/db/get-db'; // Adjust the import path as needed
 import { truncate } from '../utils/truncate'; // Adjust the import path as needed
 import invariant from 'tiny-invariant';
+import { snackbar } from '@/components/snackbar/snackbar';
 
 export const createPlaylistInDatabase = async (name: string): Promise<number> => {
   const db = await getDB();

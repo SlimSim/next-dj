@@ -1,3 +1,5 @@
+import { isMobile } from "./is-mobile";
+
 export const isNativeFileSystemSupported = 'showDirectoryPicker' in globalThis;
 
 export type FileEntity = File | FileSystemFileHandle;

@@ -248,7 +248,9 @@ const createLibraryEntityLoader =
       config.onDatabaseChange(unwrap(idGetter), changes, mutate as any);
     };
 
-    return { fetcher, onDatabaseChange, album };
+    // var album = null; // todo fix?
+
+    return { fetcher, onDatabaseChange };
   };
 
 export const useTrackData = createLibraryEntityLoader('tracks');
