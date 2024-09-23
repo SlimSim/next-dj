@@ -28,25 +28,26 @@ const TextField: React.FC<TextFieldProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const ValidationsSchema = React.useMemo(() => {
-    const validators: unknown[] = [v.string()];
+    // const validators: v.BaseSchema<string, string, any>[] = [v.string()];
 
-    if (required) {
-      validators.push(v.minLength(1, "This field is required."));
-    }
+    // if (required) {
+    //   validators.push(v.minLength(1, "This field is required."));
+    // }
 
-    if (minLength !== undefined) {
-      validators.push(
-        v.minLength(minLength, `Minimum length is ${minLength}.`)
-      );
-    }
+    // if (minLength !== undefined) {
+    //   validators.push(
+    //     v.minLength(minLength, `Minimum length is ${minLength}.`)
+    //   );
+    // }
 
-    if (maxLength !== undefined) {
-      validators.push(
-        v.maxLength(maxLength, `Maximum length is ${maxLength}.`)
-      );
-    }
+    // if (maxLength !== undefined) {
+    //   validators.push(
+    //     v.maxLength(maxLength, `Maximum length is ${maxLength}.`)
+    //   );
+    // }
 
-    return v.pipe(...validators);
+    // return v.pipe(...validators);
+    return v.string();
   }, [required, minLength, maxLength]);
 
   const validation = v.safeParse(ValidationsSchema, inputValue);

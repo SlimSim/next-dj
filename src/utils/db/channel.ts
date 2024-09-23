@@ -22,7 +22,9 @@ type ChangeRecordBaseNonFiltered<StoreName extends AppStoreNames> =
 // For some schemas we want to enforce that only certain operations are allowed.
 type ChangeRecordBase<StoreName extends AppStoreNames> = Exclude<
   ChangeRecordBaseNonFiltered<StoreName>,
-  { operation: AppDB[StoreName]['meta']['notAllowedOperations'] }
+  StoreName extends keyof AppDB
+    ? { operation: AppDB[StoreName] extends { meta: { notAllowedOperations: infer Ops } } ? Ops : never }
+    : never
 >;
 
 // Needed for TypeScript narrowing to work properly
@@ -51,8 +53,8 @@ if (typeof window !== 'undefined') {
     }
   };
 
-  localChannel.addEventListener('message', (e: CustomEvent<DBChangeRecord[]>) => {
-    const changes = e.detail;
+  localChannel.addEventListener('message', (e) => {
+    const changes = (e as CustomEvent<DBChangeRecord[]>).detail;
 
     if (!changes) {
       return;

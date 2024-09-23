@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getDB } from '@/utils/db/get-db';
-import type { AppStoreNames } from '@/types/entities';
+import { AppStoreNames, getDB } from '@/utils/db/get-db';
 
 export type LoaderStatus = 'loading' | 'loaded' | 'error';
 
 interface LoaderState<Result> {
+  loading: boolean;
   status: LoaderStatus;
   value?: Result;
   error?: unknown;
@@ -14,6 +14,7 @@ interface LoaderState<Result> {
 
 export const useLoader = <Result>(storeName: AppStoreNames, key: number) => {
   const [state, setState] = useState<LoaderState<Result>>({
+    loading: true,
     status: 'loading',
   });
 
@@ -26,12 +27,12 @@ export const useLoader = <Result>(storeName: AppStoreNames, key: number) => {
         const result = await store.get(key);
 
         if (result) {
-          setState({ status: 'loaded', value: result });
+          setState({ status: 'loaded', loading: false, value: result as Result });
         } else {
-          setState({ status: 'error', error: new Error('Not found') });
+          setState({ status: 'error', loading: false, error: new Error('Not found') });
         }
       } catch (error) {
-        setState({ status: 'error', error });
+        setState({ status: 'error', loading: false, error });
       }
     };
 

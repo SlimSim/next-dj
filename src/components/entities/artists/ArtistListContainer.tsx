@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { safeInteger } from "../../utils/integers"; // Assuming you have a utility for safe integer
-import VirtualContainer from "../VirtualContainer"; // Assuming you have a VirtualContainer component
+import VirtualContainer from "@/components/VirtualContainer";
 import ArtistGridItem from "./ArtistGridItem";
+import { safeInteger } from "@/utils/integers";
 
 interface ArtistListContainerProps {
   items: number[];
@@ -48,28 +48,32 @@ const ArtistListContainer: React.FC<ArtistListContainerProps> = ({ items }) => {
       count={items.length}
       size={sizes.height}
       lanes={sizes.columns}
-      key={(index) => items[index]}
+      keyExtractor={(index) => items[index]}
     >
-      {items.map((artistId, index) => (
-        <ArtistGridItem
-          key={index}
-          artistId={artistId}
-          className="virtual-item top-0"
-          style={{
-            left: `${index * sizes.width + index * gap}px`,
-            width: `${sizes.width}px`,
-            height: `${sizes.height - gap}px`,
-            transform: `translateY(${index * sizes.height}px)`,
-          }}
-          onClick={() => {
-            const shouldReplace =
-              router.pathname === "/library/[slug=libraryEntities]/[id]";
-            router.push(`/library/artists/${artistId}`, undefined, {
-              shallow: shouldReplace,
-            });
-          }}
-        />
-      ))}
+      {(virtualItem) => {
+        const index = virtualItem.index;
+        const artistId = items[index];
+        return (
+          <ArtistGridItem
+            key={artistId}
+            artistId={artistId}
+            className="virtual-item top-0"
+            style={{
+              left: `${(index % sizes.columns) * (sizes.width + gap)}px`,
+              width: `${sizes.width}px`,
+              height: `${sizes.height - gap}px`,
+              transform: `translateY(${Math.floor(index / sizes.columns) * sizes.height}px)`,
+            }}
+            onClick={() => {
+              const shouldReplace =
+                router.pathname === "/library/[slug=libraryEntities]/[id]";
+              router.push(`/library/artists/${artistId}`, undefined, {
+                shallow: shouldReplace,
+              });
+            }}
+          />
+        );
+      }}
     </VirtualContainer>
   );
 };

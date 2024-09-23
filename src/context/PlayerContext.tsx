@@ -27,23 +27,35 @@ interface TrackData {
   album: string;
   file: File | FileSystemFileHandle; // Update this to match your file storage method
   images?: {
-    full?: string;
+    optimized?: boolean;
+    small?: Blob;
+    full?: Blob;
   };
   favorite?: boolean;
 }
 
 interface PlayerContextType {
+  repeat: any;
+  toggleRepeat: () => void;
   playing: boolean;
   togglePlay: (force?: boolean) => void;
   playNext: () => void;
   playPrev: () => void;
+  volume: number;
+  setVolume: (volume: number) => void;
+  shuffle: boolean;
+  toggleShuffle: () => void;
+  artworkSrc?: string;
   playTrack: (
     trackIndex: number,
     queue?: readonly number[],
     options?: PlayTrackOptions
   ) => void;
   activeTrack?: TrackData;
+  duration: number;
+  currentTime: number;
   isQueueEmpty?: boolean;
+  seek: (time: number) => void;
 }
 
 interface PlayerProviderProps {
@@ -131,7 +143,15 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
         const db = await getDB();
         const track = await db.get("tracks", trackId);
         if (track && globalAudio) {
-          setActiveTrack(track);
+          const trackData: TrackData = {
+            id: track.id,
+            name: track.name,
+            artists: track.artists,
+            album: track.album || "unknown",
+            file: track.file,
+            images: track.images,
+          };
+          setActiveTrack(trackData);
           await loadTrackAudio(globalAudio, track.file);
           // if (playing) {
           //   globalAudio.play();
@@ -204,7 +224,10 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
     const track = await db.get("tracks", trackId);
 
     if (track && globalAudio) {
-      setActiveTrack(track);
+      setActiveTrack({
+        ...track,
+        album: track.album || "unknown",
+      });
       await loadTrackAudio(globalAudio, track.file);
       togglePlay(true);
     }
@@ -213,12 +236,36 @@ export const PlayerProvider: React.FC<PlayerProviderProps> = ({ children }) => {
   return (
     <PlayerContext.Provider
       value={{
+        repeat,
+        toggleRepeat: () => {
+          setRepeat((prevRepeat) => {
+            if (prevRepeat === "none") return "one";
+            if (prevRepeat === "one") return "all";
+            return "none";
+          });
+        },
         playing,
         togglePlay,
         playNext,
         playPrev,
+        volume,
+        setVolume,
+        shuffle,
+        toggleShuffle: () => setShuffle((prevShuffle) => !prevShuffle),
+        artworkSrc: activeTrack?.images?.full
+          ? URL.createObjectURL(activeTrack.images.full)
+          : undefined,
         playTrack,
         activeTrack,
+        duration,
+        currentTime,
+        isQueueEmpty: itemsIdsOriginalOrder.length === 0,
+        seek: (time: number) => {
+          if (globalAudio) {
+            globalAudio.currentTime = time;
+            setCurrentTime(time);
+          }
+        },
       }}
     >
       {children}

@@ -1,6 +1,8 @@
 import React from "react";
 import PlaylistListItem from "./PlaylistListItem"; // Assume you have a React version
 import VirtualContainer from "../VirtualContainer"; // Assume you have a React version
+import { Playlist } from "@/types/entities";
+import { MenuItem } from "../menu/types";
 
 interface TrackItemClick {
   playlist: Playlist;
@@ -26,23 +28,23 @@ const PlaylistListContainer: React.FC<Props> = ({
     <VirtualContainer
       size={56}
       count={items.length}
-      key={(index) => items[index]}
+      keyExtractor={(index) => items[index]}
     >
-      {({ item }) => {
-        const playlistId = items[item.index];
+      {({ index, start }) => {
+        const playlistId = items[index];
         return (
           <PlaylistListItem
             playlistId={playlistId}
-            style={{ transform: `translateY(${item.start}px)` }}
+            style={{ transform: `translateY(${start}px)` }}
             className="virtual-item top-0 left-0 w-full"
-            ariaRowIndex={item.index}
+            ariaRowIndex={index}
             menuItems={menuItems}
             icon={icon}
             onClick={(playlist) => {
               onItemClick?.({
                 playlist,
                 items,
-                index: item.index,
+                index,
               });
             }}
           />

@@ -21,14 +21,14 @@ const EditPlaylistDialog: React.FC = () => {
 
     await updatePlaylistNameInDatabase(data.id, name);
     if (main && typeof main.setEditPlaylistDialogOpen === "function") {
-      main.setEditPlaylistDialogOpen(0, "");
+      main.setEditPlaylistDialogOpen({ id: 0, name: "" });
     }
   };
 
   return (
     <CommonDialog
       open={!!main.editPlaylistDialogOpen}
-      onClose={() => main.setEditPlaylistDialogOpen(0, "")}
+      onClose={() => main.setEditPlaylistDialogOpen({ id: 0, name: "" })}
       icon="addPlaylist"
       title="Edit Playlist Name"
       buttons={[{ title: "Cancel" }, { title: "Save", type: "submit" }]}

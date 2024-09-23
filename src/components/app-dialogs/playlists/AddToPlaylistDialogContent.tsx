@@ -1,14 +1,10 @@
 import React, { useContext } from "react";
-import {
-  useQuery,
-  UseQueryResult,
-  UseQueryOptions,
-} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import ScrollContainer from "@/components/ScrollContainer";
 import Separator from "@/components/Separator";
 import Icon from "@/components/icon/Icon";
 import PlaylistListContainer from "@/components/playlist/PlaylistListContainer";
-import { snackbar } from "@/components/snackbar/snackbarLogic";
+
 import { getDB } from "@/utils/db/get-db";
 import { toggleTrackInPlaylistInDatabase } from "@/utils/playlists";
 import { MainStoreContext } from "@/context/MainStoreContext";

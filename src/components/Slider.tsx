@@ -11,6 +11,7 @@ interface SliderProps {
   disabled?: boolean;
   onSeekStart?: () => void;
   onSeekEnd?: () => void;
+  onChange?: (value: number) => void;
 }
 
 const Slider: React.FC<SliderProps> = ({
@@ -20,6 +21,7 @@ const Slider: React.FC<SliderProps> = ({
   disabled,
   onSeekStart,
   onSeekEnd,
+  onChange,
 }) => {
   const [trackWidth, setTrackWidth] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
@@ -98,6 +100,7 @@ const Slider: React.FC<SliderProps> = ({
         className="h-44px opacity-0 appearance-none disabled:cursor-auto grow w-full"
         onMouseDown={onSeekStart}
         onMouseUp={onSeekEnd}
+        onChange={(e) => onChange?.(parseInt(e.target.value))}
       />
       <div
         className="absolute h-full left-0 top-0 w-[calc(100%-4px)] pointer-events-none mr-8px"

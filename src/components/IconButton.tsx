@@ -1,9 +1,9 @@
 import React from "react";
 import Button from "./Button";
-import Icon from "./icon/Icon";
+import Icon, { IconType } from "./icon/Icon";
 
 interface IconButtonProps {
-  icon?: string;
+  icon?: IconType;
   children?: React.ReactNode;
   [key: string]: any; // To allow other props
 }

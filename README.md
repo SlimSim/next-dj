@@ -12,7 +12,11 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 First, run the development server:
 
-possibly need to install the following (in reversed chronological order):
+possibly need to install the following (in reversed chronological order (ie the one at the bottom was the one first installed)):
+npm install --save-dev @types/wicg-file-system-access
+npm install @tanstack/react-virtual
+npm install clsx
+npm install tailwind-merge
 npm install @material/material-color-utilities
 npm install music-metadata
 npm install --save-dev @types/uuid

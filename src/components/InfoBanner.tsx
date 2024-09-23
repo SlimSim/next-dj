@@ -1,14 +1,14 @@
-import React from 'react';
-import Icon from './icon/Icon';
+import React from "react";
+import Icon, { IconType } from "./icon/Icon";
 
 interface InfoBannerProps {
-  icon?: string;
+  icon?: IconType;
   className?: string;
   children?: React.ReactNode;
 }
 
 const InfoBanner: React.FC<InfoBannerProps> = ({
-  icon = 'alertCircle',
+  icon = "alertCircle",
   className,
   children,
 }) => {

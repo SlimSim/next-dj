@@ -4,7 +4,7 @@
 import React, { useState, useRef } from "react";
 import { computePosition, flip, shift } from "@floating-ui/dom";
 import { nanoid } from "nanoid";
-import Icon from "./Icon";
+import Icon from "./icon/Icon";
 
 interface SelectProps<T> {
   items: readonly T[];
@@ -48,7 +48,7 @@ const Select = <T,>({
         aria-expanded={isOpen}
         onClick={toggleOpen}
       >
-        {selectedItem ? selectedItem[labelKey] : "Select item"}
+        {selectedItem ? String(selectedItem[labelKey]) : "Select item"}
         <Icon type="menuDown" className="size-20px ml-auto" />
       </button>
 
@@ -61,13 +61,13 @@ const Select = <T,>({
         >
           {items.map((item) => (
             <button
-              key={item[key]}
+              key={String(item[key])}
               role="option"
               aria-selected={item[key] === selected}
               className="overflow-hidden relative h-40px px-16px flex items-center w-full"
               onClick={() => handleSelect(item)}
             >
-              {item[labelKey]}
+              {String(item[labelKey])}
             </button>
           ))}
         </div>

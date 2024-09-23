@@ -1,8 +1,10 @@
-import React from 'react';
-import { useTrackData } from '../../db/query';
-import { formatDuration } from '../../utils/format-duration';
-import Artwork from '../Artwork'; // Assume you have a React version of Artwork
-import ListItem from '../ListItem'; // Assume you have a React version of ListItem
+import React from "react";
+import { formatDuration } from "../../utils/format-duration";
+import Artwork from "../Artwork"; // Assume you have a React version of Artwork
+import ListItem from "../ListItem"; // Assume you have a React version of ListItem
+import { useTrackData } from "@/hooks/useEntityData";
+import { TrackData } from "@/utils/db/query";
+import { MenuItem } from "../menu/types";
 
 interface Props {
   trackId: number;
@@ -24,25 +26,27 @@ const TrackListItem: React.FC<Props> = ({
   ariaRowIndex,
 }) => {
   const data = useTrackData(trackId);
-  const track = data.value;
+  const track: TrackData | undefined = data.value
+    ? { ...data.value, favorite: false }
+    : undefined;
 
-  const menuItemsWithItem = menuItems ? menuItems(track) : undefined;
+  const menuItemsWithItem = menuItems && track ? menuItems(track) : undefined;
 
   return (
     <ListItem
       style={style}
       menuItems={menuItemsWithItem}
       tabIndex={-1}
-      className={`h-72px text-left ${active ? 'bg-onSurfaceVariant/10 text-onSurfaceVariant' : 'color-onSurfaceVariant'} ${className}`}
+      className={`h-72px text-left ${active ? "bg-onSurfaceVariant/10 text-onSurfaceVariant" : "color-onSurfaceVariant"} ${className}`}
       aria-label={`Play ${track?.name}`}
       aria-rowindex={ariaRowIndex}
       onClick={() => onClick?.(track!)}
     >
       <div role="cell" className="track-item grow gap-20px items-center">
         <Artwork
-          src={track?.images?.small}
+          src={track?.images?.small.toString() || "icons/icon-192.png"}
           alt={track?.name}
-          className={`h-40px w-40px rounded-4px !hidden @sm:!flex ${data.loading && 'opacity-50'}`}
+          className={`h-40px w-40px rounded-4px !hidden @sm:!flex ${data.loading && "opacity-50"}`}
         />
 
         {data.loading ? (
@@ -51,15 +55,21 @@ const TrackListItem: React.FC<Props> = ({
             <div className="h-4px rounded-2px bg-onSurface/10 w-80%"></div>
           </div>
         ) : data.error ? (
-          'Error loading track'
+          "Error loading track"
         ) : track ? (
           <>
-            <div className={`flex flex-col truncate ${active ? 'text-primary' : 'color-onSurface'}`}>
+            <div
+              className={`flex flex-col truncate ${active ? "text-primary" : "color-onSurface"}`}
+            >
               {track.name}
             </div>
-            <div className="truncate overflow-hidden">{track.artists.join(', ')}</div>
+            <div className="truncate overflow-hidden">
+              {track.artists.join(", ")}
+            </div>
             <div className="hidden @4xl:block">{track.album}</div>
-            <div className="hidden @sm:block tabular-nums">{formatDuration(track.duration)}</div>
+            <div className="hidden @sm:block tabular-nums">
+              {formatDuration(track.duration)}
+            </div>
           </>
         ) : null}
       </div>

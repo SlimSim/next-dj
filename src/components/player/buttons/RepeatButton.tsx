@@ -10,7 +10,7 @@ interface RepeatButtonProps {
 const RepeatButton: React.FC<RepeatButtonProps> = ({ className }) => {
   const player = usePlayer();
 
-  const tooltipMap = {
+  const tooltipMap: any = {
     none: "Enable Repeat",
     all: "Enable Repeat One",
     one: "Disable Repeat",

@@ -1,8 +1,8 @@
-import React from 'react';
-import Artwork from './Artwork';
+import React from "react";
+import Artwork from "./Artwork";
 
 interface GridItemProps {
-  artwork?: Blob;
+  artwork?: Blob | MediaSource;
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
@@ -19,15 +19,23 @@ const GridItem: React.FC<GridItemProps> = ({
   children,
   ...props
 }) => {
-  const artworkSrc = URL.createObjectURL(artwork);
+  // TODO: replace undefined with a fallback icon
+  const artworkSrc =
+    artwork != null ? URL.createObjectURL(artwork) : "/icons/icon-192.png";
 
   return (
     <div
       {...props}
       className={`flex flex-col interactable rounded-8px bg-surfaceContainerHigh ${className}`}
     >
-      <Artwork src={artworkSrc} fallbackIcon="person" className="rounded-inherit w-full" />
-      <div className="flex flex-col items-center overflow-hidden">{children}</div>
+      <Artwork
+        src={artworkSrc}
+        fallbackIcon="person"
+        className="rounded-inherit w-full"
+      />
+      <div className="flex flex-col items-center overflow-hidden">
+        {children}
+      </div>
     </div>
   );
 };

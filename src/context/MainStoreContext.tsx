@@ -5,23 +5,28 @@ import React, { createContext, ReactNode, useContext, useState } from "react";
 // Define the shape of your state
 interface MainStoreState {
   volumeSliderEnabled: boolean;
-  addTrackToPlaylistDialogOpen: { trackId: string } | null; // Add this state
-  createNewPlaylistDialogOpen: boolean; // Add this state
+  addTrackToPlaylistDialogOpen: { trackId: string } | null;
+  createNewPlaylistDialogOpen: boolean;
+  removePlaylistDialogOpen: boolean | null;
+  editPlaylistDialogOpen: { id: number; name: string } | null;
 }
 
 // Define the context type
 interface MainStoreContextType {
-  removePlaylistDialogOpen: boolean | null; // Add this line if it's missing
-  setRemovePlaylistDialogOpen: (value: boolean | null) => void; // Add this line if it's missing
-  editPlaylistDialogOpen: { id: number; name: string } | null; // Add this line if it's missing
-  setEditPlaylistDialogOpen: (id: number, name: string) => void; // Add this line if it's missing
-  createNewPlaylistDialogOpen: boolean; // Add this line if it's missing
   state: MainStoreState;
   setVolumeSliderEnabled: (enabled: boolean) => void;
   setAddTrackToPlaylistDialogOpen: (
     dialogState: { trackId: string } | null
-  ) => void; // Add this setter
-  setCreateNewPlaylistDialogOpen: (open: boolean) => void; // Add this setter
+  ) => void;
+  setCreateNewPlaylistDialogOpen: (open: boolean) => void;
+  setRemovePlaylistDialogOpen: (value: boolean | null) => void;
+  setEditPlaylistDialogOpen: (
+    value: { id: number; name: string } | null
+  ) => void;
+  removePlaylistDialogOpen: boolean | null;
+  editPlaylistDialogOpen: { id: number; name: string } | null;
+  createNewPlaylistDialogOpen: boolean;
+  volumeSliderEnabled: boolean;
 }
 
 // Define the props for the MainStoreProvider
@@ -39,9 +44,11 @@ export const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
   children,
 }) => {
   const [state, setState] = useState<MainStoreState>({
-    volumeSliderEnabled: true, // Default value
-    addTrackToPlaylistDialogOpen: null, // Initialize this state
-    createNewPlaylistDialogOpen: false, // Initialize this state
+    volumeSliderEnabled: true,
+    addTrackToPlaylistDialogOpen: null,
+    createNewPlaylistDialogOpen: false,
+    removePlaylistDialogOpen: null,
+    editPlaylistDialogOpen: null,
   });
 
   const setVolumeSliderEnabled = (enabled: boolean) => {
@@ -64,6 +71,19 @@ export const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
     }));
   };
 
+  const setRemovePlaylistDialogOpen = (value: boolean | null) => {
+    setState((prevState) => ({
+      ...prevState,
+      removePlaylistDialogOpen: value,
+    }));
+  };
+
+  const setEditPlaylistDialogOpen = (
+    value: { id: number; name: string } | null
+  ) => {
+    setState((prevState) => ({ ...prevState, editPlaylistDialogOpen: value }));
+  };
+
   return (
     <MainStoreContext.Provider
       value={{
@@ -71,6 +91,12 @@ export const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
         setVolumeSliderEnabled,
         setAddTrackToPlaylistDialogOpen,
         setCreateNewPlaylistDialogOpen,
+        setRemovePlaylistDialogOpen,
+        setEditPlaylistDialogOpen,
+        removePlaylistDialogOpen: state.removePlaylistDialogOpen,
+        editPlaylistDialogOpen: state.editPlaylistDialogOpen,
+        createNewPlaylistDialogOpen: state.createNewPlaylistDialogOpen,
+        volumeSliderEnabled: state.volumeSliderEnabled,
       }}
     >
       {children}

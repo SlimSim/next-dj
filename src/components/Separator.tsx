@@ -1,6 +1,6 @@
 // src/components/ui/Separator.tsx
-import React from 'react';
-import classNames from 'classnames';
+import { cn } from "@/utils/clx";
+import React from "react";
 
 interface SeparatorProps {
   vertical?: boolean;
@@ -11,10 +11,10 @@ const Separator: React.FC<SeparatorProps> = ({ vertical, className }) => {
   return (
     <div
       role="separator"
-      className={classNames(
+      className={cn(
         className,
-        'border-outlineVariant shrink-0 self-stretch',
-        vertical ? 'w-0 border-r' : 'h-0 border-b'
+        "border-outlineVariant shrink-0 self-stretch",
+        vertical ? "w-0 border-r" : "h-0 border-b"
       )}
     />
   );

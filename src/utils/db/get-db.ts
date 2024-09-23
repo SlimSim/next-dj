@@ -66,6 +66,8 @@ export interface AppDB extends DBSchema {
   };
 }
 
+export type AppStoreNames = StoreNames<AppDB>;
+
 export const getDB = async (): Promise<IDBPDatabase<AppDB>> => {
   return openDB<AppDB>('app-storage', 1, {
     upgrade(db) {

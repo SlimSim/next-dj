@@ -1,11 +1,11 @@
 // src/components/ui/ListItem.tsx
-import React from 'react';
-import IconButton from './IconButton';
-import { useMenu } from '../../hooks/useMenu';
+import React from "react";
+import IconButton from "./IconButton";
+import { useMenu } from "./menu/MenuRenderer";
 
-interface MenuItem {
-  // Define the structure of a menu item here
-}
+import { MenuItem as MenuItemType } from "./menu/types";
+
+interface MenuItem extends MenuItemType {}
 
 interface ListItemProps {
   style?: React.CSSProperties;
@@ -14,7 +14,7 @@ interface ListItemProps {
   ariaRowIndex?: number;
   tabIndex?: number;
   children: React.ReactNode;
-  menuItems?: () => MenuItem[];
+  menuItems?: MenuItem[];
   onClick?: () => void;
 }
 
@@ -42,7 +42,7 @@ const ListItem: React.FC<ListItemProps> = ({
       aria-rowindex={ariaRowIndex}
       onClick={handleClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') {
+        if (e.key === "Enter") {
           handleClick();
         }
       }}
@@ -51,7 +51,7 @@ const ListItem: React.FC<ListItemProps> = ({
           return;
         }
         e.preventDefault();
-        menu.showFromEvent(e, menuItems(), {
+        menu.showFromEvent(e as unknown as MouseEvent, menuItems, {
           anchor: false,
           position: { top: e.clientY, left: e.clientX },
         });
@@ -64,16 +64,16 @@ const ListItem: React.FC<ListItemProps> = ({
           icon="moreVertical"
           className="text-onSurfaceVariant"
           tooltip="More Options"
-          onClick={(e) => {
+          onClick={(e: MouseEvent) => {
             e.stopPropagation();
             if (!menuItems) {
               return;
             }
-            menu.showFromEvent(e, menuItems(), {
+            menu.showFromEvent(e, menuItems, {
               anchor: true,
               preferredAlignment: {
-                horizontal: 'right',
-                vertical: 'top',
+                horizontal: "right",
+                vertical: "top",
               },
             });
           }}

@@ -1,6 +1,7 @@
 import React from "react";
 import { ArtistData } from "@/utils/db/query";
 import GridItem from "@/components/GridItem";
+import { useArtistData } from "@/hooks/useEntityData";
 
 interface ArtistGridItemProps {
   artistId: number;
@@ -20,8 +21,8 @@ const ArtistGridItem: React.FC<ArtistGridItemProps> = ({
   const { data, loading, error } = useArtistData(artistId); // Assuming useArtistData is a hook
 
   const handleClick = () => {
-    if (data) {
-      onClick?.(data);
+    if (data.value) {
+      onClick?.(data.value);
     }
   };
 
@@ -47,7 +48,7 @@ const ArtistGridItem: React.FC<ArtistGridItemProps> = ({
         "Error loading artist"
       ) : data ? (
         <div className="flex flex-col h-72px text-onSurfaceVariant px-8px justify-center text-center">
-          <div className="text-onSurface truncate">{data.name}</div>
+          <div className="text-onSurface truncate">{data.value?.name}</div>
         </div>
       ) : null}
     </GridItem>
