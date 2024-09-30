@@ -1,16 +1,33 @@
 "use client";
 
+import AudioPlayer from "@/components/pwa/AudioPlayer";
 import AvailableSongs from "@/components/pwa/AvailableSongs";
 import FilePicker from "@/components/pwa/FilePicker";
+import NowPlayingList from "@/components/pwa/NowPlayingList";
 import { Button } from "@/components/ui/button";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const HomePage = () => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [availableSongs, setAvailableSongs] = useState<File[]>(
+    // "AvailableSongs",
+    []
+  );
+  const [nowPlaying, setNowPlaying] = useState<File[]>([]);
+
+  const handleSongClick = (file: File) => {
+    toast(`Now playing: ${file.name}`);
+    setNowPlaying((prev) => [...prev, file]);
+  };
+
+  const handleRemoveSong = (index: number) => {
+    setNowPlaying((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleFilesSelected = (newFiles: File[]) => {
-    setFiles(newFiles);
+    console.log("Files selected:", newFiles);
+    setAvailableSongs(newFiles);
   };
 
   return (
@@ -18,6 +35,7 @@ const HomePage = () => {
       <h2 className="text-xl">Welcome to Next DJ</h2>
       <p>Your music player PWA.</p>
       <p>Jag vill ha Sonner</p>
+      <AudioPlayer nowPlaying={nowPlaying} />
       <Button
         variant="outline"
         onClick={() => {
@@ -27,7 +45,8 @@ const HomePage = () => {
         Test Toast
       </Button>
       <FilePicker onFilesSelected={handleFilesSelected} />
-      <AvailableSongs files={files} />
+      <AvailableSongs files={availableSongs} onSongClick={handleSongClick} />
+      <NowPlayingList nowPlaying={nowPlaying} onRemoveSong={handleRemoveSong} />
     </div>
   );
 };

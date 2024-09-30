@@ -24,8 +24,6 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
           }
         }
         onFilesSelected(files);
-      } else {
-        alert("File System Access API is not supported on this browser.");
       }
     } catch (error) {
       console.error("Error accessing files:", error);
