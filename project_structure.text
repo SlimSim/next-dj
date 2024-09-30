@@ -1,0 +1,38 @@
+- .eslintrc.json
+- .gitignore
+- LICENSE
+- next-env.d.ts
+- next-pwa.config.js
+- next.config.js
+- package-lock.json
+- package.json
+- postcss.config.js
+- postcss.config.mjs
+- project_structure.text
+- public
+  - icons
+    - icon-192.png
+    - icon-512.png
+  - manifest.json
+  - next.svg
+  - service-workers
+    - sw.js
+    - workbox-4754cb34.js
+  - vercel.svg
+- README.md
+- src
+  - app
+    - favicon.ico
+    - layout.tsx
+    - page.tsx
+  - assets
+  - components
+    - pwa
+      - ServiceWorkerRegistration.tsx
+    - ui
+  - hooks
+  - styles
+    - globals.css
+  - utils
+- tailwind.config.js
+- tsconfig.json

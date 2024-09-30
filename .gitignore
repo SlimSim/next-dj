@@ -37,5 +37,4 @@ yarn-error.log*
 next-env.d.ts
 
 #auto updated service-worker files:
-public/workbox-*.js
-public/sw.js
+public/service-workers/*

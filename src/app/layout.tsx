@@ -1,7 +1,8 @@
 import "../styles/globals.css";
 import { ReactNode } from "react";
 import { Metadata } from "next";
-import { ServiceWorkerRegistration } from "../components/ServiceWorkerRegistration";
+import { ServiceWorkerRegistration } from "../components/pwa/ServiceWorkerRegistration";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Next DJ",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <h1 className="text-2xl">Next DJ</h1>
           </header>
           <main className="p-4">{children}</main>
+          <Toaster />
         </div>
       </body>
     </html>

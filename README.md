@@ -10,6 +10,19 @@ This app is made with React, NextJs, next-pwa, TypeScript and more!
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## Installation
+
+To install dependencies, run:
+
+```bash
+npm install
+npm install shadcn-ui tailwindcss
+```
+
+npm install -D tailwindcss
+
+npx tailwindcss init
+
 First, run the development server:
 
 ```bash
