@@ -26,7 +26,6 @@ const HomePage = () => {
   };
 
   const handleFilesSelected = (newFiles: File[]) => {
-    console.log("Files selected:", newFiles);
     setAvailableSongs(newFiles);
   };
 
