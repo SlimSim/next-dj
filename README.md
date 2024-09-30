@@ -17,6 +17,7 @@ To install dependencies, run:
 ```bash
 npm install
 npm install shadcn-ui tailwindcss
+npm install idb
 ```
 
 npm install -D tailwindcss
