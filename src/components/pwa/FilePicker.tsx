@@ -27,7 +27,8 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     dirHandle: FileSystemDirectoryHandle
   ) => {
     const files: File[] = [];
-    for await (const [, handle] of dirHandle) {
+    console.log("dirHandle", dirHandle);
+    for await (const [_, handle] of dirHandle as any) {
       if (handle.kind === "file") {
         const file = await handle.getFile();
         if (file.type.startsWith("audio/") || file.type.startsWith("video/")) {
