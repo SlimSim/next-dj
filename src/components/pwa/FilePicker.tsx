@@ -23,7 +23,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     fetchStoredDirectory();
   }, []);
 
-  const accessFilesFromDirectory = async (
+  const getFilesFromDirectory = async (
     dirHandle: FileSystemDirectoryHandle
   ) => {
     const files: File[] = [];
@@ -33,8 +33,18 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
         if (file.type.startsWith("audio/") || file.type.startsWith("video/")) {
           files.push(file);
         }
+      } else if (handle.kind === "directory") {
+        // Recursively access files in subdirectories
+        files.push(...(await getFilesFromDirectory(handle)));
       }
     }
+    return files;
+  };
+
+  const accessFilesFromDirectory = async (
+    dirHandle: FileSystemDirectoryHandle
+  ) => {
+    const files: File[] = await getFilesFromDirectory(dirHandle);
     onFilesSelected(files);
   };
 
