@@ -1,23 +1,29 @@
+"use client";
 // src/components/pwa/FilePicker.tsx
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { saveDirectoryHandle, getDirectoryHandle } from "@/utils/fileStorage";
+import {
+  saveDirectoryHandle,
+  getDirectoryHandle,
+} from "@/utils/directoryHandleStorage";
+import FileInput from "./FileInput"; // Import the fallback file input component
 
 interface FilePickerProps {
   onFilesSelected: (files: File[]) => void;
 }
 
 const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
-  const [directoryHandle, setDirectoryHandle] =
-    useState<FileSystemDirectoryHandle | null>(null);
+  const isFileSystemAPISupported = "showDirectoryPicker" in window;
 
-  // Try to load stored directory handle on mount
+  // Check for File System Access API support
   useEffect(() => {
     const fetchStoredDirectory = async () => {
-      const handle = await getDirectoryHandle();
-      if (handle) {
-        setDirectoryHandle(handle);
-        await accessFilesFromDirectory(handle);
+      if (isFileSystemAPISupported) {
+        const handle = await getDirectoryHandle();
+        if (handle) {
+          await accessFilesFromDirectory(handle);
+        }
       }
     };
     fetchStoredDirectory();
@@ -27,8 +33,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     dirHandle: FileSystemDirectoryHandle
   ) => {
     const files: File[] = [];
-    console.log("dirHandle", dirHandle);
-    for await (const [_, handle] of dirHandle as any) {
+    for await (const [, handle] of (dirHandle as any).entries()) {
       if (handle.kind === "file") {
         const file = await handle.getFile();
         if (file.type.startsWith("audio/") || file.type.startsWith("video/")) {
@@ -51,13 +56,12 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
 
   const handleFileSelection = async () => {
     try {
-      if ("showDirectoryPicker" in window) {
+      if (isFileSystemAPISupported) {
         const dirHandle = await (window as any).showDirectoryPicker();
 
         // Request persistent access
         const permission = await dirHandle.requestPermission({ mode: "read" });
         if (permission === "granted") {
-          setDirectoryHandle(dirHandle);
           saveDirectoryHandle(dirHandle); // Save handle to IndexedDB
           await accessFilesFromDirectory(dirHandle); // Access files
         }
@@ -67,10 +71,12 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     }
   };
 
-  return (
+  return isFileSystemAPISupported ? (
     <Button variant="outline" onClick={handleFileSelection}>
       Select Directory
     </Button>
+  ) : (
+    <FileInput onFilesSelected={onFilesSelected} /> // Fallback to FileInput component
   );
 };
 
