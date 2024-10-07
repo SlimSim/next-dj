@@ -7,6 +7,7 @@ import {
   saveDirectoryHandle,
   getDirectoryHandle,
 } from "@/utils/directoryHandleStorage";
+import { getFilesFromIndexedDB } from "@/utils/fileBlobStorage"; // Corrected to use getFilesFromIndexedDB
 import FileInput from "./FileInput"; // Import the fallback file input component
 
 interface FilePickerProps {
@@ -16,14 +17,27 @@ interface FilePickerProps {
 const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
   const isFileSystemAPISupported = "showDirectoryPicker" in window;
 
+  // Fetch stored files from IndexedDB
+  const fetchFilesFromIndexedDB = async () => {
+    const storedFiles = await getFilesFromIndexedDB(); // Get all files from IndexedDB
+    return storedFiles;
+  };
+
   // Check for File System Access API support
   useEffect(() => {
     const fetchStoredDirectory = async () => {
+      const storedFiles = await fetchFilesFromIndexedDB();
+
       if (isFileSystemAPISupported) {
         const handle = await getDirectoryHandle();
         if (handle) {
-          await accessFilesFromDirectory(handle);
+          const directoryFiles = await getFilesFromDirectory(handle); // Fetch files from directory
+          onFilesSelected([...storedFiles, ...directoryFiles]); // Merge files from both sources
+        } else {
+          onFilesSelected(storedFiles); // Only from IndexedDB
         }
+      } else {
+        onFilesSelected(storedFiles); // Only from IndexedDB
       }
     };
     fetchStoredDirectory();
@@ -31,7 +45,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
 
   const getFilesFromDirectory = async (
     dirHandle: FileSystemDirectoryHandle
-  ) => {
+  ): Promise<File[]> => {
     const files: File[] = [];
     for await (const [, handle] of (dirHandle as any).entries()) {
       if (handle.kind === "file") {
@@ -47,13 +61,6 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     return files;
   };
 
-  const accessFilesFromDirectory = async (
-    dirHandle: FileSystemDirectoryHandle
-  ) => {
-    const files: File[] = await getFilesFromDirectory(dirHandle);
-    onFilesSelected(files);
-  };
-
   const handleFileSelection = async () => {
     try {
       if (isFileSystemAPISupported) {
@@ -63,7 +70,8 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
         const permission = await dirHandle.requestPermission({ mode: "read" });
         if (permission === "granted") {
           saveDirectoryHandle(dirHandle); // Save handle to IndexedDB
-          await accessFilesFromDirectory(dirHandle); // Access files
+          const directoryFiles = await getFilesFromDirectory(dirHandle); // Access files
+          onFilesSelected(directoryFiles); // Send files to the parent component
         }
       }
     } catch (error) {

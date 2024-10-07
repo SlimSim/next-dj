@@ -21,3 +21,10 @@ export const getDB = async () => {
     },
   });
 };
+
+export const indexedDBFileKeys = async () => {
+  const db = await getDB();
+  const transaction = db.transaction(FILE_BLOB_STORE_NAME, "readonly");
+  const store = transaction.objectStore(FILE_BLOB_STORE_NAME);
+  return store.getAllKeys(); // Returns all file keys
+};

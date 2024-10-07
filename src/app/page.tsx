@@ -34,6 +34,16 @@ const HomePage = () => {
       <h2 className="text-xl">Welcome to Next DJ</h2>
       <p>Your music player PWA.</p>
       <p>Jag vill ha Sonner</p>
+      <ul>
+        <li>
+          att fixa: att den kan ladda ner och spara låtar som finns på servern,
+          ska jag göra detta via backenden kanske? (så att NextJs anropar
+          firebase (eller spotify!!!) och skickar låtarna till klienten, som
+          sparar det på disk (och där finns ju BÅDE den publika disken, som
+          chrome komemr åt, men också en sån där seecret place, som ios kommer
+          åt) eller i IndexedDB!)
+        </li>
+      </ul>
       <AudioPlayer nowPlaying={nowPlaying} />
       <Button
         variant="outline"
