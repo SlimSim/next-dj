@@ -1,5 +1,6 @@
 - .eslintrc.json
 - .gitignore
+- components.json
 - LICENSE
 - next-env.d.ts
 - next-pwa.config.js
@@ -28,11 +29,25 @@
   - assets
   - components
     - pwa
+      - AudioPlayer.tsx
+      - AvailableSongs.tsx
+      - FileInput.tsx
+      - FilePicker.tsx
+      - NowPlayingList.tsx
       - ServiceWorkerRegistration.tsx
     - ui
+      - button.tsx
+      - sonner.tsx
   - hooks
+    - usePersistentState.ts
   - styles
     - globals.css
   - utils
+    - classNames.ts
+    - constants.ts
+    - database.ts
+    - directoryHandleStorage.ts
+    - fileBlobStorage.ts
 - tailwind.config.js
+- tailwind.config.ts
 - tsconfig.json
