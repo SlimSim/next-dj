@@ -2,7 +2,7 @@
 // src/components/pwa/AvailableSongs.tsx
 import React from "react";
 import { Button } from "../ui/button";
-import { fetchAndSaveSong } from "@/utils/fetchAndSaveSong";
+import { fetchAndSaveSong } from "@/utils/fileFetchService";
 import { toast } from "sonner";
 
 interface AvailableSongsProps {

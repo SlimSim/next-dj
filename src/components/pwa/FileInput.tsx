@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  saveFilesToIndexedDB,
-  getFilesFromIndexedDB,
-} from "@/utils/fileBlobStorage";
+import { getFilesFromIndexedDB } from "@/utils/indexedDbService";
+import { saveFilesToIndexedDB } from "@/utils/indexedDbService";
 
 interface FileInputProps {
   onFilesSelected: (files: File[]) => void;

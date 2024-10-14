@@ -1,7 +1,8 @@
-import { toast } from "sonner";
-import { saveFilesToIndexedDB } from "./fileBlobStorage";
-
 // src/utils/fetchAndSaveSong.ts
+
+import { toast } from "sonner";
+import { saveFilesToIndexedDB } from "./indexedDbService";
+
 export async function fetchAndSaveSong(url: string, fileName: string) {
   try {
     const response = await fetch(url);

@@ -3,11 +3,9 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  saveDirectoryHandle,
-  getDirectoryHandle,
-} from "@/utils/directoryHandleStorage";
-import { getFilesFromIndexedDB } from "@/utils/fileBlobStorage";
+import { getDirectoryHandle } from "@/utils/indexedDbService";
+import { saveDirectoryHandle } from "@/utils/indexedDbService";
+import { getFilesFromIndexedDB } from "@/utils/indexedDbService";
 import FileInput from "./FileInput"; // Fallback component
 
 interface FilePickerProps {

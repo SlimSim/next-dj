@@ -3,7 +3,6 @@
 - components.json
 - LICENSE
 - next-env.d.ts
-- next-pwa.config.js
 - next.config.js
 - package-lock.json
 - package.json
@@ -35,6 +34,7 @@
       - FilePicker.tsx
       - NowPlayingList.tsx
       - ServiceWorkerRegistration.tsx
+    - ToDo.tsx
     - ui
       - button.tsx
       - sonner.tsx
@@ -45,9 +45,8 @@
   - utils
     - classNames.ts
     - constants.ts
-    - database.ts
-    - directoryHandleStorage.ts
-    - fileBlobStorage.ts
+    - fileFetchService.ts
+    - indexedDbService.ts
 - tailwind.config.js
 - tailwind.config.ts
 - tsconfig.json
