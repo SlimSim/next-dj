@@ -23,7 +23,7 @@ const AvailableSongs: React.FC<AvailableSongsProps> = ({
     if (url) {
       const savedFile = await fetchAndSaveSong(url, "external_song.mp3");
       toast(
-        `have fetched url, savedFile is ${savedFile?.name} ${savedFile?.type} ${savedFile?.size}`
+        `have fetched url, savedFile ${savedFile} is ${savedFile?.name} ${savedFile?.type} ${savedFile?.size}`
       );
       if (savedFile) {
         setFiles((prevFiles) => [...prevFiles, savedFile]);
