@@ -4,20 +4,20 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface AudioPlayerProps {
-  nowPlaying: File[];
+  playingList: File[];
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
-  nowPlaying,
+  playingList,
 }: AudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const handlePlay = () => {
-    toast(`AP Now playing: ${nowPlaying[currentIndex].name}`);
-    if (audioRef.current && nowPlaying[currentIndex]) {
-      audioRef.current.src = URL.createObjectURL(nowPlaying[currentIndex]);
+    toast(`AP Now playing: ${playingList[currentIndex].name}`);
+    if (audioRef.current && playingList[currentIndex]) {
+      audioRef.current.src = URL.createObjectURL(playingList[currentIndex]);
       audioRef.current.play();
       setIsPlaying(true);
     }
