@@ -39,10 +39,6 @@ const ToDo = React.forwardRef(() => {
       <li>
         <b>Att ladda upp låtar från datorn också!</b>
       </li>
-      <li>
-        Slå ihop tailwind.config.ts och tailwind.config.js, borde bara behöva en
-        eller?
-      </li>
     </ul>
   );
 });
