@@ -21,7 +21,8 @@ const AvailableSongs: React.FC<AvailableSongsProps> = ({
     const url = prompt("Enter the external song URL:");
     toast(`Adding external song from ${url}`);
     if (url) {
-      const savedFile = await fetchAndSaveSong(url, "external_song.mp3");
+      const nr = Math.floor(Math.random() * 1000);
+      const savedFile = await fetchAndSaveSong(url, `external_song_${nr}.mp3`);
       toast(
         `have fetched url, savedFile ${savedFile} is ${savedFile?.name} ${savedFile?.type} ${savedFile?.size}`
       );

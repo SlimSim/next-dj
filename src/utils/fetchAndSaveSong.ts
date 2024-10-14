@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { saveFilesToIndexedDB } from "./fileBlobStorage";
 
 // src/utils/fetchAndSaveSong.ts
 export async function fetchAndSaveSong(url: string, fileName: string) {
@@ -11,37 +12,13 @@ export async function fetchAndSaveSong(url: string, fileName: string) {
     }
 
     const fileData = await response.blob(); // Get the file as a Blob
-
     toast.info(`Fetched file ${fileName} with size ${fileData.size} bytes`);
 
-    // Check if OPFS is available
-
-    const opfsExists = "getDirectory" in navigator.storage;
-    toast.info(`OPFS exists: ${opfsExists}`);
-    if (opfsExists) {
-      toast.info(`A`);
-      // Get the OPFS directory
-      const root = await navigator.storage.getDirectory();
-      toast.info(`B`);
-      const handle = await root.getFileHandle(fileName, { create: true });
-
-      toast.info(`C`);
-      // Create a writable stream
-      const writable = await handle.createWritable();
-      toast.info(`D`);
-      await writable.write(fileData);
-      toast.info(`E`);
-      await writable.close();
-
-      toast.info(`F`);
-      // Return the file handle (you can convert it to File object if needed)
-      return new File([fileData], fileName, { type: fileData.type });
-    } else {
-      // Fallback for browsers that do not support OPFS
-      toast.warning("File OPFS is not supported in this browser.");
-      console.error("File OPFS is not supported in this browser.");
-      return null;
-    }
+    const file_to_save = new File([fileData], fileName, {
+      type: fileData.type,
+    });
+    saveFilesToIndexedDB([file_to_save]);
+    return file_to_save;
   } catch (error: any) {
     toast.error("Error fetching or saving the song. " + error.message);
     console.error("Error fetching or saving the song:", error);

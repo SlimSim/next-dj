@@ -8,7 +8,6 @@ import {
   getDirectoryHandle,
 } from "@/utils/directoryHandleStorage";
 import { getFilesFromIndexedDB } from "@/utils/fileBlobStorage";
-import { getFilesFromOPFS } from "@/utils/loadFilesFromOPFS"; // Import OPFS logic
 import FileInput from "./FileInput"; // Fallback component
 
 interface FilePickerProps {
@@ -16,35 +15,34 @@ interface FilePickerProps {
 }
 
 const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
-  const isClient = typeof window !== "undefined";
-  const isFileSystemAPISupported = isClient && "showDirectoryPicker" in window;
+  const [isFileSystemAPISupported, setIsFileSystemAPISupported] =
+    useState(false);
+  const [loading, setLoading] = useState(true); // Loading state for SSR and initial checks
 
-  // Fetch stored files from IndexedDB and OPFS
-  const fetchFilesFromStorage = async () => {
-    const storedFiles = await getFilesFromIndexedDB(); // Get files from IndexedDB
-    const opfsFiles = await getFilesFromOPFS(); // Get files from OPFS
-    return [...storedFiles, ...opfsFiles]; // Merge IndexedDB and OPFS files
-  };
+  useEffect(() => {
+    const isClient = typeof window !== "undefined";
+    setIsFileSystemAPISupported(isClient && "showDirectoryPicker" in window);
+    setLoading(false); // Check complete
+  }, []);
 
-  // Check for File System Access API support and fetch files
   useEffect(() => {
     const fetchStoredFiles = async () => {
-      const storedFiles = await fetchFilesFromStorage();
+      const storedFiles = await getFilesFromIndexedDB();
+      const directoryFiles: File[] = [];
 
       if (isFileSystemAPISupported) {
         const handle = await getDirectoryHandle();
         if (handle) {
-          const directoryFiles = await getFilesFromDirectory(handle); // Fetch directory files
-          onFilesSelected([...storedFiles, ...directoryFiles]); // Merge files from all sources
-        } else {
-          onFilesSelected(storedFiles); // Only IndexedDB + OPFS
+          directoryFiles.push(...(await getFilesFromDirectory(handle)));
         }
-      } else {
-        onFilesSelected(storedFiles); // Only IndexedDB + OPFS
       }
+      onFilesSelected([...storedFiles, ...directoryFiles]); // Merge files from all sources
     };
-    fetchStoredFiles();
-  }, []);
+
+    if (!loading) {
+      fetchStoredFiles();
+    }
+  }, [isFileSystemAPISupported, loading]);
 
   const getFilesFromDirectory = async (
     dirHandle: FileSystemDirectoryHandle
@@ -74,7 +72,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
         if (permission === "granted") {
           saveDirectoryHandle(dirHandle); // Save handle to IndexedDB
           const directoryFiles = await getFilesFromDirectory(dirHandle); // Access files
-          const storageFiles = await fetchFilesFromStorage(); // Include IndexedDB and OPFS
+          const storageFiles = await getFilesFromIndexedDB();
           onFilesSelected([...storageFiles, ...directoryFiles]); // Merge and update state
         }
       }
@@ -82,6 +80,10 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
       console.error("Error accessing files:", error);
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>; // Placeholder during API check
+  }
 
   return isFileSystemAPISupported ? (
     <Button variant="outline" onClick={handleFileSelection}>
