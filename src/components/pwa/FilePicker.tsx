@@ -16,7 +16,8 @@ interface FilePickerProps {
 }
 
 const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
-  const isFileSystemAPISupported = "showDirectoryPicker" in window;
+  const isClient = typeof window !== "undefined";
+  const isFileSystemAPISupported = isClient && "showDirectoryPicker" in window;
 
   // Fetch stored files from IndexedDB and OPFS
   const fetchFilesFromStorage = async () => {
