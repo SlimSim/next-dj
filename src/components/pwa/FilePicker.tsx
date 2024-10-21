@@ -25,23 +25,25 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
   }, []);
 
   useEffect(() => {
-    const fetchStoredFiles = async () => {
-      const storedFiles = await getFilesFromIndexedDB();
-      const directoryFiles: File[] = [];
-
-      if (isFileSystemAPISupported) {
-        const handle = await getDirectoryHandle();
-        if (handle) {
-          directoryFiles.push(...(await getFilesFromDirectory(handle)));
-        }
-      }
-      onFilesSelected([...storedFiles, ...directoryFiles]); // Merge files from all sources
-    };
-
     if (!loading) {
-      fetchStoredFiles();
+      reloadAllStoredFiles(null);
     }
   }, [isFileSystemAPISupported, loading]);
+
+  const reloadAllStoredFiles = async (
+    handle: FileSystemDirectoryHandle | null
+  ) => {
+    const storedFiles = await getFilesFromIndexedDB();
+    const directoryFiles: File[] = [];
+
+    if (isFileSystemAPISupported) {
+      handle = handle || (await getDirectoryHandle());
+      if (handle) {
+        directoryFiles.push(...(await getFilesFromDirectory(handle)));
+      }
+    }
+    onFilesSelected([...storedFiles, ...directoryFiles]); // Merge files from all sources
+  };
 
   const getFilesFromDirectory = async (
     dirHandle: FileSystemDirectoryHandle
@@ -62,6 +64,11 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     return files;
   };
 
+  const finleInputChanged = async () => {
+    const dirHandle = await getDirectoryHandle();
+    reloadAllStoredFiles(dirHandle);
+  };
+
   const handleFileSelection = async () => {
     try {
       if (isFileSystemAPISupported) {
@@ -71,9 +78,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
         const permission = await dirHandle.requestPermission({ mode: "read" });
         if (permission === "granted") {
           saveDirectoryHandle(dirHandle); // Save handle to IndexedDB
-          const directoryFiles = await getFilesFromDirectory(dirHandle); // Access files
-          const storageFiles = await getFilesFromIndexedDB();
-          onFilesSelected([...storageFiles, ...directoryFiles]); // Merge and update state
+          reloadAllStoredFiles(dirHandle);
         }
       }
     } catch (error) {
@@ -92,7 +97,7 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
           Select Directory
         </Button>
       )}
-      <FileInput onFilesSelected={onFilesSelected} />
+      <FileInput onFilesChanged={finleInputChanged} />
     </>
   );
 };

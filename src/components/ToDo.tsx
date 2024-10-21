@@ -43,7 +43,6 @@ const ToDo = React.forwardRef(() => {
         om jag har directory selected, och sen väljer en låt från filePicker, så
         töms låt-listan...
       </li>
-      <li>Testa att add song from ulr funkar</li>
     </ul>
   );
 });
