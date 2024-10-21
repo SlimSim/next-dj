@@ -7,6 +7,7 @@ import { getDirectoryHandle } from "@/utils/indexedDbService";
 import { saveDirectoryHandle } from "@/utils/indexedDbService";
 import { getFilesFromIndexedDB } from "@/utils/indexedDbService";
 import FileInput from "./FileInput"; // Fallback component
+import { CustomFile } from "@/types/fileTypes";
 
 interface FilePickerProps {
   onFilesSelected: (files: File[]) => void;
@@ -44,12 +45,13 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
 
   const getFilesFromDirectory = async (
     dirHandle: FileSystemDirectoryHandle
-  ): Promise<File[]> => {
-    const files: File[] = [];
+  ): Promise<CustomFile[]> => {
+    const files: CustomFile[] = [];
     for await (const [, handle] of (dirHandle as any).entries()) {
       if (handle.kind === "file") {
-        const file = await handle.getFile();
+        const file: CustomFile = await handle.getFile();
         if (file.type.startsWith("audio/") || file.type.startsWith("video/")) {
+          file.fileIsIn = "fileSystem";
           files.push(file);
         }
       } else if (handle.kind === "directory") {
@@ -83,12 +85,15 @@ const FilePicker: React.FC<FilePickerProps> = ({ onFilesSelected }) => {
     return <div>Loading...</div>; // Placeholder during API check
   }
 
-  return isFileSystemAPISupported ? (
-    <Button variant="outline" onClick={handleFileSelection}>
-      Select Directory
-    </Button>
-  ) : (
-    <FileInput onFilesSelected={onFilesSelected} /> // Fallback to FileInput component
+  return (
+    <>
+      {isFileSystemAPISupported && (
+        <Button variant="outline" onClick={handleFileSelection}>
+          Select Directory
+        </Button>
+      )}
+      <FileInput onFilesSelected={onFilesSelected} />
+    </>
   );
 };
 

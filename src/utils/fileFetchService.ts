@@ -2,6 +2,7 @@
 
 import { toast } from "sonner";
 import { saveFilesToIndexedDB } from "./indexedDbService";
+import { CustomFile } from "@/types/fileTypes";
 
 export async function fetchAndSaveSong(url: string, fileName: string) {
   try {
@@ -15,7 +16,7 @@ export async function fetchAndSaveSong(url: string, fileName: string) {
     const fileData = await response.blob(); // Get the file as a Blob
     toast.info(`Fetched file ${fileName} with size ${fileData.size} bytes`);
 
-    const file_to_save = new File([fileData], fileName, {
+    const file_to_save: CustomFile = new File([fileData], fileName, {
       type: fileData.type,
     });
     saveFilesToIndexedDB([file_to_save]);

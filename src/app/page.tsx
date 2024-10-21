@@ -5,15 +5,15 @@ import AvailableSongs from "@/components/pwa/AvailableSongs";
 import FilePicker from "@/components/pwa/FilePicker";
 import NowPlayingList from "@/components/pwa/NowPlayingList";
 import ToDo from "@/components/ToDo";
-import { Button } from "@/components/ui/button";
+import { CustomFile } from "@/types/fileTypes";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const HomePage = () => {
-  const [availableSongs, setAvailableSongs] = useState<File[]>([]);
+  const [availableSongs, setAvailableSongs] = useState<CustomFile[]>([]);
   const [playingList, setPlayingList] = useState<File[]>([]);
 
-  const handleSongClick = (file: File) => {
+  const handleSongClick = (file: CustomFile) => {
     toast(`Added ${file.name} to playlist.`);
     setPlayingList((prev) => [...prev, file]);
   };
@@ -22,7 +22,7 @@ const HomePage = () => {
     setPlayingList((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleFilesSelected = (newFiles: File[]) => {
+  const handleFilesSelected = (newFiles: CustomFile[]) => {
     setAvailableSongs(newFiles);
   };
 
@@ -32,14 +32,6 @@ const HomePage = () => {
       <p>Your music player PWA.</p>
       <ToDo></ToDo>
       <AudioPlayer playingList={playingList} />
-      <Button
-        variant="outline"
-        onClick={() => {
-          toast("Toast working");
-        }}
-      >
-        Test Toast
-      </Button>
       <FilePicker onFilesSelected={handleFilesSelected} />
       <AvailableSongs
         files={availableSongs}

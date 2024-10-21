@@ -18,7 +18,7 @@ const ToDo = React.forwardRef(() => {
               href="https://firebasestorage.googleapis.com/v0/b/troff-test.appspot.com/o/TroffFiles%2F4ed171cc22759ea60cfe6049f01f0e1b8715e52acbc1b3bffe88acc1c42652a5?alt=media&token=bfc80084-a477-4db6-b587-2ae00e64d5ac"
             >
               Take Me To Church
-            </a>{" "}
+            </a>
             från firebase:
             4ed171cc22759ea60cfe6049f01f0e1b8715e52acbc1b3bffe88acc1c42652a5
           </li>
@@ -29,7 +29,7 @@ const ToDo = React.forwardRef(() => {
               href="https://firebasestorage.googleapis.com/v0/b/troff-test.appspot.com/o/TroffFiles%2F94b0acbaab70a53cf8ab7a6e81820bfe9fe473b27a819a22e198b480fb5690df?alt=media&token=24d93957-021c-42d4-ae30-7ae180230b4e"
             >
               Jurassic Park
-            </a>{" "}
+            </a>
             från firebase:
             94b0acbaab70a53cf8ab7a6e81820bfe9fe473b27a819a22e198b480fb5690df
           </li>
@@ -39,6 +39,11 @@ const ToDo = React.forwardRef(() => {
       <li>
         <b>Att ladda upp låtar från datorn också!</b>
       </li>
+      <li>
+        om jag har directory selected, och sen väljer en låt från filePicker, så
+        töms låt-listan...
+      </li>
+      <li>Testa att add song from ulr funkar</li>
     </ul>
   );
 });

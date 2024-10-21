@@ -1,10 +1,11 @@
-// src/components/pwa/AudioPlayer.tsx
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { CustomFile } from "@/types/fileTypes"; // Assume CustomFile extends File with metadata
+import { updateFileMetadataInIndexedDB } from "@/utils/indexedDbService"; // Helper to update in IndexedDB
 
 interface AudioPlayerProps {
-  playingList: File[];
+  playingList: CustomFile[]; // Now using CustomFile type
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -14,12 +15,33 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const handlePlay = () => {
-    toast(`AP Now playing: ${playingList[currentIndex].name}`);
-    if (audioRef.current && playingList[currentIndex]) {
-      audioRef.current.src = URL.createObjectURL(playingList[currentIndex]);
-      audioRef.current.play();
-      setIsPlaying(true);
+  // Update the "timesPlayed" for the current file
+  const incrementTimesPlayed = async (file: CustomFile) => {
+    file.timesPlayed = (file.timesPlayed || 0) + 1;
+
+    // Check if file is in IndexedDB and update metadata accordingly
+    if (file.fileIsIn === "indexedDB") {
+      await updateFileMetadataInIndexedDB(file);
+    }
+
+    // For FileSystem files, you can extend this logic
+    // e.g., using a different helper for FileSystemAPI to sync metadata
+  };
+
+  const handlePlay = async () => {
+    if (playingList[currentIndex]) {
+      const currentFile = playingList[currentIndex];
+
+      toast(`AP Now playing: ${currentFile.name}`);
+
+      if (audioRef.current) {
+        audioRef.current.src = URL.createObjectURL(currentFile);
+        audioRef.current.play();
+        setIsPlaying(true);
+
+        // Increment "timesPlayed" count and update metadata
+        await incrementTimesPlayed(currentFile);
+      }
     }
   };
 

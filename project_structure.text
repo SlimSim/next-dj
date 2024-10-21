@@ -42,11 +42,12 @@
     - usePersistentState.ts
   - styles
     - globals.css
+  - types
+    - fileTypes.ts
   - utils
     - classNames.ts
     - constants.ts
     - fileFetchService.ts
     - indexedDbService.ts
-- tailwind.config.js
 - tailwind.config.ts
 - tsconfig.json

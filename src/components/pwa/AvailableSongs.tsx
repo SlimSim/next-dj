@@ -4,11 +4,12 @@ import React from "react";
 import { Button } from "../ui/button";
 import { fetchAndSaveSong } from "@/utils/fileFetchService";
 import { toast } from "sonner";
+import { CustomFile } from "@/types/fileTypes";
 
 interface AvailableSongsProps {
-  files: File[];
-  onSongClick: (file: File) => void;
-  setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  files: CustomFile[];
+  onSongClick: (file: CustomFile) => void;
+  setFiles: React.Dispatch<React.SetStateAction<CustomFile[]>>;
 }
 
 const AvailableSongs: React.FC<AvailableSongsProps> = ({
@@ -41,7 +42,8 @@ const AvailableSongs: React.FC<AvailableSongsProps> = ({
         {files.map((file, index) => (
           <li key={index}>
             <Button variant="outline" onClick={() => onSongClick(file)}>
-              {file.name} ({file.type})
+              {file.name} ({file.type}) - {file.size} bytes. {file.fileIsIn}{" "}
+              {file.timesPlayed} times played.
             </Button>
           </li>
         ))}

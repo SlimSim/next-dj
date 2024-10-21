@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getFilesFromIndexedDB } from "@/utils/indexedDbService";
 import { saveFilesToIndexedDB } from "@/utils/indexedDbService";
+import { Button } from "../ui/button";
 
 interface FileInputProps {
   onFilesSelected: (files: File[]) => void;
@@ -8,6 +9,7 @@ interface FileInputProps {
 
 const FileInput: React.FC<FileInputProps> = ({ onFilesSelected }) => {
   const [storedFiles, setStoredFiles] = useState<File[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const loadStoredFiles = async () => {
@@ -20,6 +22,12 @@ const FileInput: React.FC<FileInputProps> = ({ onFilesSelected }) => {
     loadStoredFiles();
   }, []);
 
+  const handleSelectFileClick = () => {
+    if (inputRef.current) {
+      inputRef.current.click();
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setStoredFiles(files); // Set selected files in state
@@ -29,7 +37,16 @@ const FileInput: React.FC<FileInputProps> = ({ onFilesSelected }) => {
 
   return (
     <div>
-      <input type="file" multiple onChange={handleFileChange} />
+      <Button variant="outline" onClick={handleSelectFileClick}>
+        Select a file
+      </Button>
+      <input
+        ref={inputRef}
+        className="hidden"
+        type="file"
+        multiple
+        onChange={handleFileChange}
+      />
       <div>
         <h4>Stored Files:</h4>
         <ul>
