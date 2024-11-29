@@ -59,7 +59,6 @@ export function AudioPlayer() {
             console.log('File type:', file.type);
             
             audioRef.current.src = fileUrl;
-            audioRef.current.volume = volume;
             
             // Force a reload of the audio element
             audioRef.current.load();
@@ -138,7 +137,15 @@ export function AudioPlayer() {
 
       loadAudio();
     }
-  }, [currentTrack, volume]);
+  }, [currentTrack]);
+
+  // Handle volume changes
+  useEffect(() => {
+    if (audioRef.current) {
+      console.log('Volume changed:', volume);
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   // Handle play/pause state changes
   useEffect(() => {
@@ -199,12 +206,11 @@ export function AudioPlayer() {
     setDuration(audioRef.current.duration)
   }
 
-  const handleVolumeChange = (value: number[]) => {
-    if (!audioRef.current) return
-    const newVolume = value[0]
-    audioRef.current.volume = newVolume
-    setVolume(newVolume)
-  }
+  const handleVolumeChange = useCallback((value: number[]) => {
+    const newVolume = value[0];
+    console.log('Setting volume to:', newVolume);
+    setVolume(newVolume);
+  }, [setVolume]);
 
   const toggleMute = () => {
     if (!audioRef.current) return
