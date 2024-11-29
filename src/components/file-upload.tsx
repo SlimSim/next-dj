@@ -35,21 +35,27 @@ export function FileUpload() {
     setIsLoading(true)
     try {
       for (const file of Array.from(files)) {
+        console.log('Processing file:', file);
         if (isAudioFile(file)) {
-          await addAudioFile(file, {
-            title: file.name,
+          const metadata = {
+            title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
             artist: 'Unknown Artist',
             album: 'Unknown Album',
             duration: 0,
-          })
-          toast.success(`Added ${file.name}`)
+            playCount: 0,
+            file: file,
+          }
+          console.log('Adding file with metadata:', metadata);
+          const id = await addAudioFile(file, metadata)
+          console.log('File added with ID:', id);
+          toast.success(`Added ${metadata.title}`)
         } else {
           toast.error(`${file.name} is not a supported audio file`)
         }
       }
     } catch (error) {
       toast.error('Failed to add files')
-      console.error(error)
+      console.error('Error adding files:', error)
     } finally {
       setIsLoading(false)
     }
@@ -76,13 +82,16 @@ export function FileUpload() {
           const file = await fileHandle.getFile()
           if (isAudioFile(file)) {
             const newPath = path ? `${path}/${file.name}` : file.name
-            await addAudioFile(file, {
-              title: file.name,
+            const metadata = {
+              title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
               artist: 'Unknown Artist',
               album: 'Unknown Album',
               duration: 0,
+              playCount: 0,
               path: newPath,
-            })
+              file: file,
+            }
+            await addAudioFile(file, metadata)
             toast.success(`Added ${newPath}`)
           }
         } else if (entry.kind === 'directory') {

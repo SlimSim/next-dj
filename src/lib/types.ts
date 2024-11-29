@@ -8,6 +8,7 @@ export interface MusicMetadata {
   lastPlayed?: Date
   path?: string
   coverArt?: string
+  file?: File
 }
 
 export interface AudioFile {
@@ -23,6 +24,5 @@ export interface PlaybackState {
   currentTime: number
   duration: number
   volume: number
-  repeat: RepeatMode
-  shuffle: boolean
+  isMuted: boolean
 }

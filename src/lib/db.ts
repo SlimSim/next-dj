@@ -10,6 +10,7 @@ interface MusicMetadata {
   lastPlayed?: Date
   path?: string
   coverArt?: string
+  file: File
 }
 
 interface AudioFile {
@@ -66,6 +67,7 @@ export async function addAudioFile(file: File, metadata: Partial<MusicMetadata>)
       playCount: 0,
       path: metadata.path,
       coverArt: metadata.coverArt,
+      file: file,
     },
   }
 
@@ -90,8 +92,25 @@ export async function updateMetadata(id: string, metadata: Partial<MusicMetadata
 }
 
 export async function getAllMetadata(): Promise<MusicMetadata[]> {
-  const db = await initDB()
-  return await db.getAll('metadata')
+  const db = await initDB();
+  const audioFiles = await db.getAll('audioFiles');
+  const metadata = await db.getAll('metadata');
+  
+  console.log('Retrieved audio files:', audioFiles);
+  console.log('Retrieved metadata:', metadata);
+  
+  // Merge the file data with metadata
+  const result = metadata.map(meta => {
+    const audioFile = audioFiles.find(af => af.id === meta.id);
+    console.log(`Merging metadata for ${meta.id}:`, { meta, audioFile });
+    return {
+      ...meta,
+      file: audioFile?.file as File
+    };
+  });
+  
+  console.log('Final merged metadata:', result);
+  return result;
 }
 
 export async function incrementPlayCount(id: string): Promise<void> {

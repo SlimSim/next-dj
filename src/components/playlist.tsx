@@ -53,6 +53,8 @@ export function Playlist() {
   })
 
   const handlePlay = (track: MusicMetadata) => {
+    console.log('Playing track:', track);
+    console.log('Track file:', track.file);
     if (currentTrack?.id === track.id) {
       setIsPlaying(!isPlaying)
     } else {
