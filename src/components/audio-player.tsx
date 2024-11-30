@@ -93,7 +93,6 @@ export function AudioPlayer() {
         currentUrlRef.current = audioUrl
         const audio = audioRef.current
         audio.src = audioUrl
-        audio.volume = volume
         audio.load()
 
         await new Promise<void>((resolve, reject) => {
@@ -144,7 +143,14 @@ export function AudioPlayer() {
       mounted = false
       cleanup()
     }
-  }, [currentTrack, volume, isPlaying, cleanup, loadAudioFile])
+  }, [currentTrack, isPlaying, cleanup, loadAudioFile])
+
+  // Handle volume changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+    }
+  }, [volume])
 
   // Handle play/pause
   useEffect(() => {
