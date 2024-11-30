@@ -13,6 +13,7 @@ interface PlayerState {
   duration: number
   currentTime: number
   loading: boolean
+  isQueueVisible: boolean
 }
 
 interface PlayerActions {
@@ -21,12 +22,19 @@ interface PlayerActions {
   setQueue: (queue: MusicMetadata[]) => void
   addToQueue: (track: MusicMetadata) => void
   removeFromQueue: (trackId: string) => void
+  moveInQueue: (fromIndex: number, toIndex: number) => void
+  playNext: (track: MusicMetadata) => void
+  playLast: (track: MusicMetadata) => void
+  clearQueue: () => void
   setVolume: (volume: number) => void
   setShuffle: (shuffle: boolean) => void
   setRepeat: (repeat: 'none' | 'one' | 'all') => void
   setDuration: (duration: number) => void
   setCurrentTime: (time: number) => void
   setLoading: (loading: boolean) => void
+  setQueueVisible: (visible: boolean) => void
+  playNextTrack: () => void
+  playPreviousTrack: () => void
 }
 
 const initialState: PlayerState = {
@@ -39,6 +47,7 @@ const initialState: PlayerState = {
   duration: 0,
   currentTime: 0,
   loading: false,
+  isQueueVisible: false,
 }
 
 const storage = typeof window !== 'undefined' 
@@ -46,15 +55,52 @@ const storage = typeof window !== 'undefined'
   : undefined
 
 export const usePlayerStore = create(
-  persist(
-    immer<PlayerState & PlayerActions>((set) => ({
+  persist<PlayerState & PlayerActions>(
+    immer((set) => ({
       ...initialState,
-      setCurrentTrack: (track) => set((state) => { state.currentTrack = track }),
-      setIsPlaying: (isPlaying) => set((state) => { state.isPlaying = isPlaying }),
-      setQueue: (queue) => set((state) => { state.queue = queue }),
-      addToQueue: (track) => set((state) => { state.queue.push(track) }),
+
+      // Queue management
+      addToQueue: (track) => set((state) => {
+        state.queue.push(track)
+        // If this is the first track, set it as current
+        if (!state.currentTrack) {
+          state.currentTrack = track
+        }
+      }),
+
+      playNext: (track) => set((state) => {
+        const currentIndex = state.currentTrack 
+          ? state.queue.findIndex((t) => t.id === state.currentTrack?.id)
+          : -1
+        state.queue.splice(currentIndex + 1, 0, track)
+      }),
+
+      playLast: (track) => set((state) => {
+        state.queue.push(track)
+      }),
+
       removeFromQueue: (trackId) => set((state) => {
         state.queue = state.queue.filter((track) => track.id !== trackId)
+        // If we removed the current track, set the next one as current
+        if (state.currentTrack?.id === trackId) {
+          const nextTrack = state.queue[0] || null
+          state.currentTrack = nextTrack
+          state.isPlaying = false
+        }
+      }),
+
+      setCurrentTrack: (track) => set((state) => { state.currentTrack = track }),
+      setIsPlaying: (isPlaying) => set((state) => { state.isPlaying = isPlaying }),
+      setQueue: (queue) => set({ queue }),
+      moveInQueue: (fromIndex, toIndex) => set((state) => {
+        const track = state.queue[fromIndex]
+        state.queue.splice(fromIndex, 1)
+        state.queue.splice(toIndex, 0, track)
+      }),
+      clearQueue: () => set((state) => {
+        state.queue = []
+        state.currentTrack = null
+        state.isPlaying = false
       }),
       setVolume: (volume) => set((state) => { state.volume = volume }),
       setShuffle: (shuffle) => set((state) => { state.shuffle = shuffle }),
@@ -62,6 +108,52 @@ export const usePlayerStore = create(
       setDuration: (duration) => set((state) => { state.duration = duration }),
       setCurrentTime: (time) => set((state) => { state.currentTime = time }),
       setLoading: (loading) => set((state) => { state.loading = loading }),
+      setQueueVisible: (visible) => set({ isQueueVisible: visible }),
+      playNextTrack: () => set((state) => {
+        if (state.queue.length === 0) return
+
+        const currentIndex = state.currentTrack 
+          ? state.queue.findIndex((track) => track.id === state.currentTrack?.id)
+          : -1
+
+        let nextIndex
+        if (state.shuffle) {
+          // Get random track excluding current
+          const availableIndices = state.queue
+            .map((_, index) => index)
+            .filter(index => index !== currentIndex)
+          nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)]
+        } else {
+          nextIndex = currentIndex + 1
+          // Handle repeat all
+          if (nextIndex >= state.queue.length && state.repeat === 'all') {
+            nextIndex = 0
+          }
+        }
+
+        if (nextIndex >= 0 && nextIndex < state.queue.length) {
+          state.currentTrack = state.queue[nextIndex]
+          state.isPlaying = true
+        }
+      }),
+      playPreviousTrack: () => set((state) => {
+        if (state.queue.length === 0) return
+
+        const currentIndex = state.currentTrack 
+          ? state.queue.findIndex((track) => track.id === state.currentTrack?.id)
+          : -1
+
+        let prevIndex = currentIndex - 1
+        // Handle repeat all
+        if (prevIndex < 0 && state.repeat === 'all') {
+          prevIndex = state.queue.length - 1
+        }
+
+        if (prevIndex >= 0 && prevIndex < state.queue.length) {
+          state.currentTrack = state.queue[prevIndex]
+          state.isPlaying = true
+        }
+      }),
     })),
     {
       name: 'player-store',

@@ -19,10 +19,15 @@ export function Playlist() {
   const [tracks, setTracks] = useState<MusicMetadata[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
   
   const {
     currentTrack,
     isPlaying,
+    addToQueue,
+    playNext,
+    playLast,
+    setQueueVisible,
     setCurrentTrack,
     setIsPlaying,
     setQueue,
@@ -36,7 +41,16 @@ export function Playlist() {
     try {
       const metadata = await getAllMetadata()
       setTracks(metadata)
-      setQueue(metadata)
+    } catch (error) {
+      toast.error('Failed to load tracks')
+      console.error(error)
+    }
+  }
+
+  const refreshMetadata = async () => {
+    try {
+      const metadata = await getAllMetadata()
+      setTracks(metadata)
     } catch (error) {
       toast.error('Failed to load tracks')
       console.error(error)
@@ -53,8 +67,6 @@ export function Playlist() {
   })
 
   const handlePlay = (track: MusicMetadata) => {
-    console.log('Playing track:', track);
-    console.log('Track file:', track.file);
     if (currentTrack?.id === track.id) {
       setIsPlaying(!isPlaying)
     } else {
@@ -74,24 +86,25 @@ export function Playlist() {
     }
   }
 
-  const handleEdit = async (track: MusicMetadata, updates: Partial<MusicMetadata>) => {
+  const handleEditTrack = async (track: MusicMetadata) => {
+    setEditingTrack(track)
+    setIsEditing(true)
+  }
+
+  const handleSaveTrack = async (updatedTrack: MusicMetadata) => {
     try {
-      await updateMetadata(track.id, updates)
-      await loadTracks()
+      await updateMetadata(updatedTrack)
+      setIsEditing(false)
       setEditingTrack(null)
-      toast.success('Track updated')
+      await refreshMetadata()
     } catch (error) {
-      toast.error('Failed to update track')
-      console.error(error)
+      console.error('Error updating track:', error)
     }
   }
 
   const handleTrackSelect = (track: MusicMetadata) => {
-    handlePlay(track)
-  }
-
-  const handleEditTrack = (track: MusicMetadata) => {
-    setEditingTrack(editingTrack?.id === track.id ? null : track)
+    addToQueue(track)
+    setQueueVisible(true) // Show the queue when adding a track
   }
 
   const handleDeleteTrack = (track: MusicMetadata) => {
@@ -148,6 +161,24 @@ export function Playlist() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      addToQueue(track)
+                      setQueueVisible(true)
+                    }}>
+                      Add to Queue
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      playNext(track)
+                      setQueueVisible(true)
+                    }}>
+                      Play Next
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      playLast(track)
+                      setQueueVisible(true)
+                    }}>
+                      Play Last
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleEditTrack(track)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit metadata
