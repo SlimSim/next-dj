@@ -240,21 +240,23 @@ export function AudioPlayer() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-950 border-t p-4">
+    <div className="bottom-0 left-0 right-0 bg-white dark:bg-neutral-950 p-2 sm:p-3">
       <div className="container max-w-4xl mx-auto">
-        <div className="px-3 sm:px-4 py-2 sm:py-4">
+        <div className="space-y-2 sm:space-y-3">
           {/* Track info */}
-          <div className="flex items-center justify-between mb-2 sm:mb-4">
-            <div className="flex-1 min-w-0 mr-4">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
               {currentTrack ? (
                 <>
-                  <div className="font-medium truncate">
+                  <div className="truncate font-medium">
                     {currentTrack.title}
                   </div>
-                  <div className="text-sm text-muted-foreground truncate">
-                    {currentTrack.artist}
-                    {currentTrack.album && ` - ${currentTrack.album}`}
-                  </div>
+                  {currentTrack.artist && (
+                    <div className="truncate text-sm text-muted-foreground">
+                      {currentTrack.artist}
+                      {currentTrack.album && ` - ${currentTrack.album}`}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-muted-foreground">
@@ -262,124 +264,138 @@ export function AudioPlayer() {
                 </div>
               )}
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              onClick={() => setQueueVisible(!isQueueVisible)}
+            >
+              <ListMusic className="h-5 w-5" />
+              <span className="sr-only">Toggle queue</span>
+            </Button>
+          </div>
+
+          {/* Progress bar */}
+          <div className="space-y-1">
+            <Slider
+              value={[currentTime]}
+              max={duration}
+              step={1}
+              onValueChange={([value]) => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = value
+                  setCurrentTime(value)
+                }
+              }}
+              className="cursor-pointer"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <div>{formatTime(currentTime)}</div>
+              <div>{formatTime(duration)}</div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center">
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden sm:inline-flex"
-                onClick={toggleMute}
+                disabled={!currentTrack}
+                onClick={() => setShuffle(!shuffle)}
+                className={cn(shuffle && 'text-primary')}
               >
-                {isMuted ? (
+                <Shuffle className="h-5 w-5" />
+                <span className="sr-only">Toggle shuffle</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={!currentTrack}
+                onClick={playPreviousTrack}
+              >
+                <SkipBack className="h-5 w-5" />
+                <span className="sr-only">Previous track</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12"
+                disabled={!currentTrack || isLoading}
+                onClick={togglePlay}
+              >
+                {isPlaying ? (
+                  <Pause className="h-6 w-6" />
+                ) : (
+                  <Play className="h-6 w-6" />
+                )}
+                <span className="sr-only">
+                  {isPlaying ? 'Pause' : 'Play'}
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={!currentTrack}
+                onClick={playNextTrack}
+              >
+                <SkipForward className="h-5 w-5" />
+                <span className="sr-only">Next track</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={!currentTrack}
+                onClick={() => {
+                  const nextRepeat = repeat === 'none' ? 'all' : repeat === 'all' ? 'one' : 'none'
+                  setRepeat(nextRepeat)
+                }}
+                className={cn(repeat !== 'none' && 'text-primary')}
+              >
+                {repeat === 'one' ? (
+                  <Repeat1 className="h-5 w-5" />
+                ) : (
+                  <Repeat className="h-5 w-5" />
+                )}
+                <span className="sr-only">Change repeat mode</span>
+              </Button>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => {
+                  setIsMuted(!isMuted)
+                  setVolume(isMuted ? volume || 1 : 0)
+                }}
+              >
+                {volume === 0 || isMuted ? (
                   <VolumeX className="h-5 w-5" />
                 ) : (
                   <Volume2 className="h-5 w-5" />
                 )}
+                <span className="sr-only">Toggle mute</span>
               </Button>
-              <div className="hidden sm:block w-24 mx-2">
-                <Slider
-                  value={[isMuted ? 0 : volume]}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  onValueChange={handleVolumeChange}
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setQueueVisible(!isQueueVisible)}
-              >
-                <ListMusic className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="text-sm tabular-nums">
-              {formatTime(currentTime)}
-            </div>
-            <div className="flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
               <Slider
-                value={[currentTime]}
-                min={0}
-                max={duration || 100}
+                value={[isMuted ? 0 : volume * 100]}
+                max={100}
                 step={1}
-                onValueChange={handleTimeSeek}
-                className="h-1"
+                onValueChange={([value]) => {
+                  const newVolume = value / 100
+                  setVolume(newVolume)
+                  setIsMuted(newVolume === 0)
+                }}
+                className="w-24 cursor-pointer"
               />
             </div>
-            <div className="text-sm tabular-nums">
-              {formatTime(duration)}
-            </div>
-          </div>
-
-          {/* Playback controls */}
-          <div className="flex items-center justify-center gap-2 sm:gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:inline-flex"
-              onClick={() => setShuffle(!shuffle)}
-              data-active={shuffle}
-            >
-              <Shuffle className={cn("h-5 w-5", shuffle && "text-primary")} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={playPreviousTrack}
-              disabled={!currentTrack}
-            >
-              <SkipBack className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-12"
-              onClick={togglePlay}
-              disabled={!currentTrack}
-            >
-              {isPlaying ? (
-                <Pause className="h-6 w-6" />
-              ) : (
-                <Play className="h-6 w-6" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={playNextTrack}
-              disabled={!currentTrack}
-            >
-              <SkipForward className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:inline-flex"
-              onClick={() => {
-                const nextRepeat = repeat === 'none' ? 'all' : repeat === 'all' ? 'one' : 'none'
-                setRepeat(nextRepeat)
-              }}
-            >
-              {repeat === 'one' ? (
-                <Repeat1 className="h-5 w-5 text-primary" />
-              ) : (
-                <Repeat className={cn("h-5 w-5", repeat === 'all' && "text-primary")} />
-              )}
-            </Button>
           </div>
         </div>
-
-        <audio
-          ref={audioRef}
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedMetadata={handleLoadedMetadata}
-        />
-
-        <PlayingQueue />
       </div>
+
+      <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} onEnded={playNextTrack} />
+      <PlayingQueue />
     </div>
   )
 }
