@@ -65,21 +65,25 @@ export function FileUpload() {
   }, [triggerRefresh])
 
   const handleFolderSelect = useCallback(async () => {
+    setIsLoading(true)
     try {
       const dirHandle = await window.showDirectoryPicker()
       await processDirectory(dirHandle)
+      triggerRefresh()
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         toast.error('Failed to access folder')
         console.error(error)
       }
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [triggerRefresh])
 
   const processDirectory = async (dirHandle: FileSystemDirectoryHandle, path = '') => {
-    setIsLoading(true)
     try {
-      for await (const entry of dirHandle.values()) {
+      const entries = dirHandle.values()
+      for await (const entry of entries) {
         if (entry.kind === 'file') {
           const fileHandle = entry as FileSystemFileHandle
           const file = await fileHandle.getFile()
@@ -87,8 +91,8 @@ export function FileUpload() {
             const newPath = path ? `${path}/${file.name}` : file.name
             const metadata = {
               title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
-              artist: 'Unknown Artist',
-              album: 'Unknown Album',
+              artist: path ? path.split('/')[0] : 'Unknown Artist', // Use first directory as artist
+              album: path ? path.split('/')[1] || 'Unknown Album' : 'Unknown Album', // Use second directory as album
               duration: 0,
               playCount: 0,
               path: newPath,
@@ -102,12 +106,9 @@ export function FileUpload() {
           await processDirectory(subDirHandle, path ? `${path}/${entry.name}` : entry.name)
         }
       }
-      triggerRefresh()
     } catch (error) {
-      toast.error('Failed to process directory')
       console.error('Error processing directory:', error)
-    } finally {
-      setIsLoading(false)
+      throw error // Propagate error to parent handler
     }
   }
 

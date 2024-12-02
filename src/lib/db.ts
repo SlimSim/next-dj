@@ -10,13 +10,13 @@ interface MusicMetadata {
   lastPlayed?: Date
   path?: string
   coverArt?: string
-  file: File
+  file?: File
 }
 
 interface AudioFile {
   id: string
   file: Blob
-  metadata: MusicMetadata
+  metadata: Omit<MusicMetadata, 'file'>
 }
 
 interface MusicPlayerDB extends DBSchema {
@@ -55,9 +55,22 @@ export async function addAudioFile(file: File, metadata: Partial<MusicMetadata>)
   const db = await initDB()
   const id = crypto.randomUUID()
   
+  console.log('Adding audio file:', {
+    originalType: file.type,
+    originalSize: file.size
+  })
+  
+  // Convert File to Blob for storage
+  const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type })
+  
+  console.log('Created file blob:', {
+    type: fileBlob.type,
+    size: fileBlob.size
+  })
+  
   const audioFile: AudioFile = {
     id,
-    file: file,
+    file: fileBlob,
     metadata: {
       id,
       title: metadata.title || file.name,
@@ -67,19 +80,39 @@ export async function addAudioFile(file: File, metadata: Partial<MusicMetadata>)
       playCount: 0,
       path: metadata.path,
       coverArt: metadata.coverArt,
-      file: file,
     },
   }
 
   await db.put('audioFiles', audioFile)
+  console.log('Stored audio file in IndexedDB:', id)
+  
   await db.put('metadata', audioFile.metadata)
+  console.log('Stored metadata in IndexedDB:', id)
 
   return id
 }
 
 export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
+  console.log('Getting audio file from IndexedDB:', id)
   const db = await initDB()
-  return await db.get('audioFiles', id)
+  const audioFile = await db.get('audioFiles', id)
+  
+  console.log('Retrieved audio file:', {
+    found: !!audioFile,
+    hasFile: !!audioFile?.file,
+    fileType: audioFile?.file ? audioFile.file.type : 'none',
+    fileSize: audioFile?.file ? audioFile.file.size : 0
+  })
+  
+  if (audioFile) {
+    // Ensure the file is a proper Blob
+    if (!(audioFile.file instanceof Blob)) {
+      console.error('Retrieved file is not a Blob:', audioFile.file)
+      return undefined
+    }
+    return audioFile
+  }
+  return undefined
 }
 
 export async function updateMetadata(id: string, metadata: Partial<MusicMetadata>): Promise<void> {

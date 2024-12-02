@@ -124,22 +124,22 @@ export function PlayingQueue() {
   const [isDragging, setIsDragging] = useState(false)
 
   // Handle touch drag for sliding panel
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setIsDragging(true)
     setDragPosition(e.touches[0].clientY)
-  }
+  }, [])
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isDragging) return
     const diff = e.touches[0].clientY - dragPosition
     // Update panel position...
     setDragPosition(e.touches[0].clientY)
-  }
+  }, [isDragging, dragPosition])
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false)
     // Snap to open/closed position based on drag distance
-  }
+  }, [])
 
   // Configure DnD sensors
   const sensors = useSensors(
@@ -156,7 +156,6 @@ export function PlayingQueue() {
 
     const newQueue = arrayMove(queue, oldIndex, newIndex)
     setQueue(newQueue)
-    console.log('Queue updated:', newQueue)
   }, [queue, setQueue])
 
   if (!isQueueVisible) return null
@@ -199,13 +198,13 @@ export function PlayingQueue() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={queue.map((track) => track.queueId)}
+                items={queue}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
                   {queue.map((track) => (
                     <QueueItem
-                      key={track.queueId}
+                      key={track.id}
                       track={track}
                       isPlaying={currentTrack?.id === track.id}
                     />

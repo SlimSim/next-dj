@@ -5,7 +5,7 @@ import { Button } from './ui/button'
 import { Slider } from './ui/slider'
 import { usePlayerStore } from '@/lib/store'
 import { formatTime } from '@/lib/utils'
-import { incrementPlayCount } from '@/lib/db'
+import { incrementPlayCount, getAudioFile } from '@/lib/db'
 import { AudioFile } from '@/lib/types'
 import {
   Play,
@@ -22,13 +22,14 @@ import {
 import { PlayingQueue } from './playing-queue'
 import { cn } from '@/lib/utils'
 
-export function AudioPlayer() {
+export const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
-  const loadingRef = useRef<boolean>(false)
-  const currentUrlRef = useRef<string | null>(null)
-  const [isMuted, setIsMuted] = useState(false)
-  const [audioFile, setAudioFile] = useState<AudioFile | null>(null)
+  const currentFileRef = useRef<Blob | null>(null)
+  const loadingRef = useRef(false)
+  const mountedRef = useRef(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [audioFile, setAudioFile] = useState<AudioFile | null>(null)
+
   const {
     currentTrack,
     isPlaying,
@@ -46,117 +47,179 @@ export function AudioPlayer() {
     setCurrentTime,
     setQueueVisible,
     playNextTrack,
-    playPreviousTrack,
+    playPreviousTrack
   } = usePlayerStore()
 
-  const cleanup = useCallback(() => {
-    if (currentUrlRef.current) {
-      URL.revokeObjectURL(currentUrlRef.current)
-      currentUrlRef.current = null
-    }
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
-      audioRef.current.load()
-    }
-  }, [])
+  const [isMuted, setIsMuted] = useState(false)
 
-  const loadAudioFile = useCallback(async (file: File | Blob | null): Promise<string> => {
-    try {
-      if (!file) {
-        throw new Error('No file provided')
+  const handleTimeUpdate = useCallback(() => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime)
+    }
+  }, [setCurrentTime])
+
+  const handleLoadedMetadata = useCallback(() => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration)
+    }
+  }, [setDuration])
+
+  const handleVolumeChange = useCallback((value: number) => {
+    setVolume(value)
+    if (audioRef.current) {
+      audioRef.current.volume = value
+    }
+  }, [setVolume])
+
+  const toggleMute = useCallback(() => {
+    if (audioRef.current) {
+      const newMuted = !isMuted
+      setIsMuted(newMuted)
+      audioRef.current.muted = newMuted
+    }
+  }, [isMuted])
+
+  const handleSeek = useCallback((value: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value
+      setCurrentTime(value)
+    }
+  }, [setCurrentTime])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (audioRef.current?.src) {
+        URL.revokeObjectURL(audioRef.current.src)
       }
-      
-      if (file instanceof File && !file.type.startsWith('audio/')) {
-        throw new Error(`Invalid audio file type: ${file.type}`)
-      }
-      
-      return URL.createObjectURL(file)
-    } catch (error) {
-      throw error
     }
   }, [])
 
   useEffect(() => {
-    let mounted = true
-
     const initAudio = async () => {
       if (loadingRef.current) return
       
       loadingRef.current = true
+      setIsLoading(true)
 
       try {
-        if (!currentTrack?.file) {
-          setIsLoading(false)
+        if (!currentTrack?.id) {
+          console.log('No current track selected')
           return
         }
 
-        if (!audioRef.current) {
-          setIsLoading(false)
-          return
-        }
-
-        setIsLoading(true)
-        cleanup()
-
-        let audioUrl: string
-        try {
-          audioUrl = await loadAudioFile(currentTrack.file)
-        } catch (error) {
-          setIsLoading(false)
-          return
-        }
-
-        if (!mounted) {
-          URL.revokeObjectURL(audioUrl)
-          return
-        }
-
-        currentUrlRef.current = audioUrl
-        const audio = audioRef.current
+        console.log('InitAudio - Current track state:', currentTrack)
+        console.log('Attempting to restore file from IndexedDB')
         
-        audio.src = audioUrl
-        audio.load()
+        const audioFile = await getAudioFile(currentTrack.id)
+        if (!audioFile) {
+          throw new Error(`No audio file found for id: ${currentTrack.id}`)
+        }
 
-        await new Promise<void>((resolve, reject) => {
-          const handleCanPlay = () => resolve()
+        if (!audioFile.file) {
+          throw new Error(`Audio file is null for id: ${currentTrack.id}`)
+        }
 
-          const handleError = (e: Event) => {
-            const error = (e.target as HTMLAudioElement).error
-            reject(new Error(error?.message || 'Failed to load audio'))
-          }
-
-          audio.addEventListener('canplay', handleCanPlay, { once: true })
-          audio.addEventListener('error', handleError, { once: true })
+        console.log('Retrieved audio file:', {
+          id: currentTrack.id,
+          type: audioFile.file.type,
+          size: audioFile.file.size,
+          isBlob: audioFile.file instanceof Blob
         })
 
-        if (!mounted) return
-
-        setIsLoading(false)
-        if (isPlaying) {
-          try {
-            await audio.play()
-          } catch (error) {
-            setIsPlaying(false)
-          }
+        if (!mountedRef.current) {
+          console.log('Component unmounted, aborting initialization')
+          return
         }
+
+        currentFileRef.current = audioFile.file
+        
+        if (!audioRef.current) {
+          throw new Error('Audio element not initialized')
+        }
+
+        // Clean up previous URL if it exists
+        if (audioRef.current.src) {
+          URL.revokeObjectURL(audioRef.current.src)
+        }
+        
+        // Create new URL and set it
+        const url = URL.createObjectURL(audioFile.file)
+        console.log('Created object URL:', url)
+        audioRef.current.src = url
+
+        // Wait for the audio to be loaded
+        await new Promise<void>((resolve, reject) => {
+          if (!audioRef.current) {
+            reject(new Error('Audio element not found'))
+            return
+          }
+
+          const handleCanPlay = () => {
+            console.log('Audio can play event received')
+            if (mountedRef.current) {
+              setIsLoading(false)
+              setDuration(audioRef.current?.duration || 0)
+            }
+            resolve()
+          }
+
+          const handleError = (error: Event) => {
+            console.error('Audio load error:', error)
+            const audioError = audioRef.current?.error
+            reject(new Error(`Failed to load audio: ${audioError?.message || 'Unknown error'}`))
+          }
+          
+          audioRef.current.addEventListener('canplay', handleCanPlay, { once: true })
+          audioRef.current.addEventListener('error', handleError, { once: true })
+          
+          // Force load
+          audioRef.current.load()
+        })
+        
+        console.log('Audio loaded successfully')
       } catch (error) {
-        if (mounted) {
-          setIsLoading(false)
-          setIsPlaying(false)
+        console.error('Error initializing audio:', error)
+        setIsPlaying(false)
+        if (audioRef.current?.src) {
+          URL.revokeObjectURL(audioRef.current.src)
+          audioRef.current.src = ''
         }
       } finally {
-        loadingRef.current = false
+        if (mountedRef.current) {
+          setIsLoading(false)
+          loadingRef.current = false
+        }
       }
     }
 
-    initAudio()
+    if (currentTrack) {
+      initAudio()
+    }
 
     return () => {
-      mounted = false
-      cleanup()
+      if (audioRef.current?.src) {
+        URL.revokeObjectURL(audioRef.current.src)
+      }
     }
-  }, [currentTrack, isPlaying, cleanup, loadAudioFile])
+  }, [currentTrack])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (isPlaying) {
+      console.log('Playing audio')
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error)
+        setIsPlaying(false)
+      })
+    } else {
+      console.log('Pausing audio')
+      audio.pause()
+    }
+  }, [isPlaying, setIsPlaying])
 
   useEffect(() => {
     if (audioRef.current) {
@@ -167,27 +230,6 @@ export function AudioPlayer() {
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !currentTrack || isLoading || loadingRef.current) return
-
-    const handlePlay = async () => {
-      try {
-        if (isPlaying) {
-          if (audio.paused) {
-            await audio.play()
-          }
-        } else {
-          audio.pause()
-        }
-      } catch (error) {
-        setIsPlaying(false)
-      }
-    }
-
-    handlePlay()
-  }, [isPlaying, currentTrack, isLoading])
-
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
 
     const handleEnded = () => {
       setIsPlaying(false)
@@ -205,113 +247,57 @@ export function AudioPlayer() {
     setIsPlaying(!isPlaying)
   }, [currentTrack, isPlaying, isLoading])
 
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return
-    setCurrentTime(audioRef.current.currentTime)
-  }
-
-  const handleLoadedMetadata = () => {
-    if (!audioRef.current) return
-    setDuration(audioRef.current.duration)
-  }
-
-  const handleVolumeChange = useCallback((value: number[]) => {
-    setVolume(value[0])
-  }, [setVolume])
-
-  const toggleMute = () => {
-    if (!audioRef.current) return
-    audioRef.current.muted = !isMuted
-    setIsMuted(!isMuted)
-  }
-
-  const handleTimeSeek = (value: number[]) => {
-    if (!audioRef.current) return
-    const newTime = value[0]
-    audioRef.current.currentTime = newTime
-    setCurrentTime(newTime)
-  }
-
-  const toggleShuffle = () => {
-    setShuffle(!shuffle)
-  }
-
-  const toggleRepeat = () => {
-    const modes: ('none' | 'one' | 'all')[] = ['none', 'one', 'all']
-    const currentIndex = modes.indexOf(repeat)
-    const nextIndex = (currentIndex + 1) % modes.length
-    setRepeat(modes[nextIndex])
-  }
-
-  if (!currentTrack) {
-    return null
-  }
+  const cleanup = useCallback(() => {
+    if (currentFileRef.current) {
+      URL.revokeObjectURL(URL.createObjectURL(currentFileRef.current))
+      currentFileRef.current = null
+    }
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current.load()
+    }
+  }, [])
 
   return (
-    <div className="bottom-0 left-0 right-0 bg-white dark:bg-neutral-950 p-2 sm:p-3">
-      <div className="container max-w-4xl mx-auto">
-        <div className="space-y-2 sm:space-y-3">
-          {/* Track info */}
-          <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              {currentTrack ? (
-                <>
-                  <div className="truncate font-medium">
-                    {currentTrack.title}
-                  </div>
-                  {currentTrack.artist && (
-                    <div className="truncate text-sm text-muted-foreground">
-                      {currentTrack.artist}
-                      {currentTrack.album && ` - ${currentTrack.album}`}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-muted-foreground">
-                  No track selected
-                </div>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0"
-              onClick={() => setQueueVisible(!isQueueVisible)}
-            >
-              <ListMusic className="h-5 w-5" />
-              <span className="sr-only">Toggle queue</span>
-            </Button>
-          </div>
-
-          {/* Progress bar */}
-          <div className="space-y-1">
-            <Slider
-              value={[currentTime]}
-              max={duration}
-              step={1}
-              onValueChange={([value]) => {
-                if (audioRef.current) {
-                  audioRef.current.currentTime = value
-                  setCurrentTime(value)
-                }
-              }}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <div>{formatTime(currentTime)}</div>
-              <div>{formatTime(duration)}</div>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-t">
+        <div className="container flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-4">
+            {currentTrack?.coverArt && (
+              <img
+                src={currentTrack.coverArt}
+                alt={currentTrack.title}
+                width={40}
+                height={40}
+                className="aspect-square rounded-md object-cover"
+              />
+            )}
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium leading-none">
+                {currentTrack?.title || 'No track playing'}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {currentTrack?.artist || 'Unknown artist'}
+              </p>
             </div>
           </div>
-
-          {/* Controls */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center">
+          <div className="flex flex-col items-center gap-2 md:w-[500px]">
+            <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="icon"
-                disabled={!currentTrack}
+                className="shrink-0"
+                onClick={() => setQueueVisible(!isQueueVisible)}
+              >
+                <ListMusic className="h-5 w-5" />
+                <span className="sr-only">Toggle queue</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn('shrink-0', shuffle && 'text-primary')}
                 onClick={() => setShuffle(!shuffle)}
-                className={cn(shuffle && 'text-primary')}
               >
                 <Shuffle className="h-5 w-5" />
                 <span className="sr-only">Toggle shuffle</span>
@@ -328,14 +314,13 @@ export function AudioPlayer() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12"
                 disabled={!currentTrack || isLoading}
-                onClick={togglePlay}
+                onClick={() => setIsPlaying(!isPlaying)}
               >
                 {isPlaying ? (
-                  <Pause className="h-6 w-6" />
+                  <Pause className="h-5 w-5" />
                 ) : (
-                  <Play className="h-6 w-6" />
+                  <Play className="h-5 w-5" />
                 )}
                 <span className="sr-only">
                   {isPlaying ? 'Pause' : 'Play'}
@@ -353,57 +338,86 @@ export function AudioPlayer() {
               <Button
                 variant="ghost"
                 size="icon"
-                disabled={!currentTrack}
+                className={cn('shrink-0', repeat !== 'none' && 'text-primary')}
                 onClick={() => {
-                  const nextRepeat = repeat === 'none' ? 'all' : repeat === 'all' ? 'one' : 'none'
-                  setRepeat(nextRepeat)
+                  setRepeat(
+                    repeat === 'none'
+                      ? 'all'
+                      : repeat === 'all'
+                      ? 'one'
+                      : 'none'
+                  )
                 }}
-                className={cn(repeat !== 'none' && 'text-primary')}
               >
                 {repeat === 'one' ? (
                   <Repeat1 className="h-5 w-5" />
                 ) : (
                   <Repeat className="h-5 w-5" />
                 )}
-                <span className="sr-only">Change repeat mode</span>
+                <span className="sr-only">Toggle repeat</span>
               </Button>
             </div>
-
-            <div className="hidden sm:flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                onClick={() => {
-                  setIsMuted(!isMuted)
-                  setVolume(isMuted ? volume || 1 : 0)
-                }}
-              >
-                {volume === 0 || isMuted ? (
-                  <VolumeX className="h-5 w-5" />
-                ) : (
-                  <Volume2 className="h-5 w-5" />
-                )}
-                <span className="sr-only">Toggle mute</span>
-              </Button>
+            <div className="flex w-full items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {formatTime(currentTime)}
+              </span>
               <Slider
-                value={[isMuted ? 0 : volume * 100]}
-                max={100}
+                value={[currentTime]}
+                min={0}
+                max={duration}
                 step={1}
-                onValueChange={([value]) => {
-                  const newVolume = value / 100
-                  setVolume(newVolume)
-                  setIsMuted(newVolume === 0)
-                }}
-                className="w-24 cursor-pointer"
+                onValueChange={([value]) => handleSeek(value)}
+                className="w-full"
+                disabled={!currentTrack}
               />
+              <span className="text-xs text-muted-foreground">
+                {formatTime(duration)}
+              </span>
             </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMute}
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className="h-5 w-5" />
+              ) : volume < 0.5 ? (
+                <Volume2 className="h-5 w-5" />
+              ) : (
+                <Volume2 className="h-5 w-5" />
+              )}
+              <span className="sr-only">Toggle mute</span>
+            </Button>
+            <Slider
+              value={[volume]}
+              min={0}
+              max={1}
+              step={0.1}
+              onValueChange={([value]) => handleVolumeChange(value)}
+              className="w-[100px]"
+            />
           </div>
         </div>
       </div>
-
-      <audio ref={audioRef} onTimeUpdate={handleTimeUpdate} onEnded={playNextTrack} />
-      <PlayingQueue />
+      <audio 
+        ref={audioRef} 
+        onTimeUpdate={handleTimeUpdate} 
+        onLoadedMetadata={handleLoadedMetadata} 
+        onEnded={() => {
+          setIsPlaying(false)
+          if (currentTrack) {
+            incrementPlayCount(currentTrack.id)
+          }
+          if (repeat === 'one') {
+            setIsPlaying(true)
+          } else if (repeat === 'all' || shuffle) {
+            playNextTrack()
+          }
+        }} 
+      />
+      {isQueueVisible && <PlayingQueue />}
     </div>
   )
 }
