@@ -104,7 +104,7 @@ export function Playlist() {
 
   const handleTrackSelect = (track: MusicMetadata) => {
     addToQueue(track)
-    setQueueVisible(true) // Show the queue when adding a track
+    toast.success(`Added "${track.title}" to queue`)
   }
 
   const handleDeleteTrack = (track: MusicMetadata) => {
@@ -163,7 +163,7 @@ export function Playlist() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => {
                       addToQueue(track)
-                      setQueueVisible(true)
+                      toast.success(`Added "${track.title}" to queue`)
                     }}>
                       Add to Queue
                     </DropdownMenuItem>
