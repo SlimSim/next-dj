@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { createJSONStorage, persist } from 'zustand/middleware'
 import { MusicMetadata } from './types'
 
 interface PlayerState {
@@ -53,120 +52,130 @@ const initialState: PlayerState = {
   refreshTrigger: 0,
 }
 
-const storage = typeof window !== 'undefined' 
-  ? createJSONStorage(() => sessionStorage)
-  : undefined
-
 export const usePlayerStore = create(
-  persist<PlayerState & PlayerActions>(
-    immer((set) => ({
-      ...initialState,
+  immer<PlayerState & PlayerActions>((set) => ({
+    ...initialState,
 
-      // Queue management
-      addToQueue: (track) => set((state) => {
-        const queueItem = { ...track, queueId: crypto.randomUUID() }
+    // Queue management
+    addToQueue: (track) => set((state) => {
+      try {
+        // Convert File to Blob for storage
+        let storedTrack = { ...track }
+        if (track.file instanceof File) {
+          storedTrack.file = new Blob([track.file], { type: track.file.type })
+        }
+        
+        const queueItem = { ...storedTrack, queueId: crypto.randomUUID() }
         state.queue.push(queueItem)
+        
         // If this is the first track, set it as current
         if (!state.currentTrack) {
-          state.currentTrack = track
+          state.currentTrack = storedTrack
         }
-      }),
+      } catch (error) {
+        console.error('Error adding track to queue:', error)
+      }
+    }),
 
-      playNext: (track) => set((state) => {
-        const currentIndex = state.currentTrack 
-          ? state.queue.findIndex((t) => t.id === state.currentTrack?.id)
-          : -1
-        state.queue.splice(currentIndex + 1, 0, track)
-      }),
+    playNext: (track) => set((state) => {
+      const currentIndex = state.currentTrack 
+        ? state.queue.findIndex((t) => t.id === state.currentTrack?.id)
+        : -1
+      const newTrack = { ...track, queueId: crypto.randomUUID() }
+      state.queue.splice(currentIndex + 1, 0, newTrack)
+    }),
 
-      playLast: (track) => set((state) => {
-        state.queue.push(track)
-      }),
+    playLast: (track) => set((state) => {
+      const newTrack = { ...track, queueId: crypto.randomUUID() }
+      state.queue.push(newTrack)
+    }),
 
-      removeFromQueue: (queueId) => set((state) => {
-        const track = state.queue.find(t => t.queueId === queueId)
-        state.queue = state.queue.filter((t) => t.queueId !== queueId)
-        // If we removed the current track, set the next one as current
-        if (track && state.currentTrack?.id === track.id) {
-          const nextTrack = state.queue[0] || null
-          state.currentTrack = nextTrack ? { ...nextTrack } : null
-          state.isPlaying = false
-        }
-      }),
-
-      setCurrentTrack: (track) => set((state) => { state.currentTrack = track }),
-      setIsPlaying: (isPlaying) => set((state) => { state.isPlaying = isPlaying }),
-      setQueue: (queue) => set({ queue }),
-      moveInQueue: (fromIndex, toIndex) => set((state) => {
-        const track = state.queue[fromIndex]
-        state.queue.splice(fromIndex, 1)
-        state.queue.splice(toIndex, 0, track)
-      }),
-      clearQueue: () => set((state) => {
-        state.queue = []
-        state.currentTrack = null
+    removeFromQueue: (queueId) => set((state) => {
+      const track = state.queue.find(t => t.queueId === queueId)
+      state.queue = state.queue.filter((t) => t.queueId !== queueId)
+      // If we removed the current track, set the next one as current
+      if (track && state.currentTrack?.id === track.id) {
+        const nextTrack = state.queue[0] || null
+        state.currentTrack = nextTrack ? { ...nextTrack } : null
         state.isPlaying = false
-      }),
-      setVolume: (volume) => set((state) => { state.volume = volume }),
-      setShuffle: (shuffle) => set((state) => { state.shuffle = shuffle }),
-      setRepeat: (repeat) => set((state) => { state.repeat = repeat }),
-      setDuration: (duration) => set((state) => { state.duration = duration }),
-      setCurrentTime: (time) => set((state) => { state.currentTime = time }),
-      setLoading: (loading) => set((state) => { state.loading = loading }),
-      setQueueVisible: (visible) => set({ isQueueVisible: visible }),
-      playNextTrack: () => set((state) => {
-        if (state.queue.length === 0) return
+      }
+    }),
 
-        const currentIndex = state.currentTrack 
-          ? state.queue.findIndex((track) => track.id === state.currentTrack?.id)
-          : -1
+    setCurrentTrack: (track) => set((state) => { state.currentTrack = track }),
+    setIsPlaying: (isPlaying) => set((state) => { state.isPlaying = isPlaying }),
+    setQueue: (queue) => set({ queue }),
+    moveInQueue: (fromIndex, toIndex) => set((state) => {
+      const track = state.queue[fromIndex]
+      state.queue.splice(fromIndex, 1)
+      state.queue.splice(toIndex, 0, track)
+    }),
+    clearQueue: () => set((state) => {
+      state.queue = []
+      state.currentTrack = null
+      state.isPlaying = false
+    }),
+    setVolume: (volume) => set((state) => { state.volume = volume }),
+    setShuffle: (shuffle) => set((state) => { state.shuffle = shuffle }),
+    setRepeat: (repeat) => set((state) => { state.repeat = repeat }),
+    setDuration: (duration) => set((state) => { state.duration = duration }),
+    setCurrentTime: (time) => set((state) => { state.currentTime = time }),
+    setLoading: (loading) => set((state) => { state.loading = loading }),
+    setQueueVisible: (visible) => set({ isQueueVisible: visible }),
 
-        let nextIndex
-        if (state.shuffle) {
-          // Get random track excluding current
-          const availableIndices = state.queue
-            .map((_, index) => index)
-            .filter(index => index !== currentIndex)
-          nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)]
-        } else {
-          nextIndex = currentIndex + 1
-          // Handle repeat all
-          if (nextIndex >= state.queue.length && state.repeat === 'all') {
-            nextIndex = 0
-          }
-        }
+    playNextTrack: () => set((state) => {
+      if (state.queue.length === 0) return
 
-        if (nextIndex >= 0 && nextIndex < state.queue.length) {
-          state.currentTrack = state.queue[nextIndex]
-          state.isPlaying = true
-        }
-      }),
-      playPreviousTrack: () => set((state) => {
-        if (state.queue.length === 0) return
+      const currentIndex = state.currentTrack 
+        ? state.queue.findIndex((track) => track.id === state.currentTrack?.id)
+        : -1
 
-        const currentIndex = state.currentTrack 
-          ? state.queue.findIndex((track) => track.id === state.currentTrack?.id)
-          : -1
-
-        let prevIndex = currentIndex - 1
+      let nextIndex
+      if (state.shuffle) {
+        // Get random track excluding current
+        const availableIndices = state.queue
+          .map((_, index) => index)
+          .filter(index => index !== currentIndex)
+        nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)]
+      } else {
+        nextIndex = currentIndex + 1
         // Handle repeat all
-        if (prevIndex < 0 && state.repeat === 'all') {
-          prevIndex = state.queue.length - 1
+        if (nextIndex >= state.queue.length && state.repeat === 'all') {
+          nextIndex = 0
         }
+      }
 
-        if (prevIndex >= 0 && prevIndex < state.queue.length) {
-          state.currentTrack = state.queue[prevIndex]
-          state.isPlaying = true
+      if (nextIndex >= 0 && nextIndex < state.queue.length) {
+        state.currentTrack = state.queue[nextIndex]
+        state.isPlaying = true
+      }
+    }),
+
+    playPreviousTrack: () => set((state) => {
+      if (state.queue.length === 0) return
+
+      const currentIndex = state.currentTrack 
+        ? state.queue.findIndex((track) => track.id === state.currentTrack?.id)
+        : -1
+
+      if (currentIndex === -1) return
+
+      let prevIndex = currentIndex - 1
+      if (prevIndex < 0) {
+        if (state.repeat === 'all') {
+          prevIndex = state.queue.length - 1
+        } else {
+          return
         }
-      }),
-      triggerRefresh: () => set((state) => {
-        state.refreshTrigger = Date.now()
-      }),
-    })),
-    {
-      name: 'player-store',
-      storage,
-      skipHydration: true,
-    }
-  )
+      }
+
+      if (prevIndex >= 0 && prevIndex < state.queue.length) {
+        state.currentTrack = state.queue[prevIndex]
+        state.isPlaying = true
+      }
+    }),
+
+    triggerRefresh: () => set((state) => {
+      state.refreshTrigger = Date.now()
+    }),
+  }))
 )

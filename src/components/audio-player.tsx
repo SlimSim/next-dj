@@ -61,23 +61,37 @@ export function AudioPlayer() {
     }
   }, [])
 
-  const loadAudioFile = useCallback(async (file: File): Promise<string> => {
-    const buffer = await file.arrayBuffer()
-    const blob = new Blob([buffer], { type: file.type })
-    return URL.createObjectURL(blob)
+  const loadAudioFile = useCallback(async (file: File | Blob | null): Promise<string> => {
+    try {
+      if (!file) {
+        throw new Error('No file provided')
+      }
+      
+      if (file instanceof File && !file.type.startsWith('audio/')) {
+        throw new Error(`Invalid audio file type: ${file.type}`)
+      }
+      
+      return URL.createObjectURL(file)
+    } catch (error) {
+      throw error
+    }
   }, [])
 
-  // Load audio file when currentTrack changes
   useEffect(() => {
     let mounted = true
 
     const initAudio = async () => {
-      // Prevent multiple simultaneous loads
       if (loadingRef.current) return
+      
       loadingRef.current = true
 
       try {
-        if (!currentTrack?.file || !audioRef.current) {
+        if (!currentTrack?.file) {
+          setIsLoading(false)
+          return
+        }
+
+        if (!audioRef.current) {
           setIsLoading(false)
           return
         }
@@ -85,7 +99,14 @@ export function AudioPlayer() {
         setIsLoading(true)
         cleanup()
 
-        const audioUrl = await loadAudioFile(currentTrack.file)
+        let audioUrl: string
+        try {
+          audioUrl = await loadAudioFile(currentTrack.file)
+        } catch (error) {
+          setIsLoading(false)
+          return
+        }
+
         if (!mounted) {
           URL.revokeObjectURL(audioUrl)
           return
@@ -93,13 +114,12 @@ export function AudioPlayer() {
 
         currentUrlRef.current = audioUrl
         const audio = audioRef.current
+        
         audio.src = audioUrl
         audio.load()
 
         await new Promise<void>((resolve, reject) => {
-          const handleCanPlay = () => {
-            resolve()
-          }
+          const handleCanPlay = () => resolve()
 
           const handleError = (e: Event) => {
             const error = (e.target as HTMLAudioElement).error
@@ -117,13 +137,11 @@ export function AudioPlayer() {
           try {
             await audio.play()
           } catch (error) {
-            console.error('Play error:', error)
             setIsPlaying(false)
           }
         }
       } catch (error) {
         if (mounted) {
-          console.error('Audio loading error:', error)
           setIsLoading(false)
           setIsPlaying(false)
         }
@@ -132,28 +150,20 @@ export function AudioPlayer() {
       }
     }
 
-    initAudio().catch(error => {
-      if (mounted) {
-        console.error('Unhandled audio error:', error)
-        setIsLoading(false)
-        setIsPlaying(false)
-      }
-    })
+    initAudio()
 
     return () => {
       mounted = false
       cleanup()
     }
-  }, [currentTrack, isPlaying, cleanup, loadAudioFile])
+  }, [currentTrack, isPlaying, cleanup, loadAudioFile, setIsPlaying])
 
-  // Handle volume changes
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume
     }
   }, [volume])
 
-  // Handle play/pause
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !currentTrack || isLoading || loadingRef.current) return
@@ -168,7 +178,6 @@ export function AudioPlayer() {
           audio.pause()
         }
       } catch (error) {
-        console.error('Playback control error:', error)
         setIsPlaying(false)
       }
     }
@@ -176,7 +185,6 @@ export function AudioPlayer() {
     handlePlay()
   }, [isPlaying, currentTrack, isLoading])
 
-  // Handle track ended
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
