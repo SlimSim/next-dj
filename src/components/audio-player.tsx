@@ -156,7 +156,7 @@ export function AudioPlayer() {
       mounted = false
       cleanup()
     }
-  }, [currentTrack, isPlaying, cleanup, loadAudioFile, setIsPlaying])
+  }, [currentTrack, isPlaying, cleanup, loadAudioFile])
 
   useEffect(() => {
     if (audioRef.current) {
