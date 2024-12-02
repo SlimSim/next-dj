@@ -14,6 +14,7 @@ interface PlayerState {
   currentTime: number
   loading: boolean
   isQueueVisible: boolean
+  refreshTrigger: number
 }
 
 interface PlayerActions {
@@ -35,6 +36,7 @@ interface PlayerActions {
   setQueueVisible: (visible: boolean) => void
   playNextTrack: () => void
   playPreviousTrack: () => void
+  triggerRefresh: () => void
 }
 
 const initialState: PlayerState = {
@@ -48,6 +50,7 @@ const initialState: PlayerState = {
   currentTime: 0,
   loading: false,
   isQueueVisible: false,
+  refreshTrigger: 0,
 }
 
 const storage = typeof window !== 'undefined' 
@@ -155,6 +158,9 @@ export const usePlayerStore = create(
           state.currentTrack = state.queue[prevIndex]
           state.isPlaying = true
         }
+      }),
+      triggerRefresh: () => set((state) => {
+        state.refreshTrigger = Date.now()
       }),
     })),
     {

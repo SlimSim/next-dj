@@ -31,11 +31,12 @@ export function Playlist() {
     setCurrentTrack,
     setIsPlaying,
     setQueue,
+    refreshTrigger,
   } = usePlayerStore()
 
   useEffect(() => {
     loadTracks()
-  }, [])
+  }, [refreshTrigger]) // Reload tracks when refreshTrigger changes
 
   const loadTracks = async () => {
     try {

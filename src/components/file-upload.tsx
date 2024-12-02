@@ -6,6 +6,7 @@ import { Button } from './ui/button'
 import { Upload, Folder } from 'lucide-react'
 import { isAudioFile } from '@/lib/utils'
 import { addAudioFile } from '@/lib/db'
+import { usePlayerStore } from '@/lib/store'
 
 interface FileSystemHandle {
   kind: 'file' | 'directory'
@@ -30,6 +31,7 @@ declare global {
 
 export function FileUpload() {
   const [isLoading, setIsLoading] = useState(false)
+  const triggerRefresh = usePlayerStore(state => state.triggerRefresh)
 
   const handleFileSelect = useCallback(async (files: FileList) => {
     setIsLoading(true)
@@ -53,13 +55,14 @@ export function FileUpload() {
           toast.error(`${file.name} is not a supported audio file`)
         }
       }
+      triggerRefresh()
     } catch (error) {
       toast.error('Failed to add files')
       console.error('Error adding files:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [triggerRefresh])
 
   const handleFolderSelect = useCallback(async () => {
     try {
@@ -99,9 +102,10 @@ export function FileUpload() {
           await processDirectory(subDirHandle, path ? `${path}/${entry.name}` : entry.name)
         }
       }
+      triggerRefresh()
     } catch (error) {
       toast.error('Failed to process directory')
-      console.error(error)
+      console.error('Error processing directory:', error)
     } finally {
       setIsLoading(false)
     }
