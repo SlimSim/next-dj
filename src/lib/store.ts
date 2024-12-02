@@ -6,7 +6,7 @@ import { MusicMetadata } from './types'
 interface PlayerState {
   currentTrack: MusicMetadata | null
   isPlaying: boolean
-  queue: MusicMetadata[]
+  queue: (MusicMetadata & { queueId: string })[]
   volume: number
   shuffle: boolean
   repeat: 'none' | 'one' | 'all'
@@ -19,9 +19,9 @@ interface PlayerState {
 interface PlayerActions {
   setCurrentTrack: (track: MusicMetadata | null) => void
   setIsPlaying: (isPlaying: boolean) => void
-  setQueue: (queue: MusicMetadata[]) => void
+  setQueue: (queue: (MusicMetadata & { queueId: string })[]) => void
   addToQueue: (track: MusicMetadata) => void
-  removeFromQueue: (trackId: string) => void
+  removeFromQueue: (queueId: string) => void
   moveInQueue: (fromIndex: number, toIndex: number) => void
   playNext: (track: MusicMetadata) => void
   playLast: (track: MusicMetadata) => void
@@ -61,7 +61,8 @@ export const usePlayerStore = create(
 
       // Queue management
       addToQueue: (track) => set((state) => {
-        state.queue.push(track)
+        const queueItem = { ...track, queueId: crypto.randomUUID() }
+        state.queue.push(queueItem)
         // If this is the first track, set it as current
         if (!state.currentTrack) {
           state.currentTrack = track
@@ -79,12 +80,13 @@ export const usePlayerStore = create(
         state.queue.push(track)
       }),
 
-      removeFromQueue: (trackId) => set((state) => {
-        state.queue = state.queue.filter((track) => track.id !== trackId)
+      removeFromQueue: (queueId) => set((state) => {
+        const track = state.queue.find(t => t.queueId === queueId)
+        state.queue = state.queue.filter((t) => t.queueId !== queueId)
         // If we removed the current track, set the next one as current
-        if (state.currentTrack?.id === trackId) {
+        if (track && state.currentTrack?.id === track.id) {
           const nextTrack = state.queue[0] || null
-          state.currentTrack = nextTrack
+          state.currentTrack = nextTrack ? { ...nextTrack } : null
           state.isPlaying = false
         }
       }),

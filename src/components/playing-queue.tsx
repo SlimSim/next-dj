@@ -42,7 +42,7 @@ function QueueItem({ track, isPlaying }: QueueItemProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: track.id })
+  } = useSortable({ id: track.queueId })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -54,12 +54,12 @@ function QueueItem({ track, isPlaying }: QueueItemProps) {
   const queue = usePlayerStore((state) => state.queue)
 
   const moveToTop = () => {
-    const fromIndex = queue.findIndex((t) => t.id === track.id)
+    const fromIndex = queue.findIndex((t) => t.queueId === track.queueId)
     moveInQueue(fromIndex, 0)
   }
 
   const moveToBottom = () => {
-    const fromIndex = queue.findIndex((t) => t.id === track.id)
+    const fromIndex = queue.findIndex((t) => t.queueId === track.queueId)
     moveInQueue(fromIndex, queue.length - 1)
   }
 
@@ -101,7 +101,7 @@ function QueueItem({ track, isPlaying }: QueueItemProps) {
           <DropdownMenuItem onClick={moveToBottom}>
             Move to Bottom
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => removeFromQueue(track.id)}>
+          <DropdownMenuItem onClick={() => removeFromQueue(track.queueId)}>
             Remove from Queue
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -151,8 +151,8 @@ export function PlayingQueue() {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const oldIndex = queue.findIndex((track) => track.id === active.id)
-    const newIndex = queue.findIndex((track) => track.id === over.id)
+    const oldIndex = queue.findIndex((track) => track.queueId === active.id)
+    const newIndex = queue.findIndex((track) => track.queueId === over.id)
 
     const newQueue = arrayMove(queue, oldIndex, newIndex)
     setQueue(newQueue)
@@ -198,13 +198,13 @@ export function PlayingQueue() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={queue.map((track) => track.id)}
+                items={queue.map((track) => track.queueId)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
                   {queue.map((track) => (
                     <QueueItem
-                      key={track.id}
+                      key={track.queueId}
                       track={track}
                       isPlaying={currentTrack?.id === track.id}
                     />
