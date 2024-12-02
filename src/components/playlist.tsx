@@ -113,7 +113,7 @@ export function Playlist() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="flex-1">
           <Input
             type="text"
@@ -125,81 +125,75 @@ export function Playlist() {
         </div>
       </div>
 
-      <ScrollArea className="h-[calc(100vh-20rem)] rounded-md border">
+      <ScrollArea className="h-[calc(100vh-16rem)] rounded-md border">
         <div className="space-y-1 p-2">
           {filteredTracks.map((track) => (
             <div
               key={track.id}
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/50 cursor-pointer",
+                "flex items-center gap-2 rounded-lg px-2 sm:px-3 py-2 hover:bg-accent/50 cursor-pointer",
                 currentTrack?.id === track.id && "bg-accent"
               )}
               onClick={() => handleTrackSelect(track)}
             >
               <div className="flex-1 min-w-0">
-                <div className="truncate font-medium">
+                <div className="truncate font-medium text-sm sm:text-base">
                   {track.title}
                 </div>
                 {track.artist && (
-                  <div className="truncate text-sm text-muted-foreground">
+                  <div className="truncate text-xs sm:text-sm text-muted-foreground">
                     {track.artist}
                     {track.album && ` - ${track.album}`}
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {formatTime(track.duration || 0)}
-                </span>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {
-                      addToQueue(track)
-                      toast.success(`Added "${track.title}" to queue`)
-                    }}>
-                      Add to Queue
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      playNext(track)
-                      setQueueVisible(true)
-                    }}>
-                      Play Next
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      playLast(track)
-                      setQueueVisible(true)
-                    }}>
-                      Play Last
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditTrack(track)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit metadata
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => handleDeleteTrack(track)}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => {
+                    addToQueue(track)
+                    toast.success(`Added "${track.title}" to queue`)
+                  }}>
+                    Add to Queue
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    playNext(track)
+                    toast.success(`"${track.title}" will play next`)
+                  }}>
+                    Play Next
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    playLast(track)
+                    toast.success(`Added "${track.title}" to end of queue`)
+                  }}>
+                    Play Last
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEditTrack(track)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit metadata
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handleDeleteTrack(track)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
 
           {filteredTracks.length === 0 && (
             <div className="px-4 py-8 text-center text-muted-foreground">
               {tracks.length === 0
-                ? "No tracks added yet. Upload some music to get started!"
+                ? "No tracks added yet. Add some music to get started!"
                 : "No tracks found matching your search."}
             </div>
           )}

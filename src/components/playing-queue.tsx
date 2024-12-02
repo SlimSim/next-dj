@@ -162,11 +162,11 @@ export function PlayingQueue() {
   if (!isQueueVisible) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 bg-background/80 backdrop-blur-sm border-t">
+    <div className="fixed inset-x-0 bottom-0 z-50 bg-background/80 backdrop-blur-sm border-t transform transition-transform duration-300 ease-in-out">
       <div className="container max-w-2xl mx-auto">
         {/* Handle for sliding */}
         <div
-          className="h-8 flex items-center justify-center cursor-grab"
+          className="h-8 flex items-center justify-center cursor-grab touch-pan-y"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -175,11 +175,12 @@ export function PlayingQueue() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2">
-          <h2 className="text-lg font-semibold">Playing Queue</h2>
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2">
+          <h2 className="text-base sm:text-lg font-semibold">Playing Queue</h2>
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8 sm:h-9 sm:w-9"
             onClick={() => setQueueVisible(false)}
           >
             <X className="h-4 w-4" />
@@ -187,7 +188,7 @@ export function PlayingQueue() {
         </div>
 
         {/* Queue list */}
-        <div className="px-4 pb-4 max-h-[60vh] overflow-y-auto">
+        <div className="px-3 sm:px-4 pb-4 max-h-[40vh] sm:max-h-[60vh] overflow-y-auto">
           {queue.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Queue is empty
