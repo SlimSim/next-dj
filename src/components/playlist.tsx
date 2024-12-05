@@ -159,10 +159,7 @@ export function Playlist() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => {
-                      addToQueue(track)
-                      toast.success(`Added "${track.title}" to queue`)
-                    }}>
+                    <DropdownMenuItem onClick={() => handleTrackSelect(track)}>
                       Add to Queue
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {

@@ -60,17 +60,16 @@ export const usePlayerStore = create<PlayerStore>()(
         set((state) => {
           const queueId = uuidv4()
           const trackWithQueueId = { ...track, queueId }
-          const newQueue = [...state.queue, trackWithQueueId]
           if (!state.currentTrack) {
-            return { queue: newQueue, currentTrack: trackWithQueueId }
+            return { queue: [], currentTrack: trackWithQueueId }
           }
-          return { queue: newQueue }
+          return { queue: [...state.queue, trackWithQueueId] }
         }),
       
       removeFromQueue: (id) =>
         set((state) => {
-          const newQueue = state.queue.filter((track) => track.id !== id)
-          if (state.currentTrack?.id === id) {
+          const newQueue = state.queue.filter((track) => track.queueId !== id)
+          if (state.currentTrack?.queueId === id) {
             const nextTrack = newQueue[0] || null
             return { 
               queue: newQueue, 
@@ -81,7 +80,7 @@ export const usePlayerStore = create<PlayerStore>()(
           return { queue: newQueue }
         }),
       
-      clearQueue: () => set({ queue: [] }),
+      clearQueue: () => set((state) => ({ queue: state.currentTrack ? [state.currentTrack] : [] })),
       
       setQueue: (queue) => set({ queue }),
       

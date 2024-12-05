@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { MoreVertical, GripVertical, X } from 'lucide-react'
+import { MoreVertical, GripVertical, X, Trash } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,6 +119,7 @@ export function PlayingQueue() {
     history,
     isQueueVisible,
     setQueueVisible,
+    clearQueue,
     setQueue,
   } = usePlayerStore()
 
@@ -181,14 +182,25 @@ export function PlayingQueue() {
         <div className="flex items-center justify-between px-3 sm:px-4 py-2">
           <h2 className="text-base sm:text-lg font-semibold">Playing Queue</h2>
           <span className="text-sm sm:text-base">Next: {nextSongsCount}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 sm:h-9 sm:w-9"
-            onClick={() => setQueueVisible(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
+              onClick={() => setQueueVisible(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
+              onClick={clearQueue}
+            >
+              <Trash className="h-4 w-4" />
+              <span className="sr-only">Clear Queue</span>
+            </Button>
+          </div>
         </div>
 
         <div className="px-3 sm:px-4 pb-4 max-h-[40vh] sm:max-h-[60vh] overflow-y-auto">
@@ -206,9 +218,9 @@ export function PlayingQueue() {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {[...history, currentTrack, ...queue].map((track, index) => (
+                  {[...history, currentTrack, ...queue].filter(Boolean).map((track, index) => (
                     <QueueItem
-                      key={track.id}
+                      key={`${track.id}-${index}`}
                       track={track}
                       isPlaying={currentTrack?.id === track.id}
                       isHistory={index < history.length}

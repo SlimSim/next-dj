@@ -200,7 +200,13 @@ export const AudioPlayer = () => {
     }
 
     if (currentTrack) {
-      initAudio()
+      initAudio().then(() => {
+        if (isPlaying && audioRef.current) {
+          audioRef.current.play().catch(error => {
+            console.error('Error playing audio after init:', error);
+          });
+        }
+      });
     }
 
     return () => {
@@ -211,20 +217,16 @@ export const AudioPlayer = () => {
   }, [currentTrack])
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    if (isPlaying) {
-      console.log('Playing audio')
-      audio.play().catch(error => {
-        console.error('Error playing audio:', error)
-        setIsPlaying(false)
-      })
-    } else {
-      console.log('Pausing audio')
-      audio.pause()
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(error => {
+          console.error('Error playing audio:', error);
+        });
+      } else {
+        audioRef.current.pause();
+      }
     }
-  }, [isPlaying, setIsPlaying])
+  }, [isPlaying]);
 
   useEffect(() => {
     if (audioRef.current) {
