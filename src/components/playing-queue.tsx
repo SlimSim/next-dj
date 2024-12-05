@@ -120,10 +120,10 @@ export function PlayingQueue() {
     history,
     isQueueVisible,
     setQueueVisible,
-    clearQueue,
-    setQueue,
-    set,
     clearAll,
+    setQueue,
+    setCurrentTrack,
+    setHistory,
   } = usePlayerStore()
 
   // Track drag position for mobile slide
@@ -159,20 +159,80 @@ export function PlayingQueue() {
     if (!over || active.id === over.id) return
 
     const allTracks = [...history, currentTrack, ...queue].filter(Boolean)
-    const oldIndex = allTracks.findIndex((track) => track.queueId === active.id)
-    const newIndex = allTracks.findIndex((track) => track.queueId === over.id)
+    const draggedTrack = allTracks.find(track => track.queueId === active.id)
+    const targetTrack = allTracks.find(track => track.queueId === over.id)
+    
+    if (!draggedTrack || !targetTrack) return
 
-    const newAllTracks = arrayMove(allTracks, oldIndex, newIndex)
-    const newHistory = newAllTracks.filter((_, index) => index < history.length)
-    const newQueue = newAllTracks.filter((_, index) => index >= history.length + 1)
-    const newCurrentTrack = newAllTracks[history.length] || null
+    const currentTrackIndex = currentTrack ? allTracks.findIndex(track => track.queueId === currentTrack.queueId) : -1
+    const targetIndex = allTracks.findIndex(track => track.queueId === over.id)
+    
+    // Handle moving the current track
+    if (currentTrack && active.id === currentTrack.queueId) {
+      if (targetIndex < currentTrackIndex) {
+        // Calculate how many tracks should move to queue based on the new position
+        const tracksToMoveCount = Math.max(0, currentTrackIndex - targetIndex)
+        
+        // Get the tracks that should move to queue
+        const tracksToQueue = history.slice(-tracksToMoveCount)
+        const remainingHistory = history.slice(0, -tracksToMoveCount)
+        
+        // Update history and queue
+        setHistory(remainingHistory)
+        setQueue([...tracksToQueue, ...queue])
+      } else {
+        // Calculate how many tracks should move to history based on the new position
+        const tracksToMoveCount = Math.max(0, targetIndex - currentTrackIndex)
+        
+        // Get the tracks that should move to history
+        const tracksToHistory = queue.slice(0, tracksToMoveCount)
+        const remainingQueue = queue.slice(tracksToMoveCount)
+        
+        // Update history and queue
+        setHistory([...history, ...tracksToHistory])
+        setQueue(remainingQueue)
+      }
+      return
+    }
+
+    // Determine if the target position is in history (before current track)
+    const isTargetInHistory = currentTrackIndex !== -1 && targetIndex <= currentTrackIndex
+    
+    // Remove track from its original list
+    let newQueue = [...queue]
+    let newHistory = [...history]
+    
+    // Remove from original list
+    if (history.some(track => track.queueId === active.id)) {
+      newHistory = newHistory.filter(track => track.queueId !== active.id)
+    } else if (queue.some(track => track.queueId === active.id)) {
+      newQueue = newQueue.filter(track => track.queueId !== active.id)
+    }
+
+    // Add to target list based on position relative to current track
+    if (isTargetInHistory) {
+      // If target is in history section (before current track)
+      const historyTargetIndex = history.findIndex(track => track.queueId === over.id)
+      if (historyTargetIndex === -1) {
+        // If dropping at the end of history
+        newHistory.push(draggedTrack)
+      } else {
+        newHistory.splice(historyTargetIndex, 0, draggedTrack)
+      }
+    } else {
+      // If target is in queue section (after current track)
+      const queueTargetIndex = queue.findIndex(track => track.queueId === over.id)
+      if (queueTargetIndex === -1) {
+        // If dropping at the start of queue
+        newQueue.unshift(draggedTrack)
+      } else {
+        newQueue.splice(queueTargetIndex, 0, draggedTrack)
+      }
+    }
 
     setQueue(newQueue)
-    set((state) => ({
-      history: newHistory,
-      currentTrack: newCurrentTrack,
-    }))
-  }, [queue, history, currentTrack, setQueue, set])
+    setHistory(newHistory)
+  }, [queue, history, currentTrack, setQueue, setHistory])
 
   // Calculate the number of next songs
   const nextSongsCount = queue.length;

@@ -9,6 +9,7 @@ export interface MusicMetadata {
   path?: string
   coverArt?: string
   file?: File
+  queueId: string
 }
 
 export interface AudioFile {

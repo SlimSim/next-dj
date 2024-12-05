@@ -26,13 +26,14 @@ interface PlayerActions {
   addToHistory: (track: MusicMetadata) => void
   removeFromHistory: (id: string) => void
   clearHistory: () => void
+  setHistory: (history: MusicMetadata[]) => void
   setIsPlaying: (isPlaying: boolean) => void
   setVolume: (volume: number) => void
   setShuffle: (shuffle: boolean) => void
   setRepeat: (repeat: 'none' | 'one' | 'all') => void
   setDuration: (duration: number) => void
   setCurrentTime: (currentTime: number) => void
-  setQueueVisible: (visible: boolean) => void
+  setQueueVisible: (isQueueVisible: boolean) => void
   playNextTrack: () => void
   playPreviousTrack: () => void
   triggerRefresh: () => void
@@ -56,16 +57,18 @@ export const usePlayerStore = create<PlayerStore>()(
       isQueueVisible: false,
       refreshTrigger: 0,
 
-      setCurrentTrack: (track) => set({ currentTrack: track }),
+      setCurrentTrack: (track: MusicMetadata | null) => set({ 
+        currentTrack: track ? { ...track, queueId: track.queueId || uuidv4() } : null 
+      }),
       
       addToQueue: (track) =>
         set((state) => {
-          const queueId = uuidv4()
-          const trackWithQueueId = { ...track, queueId }
+          // Ensure track has queueId
+          const trackWithId = { ...track, queueId: track.queueId || uuidv4() }
           if (!state.currentTrack) {
-            return { queue: [], currentTrack: trackWithQueueId }
+            return { currentTrack: trackWithId, queue: [] }
           }
-          return { queue: [...state.queue, trackWithQueueId] }
+          return { queue: [...state.queue, trackWithId] }
         }),
       
       removeFromQueue: (id) =>
@@ -86,8 +89,9 @@ export const usePlayerStore = create<PlayerStore>()(
       
       setQueue: (queue) => set({ queue }),
       
-      addToHistory: (track) =>
-        set((state) => ({ history: [...state.history, track] })),
+      addToHistory: (track) => set((state) => ({ 
+        history: [...state.history, { ...track, queueId: track.queueId || uuidv4() }] 
+      })),
       
       removeFromHistory: (id) =>
         set((state) => {
@@ -96,6 +100,8 @@ export const usePlayerStore = create<PlayerStore>()(
         }),
       
       clearHistory: () => set({ history: [] }),
+      
+      setHistory: (history) => set({ history }),
       
       setIsPlaying: (isPlaying) => set({ isPlaying }),
       
