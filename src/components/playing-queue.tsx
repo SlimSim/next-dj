@@ -32,9 +32,10 @@ import { MusicMetadata } from '@/lib/types'
 interface QueueItemProps {
   track: MusicMetadata
   isPlaying: boolean
+  isHistory?: boolean
 }
 
-function QueueItem({ track, isPlaying }: QueueItemProps) {
+function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
   const {
     attributes,
     listeners,
@@ -70,7 +71,8 @@ function QueueItem({ track, isPlaying }: QueueItemProps) {
       className={cn(
         'flex items-center gap-2 p-2 bg-background rounded-lg',
         isDragging && 'opacity-50',
-        isPlaying && 'border border-primary'
+        isPlaying && 'border border-primary',
+        isHistory && 'opacity-50'
       )}
     >
       <Button
@@ -114,6 +116,7 @@ export function PlayingQueue() {
   const {
     queue,
     currentTrack,
+    history,
     isQueueVisible,
     setQueueVisible,
     setQueue,
@@ -158,12 +161,14 @@ export function PlayingQueue() {
     setQueue(newQueue)
   }, [queue, setQueue])
 
-  if (!isQueueVisible) return null
+  // Calculate the number of next songs
+  const nextSongsCount = queue.length;
+
+  if (!isQueueVisible) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 bg-background/80 backdrop-blur-sm border-t transform transition-transform duration-300 ease-in-out">
       <div className="container max-w-2xl mx-auto">
-        {/* Handle for sliding */}
         <div
           className="h-8 flex items-center justify-center cursor-grab touch-pan-y"
           onTouchStart={handleTouchStart}
@@ -173,9 +178,9 @@ export function PlayingQueue() {
           <div className="w-16 h-1 bg-muted-foreground/25 rounded-full" />
         </div>
 
-        {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-4 py-2">
           <h2 className="text-base sm:text-lg font-semibold">Playing Queue</h2>
+          <span className="text-sm sm:text-base">Next: {nextSongsCount}</span>
           <Button
             variant="ghost"
             size="icon"
@@ -186,9 +191,8 @@ export function PlayingQueue() {
           </Button>
         </div>
 
-        {/* Queue list */}
         <div className="px-3 sm:px-4 pb-4 max-h-[40vh] sm:max-h-[60vh] overflow-y-auto">
-          {queue.length === 0 ? (
+          {history.length === 0 && !currentTrack && queue.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Queue is empty
             </div>
@@ -198,15 +202,16 @@ export function PlayingQueue() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={queue}
+                items={[...history, currentTrack, ...queue].filter(Boolean)}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {queue.map((track) => (
+                  {[...history, currentTrack, ...queue].map((track, index) => (
                     <QueueItem
                       key={track.id}
                       track={track}
                       isPlaying={currentTrack?.id === track.id}
+                      isHistory={index < history.length}
                     />
                   ))}
                 </div>

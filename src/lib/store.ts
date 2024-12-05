@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { MusicMetadata } from './types'
+import { v4 as uuidv4 } from 'uuid'
 
 interface PlayerState {
   currentTrack: MusicMetadata | null
@@ -57,9 +58,11 @@ export const usePlayerStore = create<PlayerStore>()(
       
       addToQueue: (track) =>
         set((state) => {
-          const newQueue = [...state.queue, track]
+          const queueId = uuidv4()
+          const trackWithQueueId = { ...track, queueId }
+          const newQueue = [...state.queue, trackWithQueueId]
           if (!state.currentTrack) {
-            return { queue: newQueue, currentTrack: track }
+            return { queue: newQueue, currentTrack: trackWithQueueId }
           }
           return { queue: newQueue }
         }),
@@ -102,10 +105,11 @@ export const usePlayerStore = create<PlayerStore>()(
       setQueueVisible: (isQueueVisible) => set({ isQueueVisible }),
       
       playNextTrack: () => {
-        const { queue, currentTrack, shuffle, repeat } = get()
-        if (!queue.length) {
+        const { queue: currentQueue, currentTrack, shuffle, repeat } = get()
+        if (!currentQueue.length) {
           if (repeat === 'all' && currentTrack) {
-            set({ currentTrack, isPlaying: true })
+            const trackWithQueueId = { ...currentTrack, queueId: uuidv4() }
+            set({ currentTrack: trackWithQueueId, isPlaying: true })
           } else {
             set({ currentTrack: null, isPlaying: false })
           }
@@ -113,15 +117,14 @@ export const usePlayerStore = create<PlayerStore>()(
         }
 
         let nextTrack
+        let newQueue
         if (shuffle) {
-          const randomIndex = Math.floor(Math.random() * queue.length)
-          nextTrack = queue[randomIndex]
-          const newQueue = [...queue]
+          const randomIndex = Math.floor(Math.random() * currentQueue.length)
+          nextTrack = currentQueue[randomIndex]
+          newQueue = [...currentQueue]
           newQueue.splice(randomIndex, 1)
-          set({ queue: newQueue })
         } else {
-          [nextTrack, ...queue] = queue
-          set({ queue })
+          [nextTrack, ...newQueue] = [...currentQueue]
         }
 
         if (currentTrack) {
@@ -130,19 +133,20 @@ export const usePlayerStore = create<PlayerStore>()(
           }))
         }
 
-        set({ currentTrack: nextTrack, isPlaying: true })
+        set({ currentTrack: nextTrack, queue: newQueue, isPlaying: true })
       },
 
       playPreviousTrack: () => {
-        const { history, currentTrack } = get()
+        const { history, currentTrack, queue } = get()
         if (!history.length) return
 
         const previousTrack = history[history.length - 1]
         const newHistory = history.slice(0, -1)
 
         if (currentTrack) {
+          const trackWithQueueId = { ...currentTrack, queueId: uuidv4() }
           set((state) => ({
-            queue: [currentTrack, ...state.queue],
+            queue: [trackWithQueueId, ...state.queue],
           }))
         }
 

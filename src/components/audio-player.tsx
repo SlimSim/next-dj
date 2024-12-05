@@ -43,6 +43,7 @@ export const AudioPlayer = () => {
     duration,
     currentTime,
     isQueueVisible,
+    queue,
     setIsPlaying,
     setVolume,
     setShuffle,
@@ -303,10 +304,16 @@ export const AudioPlayer = () => {
             <Button
               variant="ghost"
               size="icon"
+              className="relative"
               onClick={() => setQueueVisible(!isQueueVisible)}
             >
               <ListMusic className="h-5 w-5" />
-              <span className="sr-only">Toggle queue</span>
+              {queue.length > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium flex items-center justify-center leading-none text-primary-foreground">
+                  {queue.length}
+                </span>
+              )}
+              <span className="sr-only">Toggle queue ({queue.length} tracks)</span>
             </Button>
             <Button
               variant="ghost"
