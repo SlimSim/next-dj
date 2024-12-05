@@ -17,9 +17,12 @@ import {
   Shuffle,
   Volume2,
   VolumeX,
-  ListMusic
+  ListMusic,
+  Settings,
+  MoreVertical
 } from 'lucide-react'
 import { PlayingQueue } from './playing-queue'
+import { PlayerControlsMenu } from './player-controls-menu'
 import { cn } from '@/lib/utils'
 
 export const AudioPlayer = () => {
@@ -29,6 +32,7 @@ export const AudioPlayer = () => {
   const mountedRef = useRef(true)
   const [isLoading, setIsLoading] = useState(false)
   const [audioFile, setAudioFile] = useState<AudioFile | null>(null)
+  const [isControlsMenuOpen, setIsControlsMenuOpen] = useState(false)
 
   const {
     currentTrack,
@@ -260,8 +264,15 @@ export const AudioPlayer = () => {
   }, [])
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="border-t">
+        {/* Progress indicator bar - non-interactive */}
+        <div className="h-1 bg-muted">
+          <div 
+            className="h-full bg-primary transition-all duration-200"
+            style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
+          />
+        </div>
         <div className="container flex items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-4">
             {currentTrack?.coverArt && (
@@ -277,145 +288,55 @@ export const AudioPlayer = () => {
               <h3 className="text-sm font-medium leading-none">
                 {currentTrack?.title || 'No track playing'}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                {currentTrack?.artist || 'Unknown artist'}
-              </p>
+              <div className="flex items-center text-xs text-muted-foreground">
+                <span>{currentTrack?.artist || 'Unknown artist'}</span>
+                <span className="mx-2">•</span>
+                <span>{formatTime(currentTime)}</span>
+                <span className="mx-1">/</span>
+                <span>{formatTime(duration)}</span>
+                <span className="mx-2">•</span>
+                <span>-{formatTime(duration - currentTime)}</span>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col items-center gap-2 md:w-[500px]">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                onClick={() => setQueueVisible(!isQueueVisible)}
-              >
-                <ListMusic className="h-5 w-5" />
-                <span className="sr-only">Toggle queue</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('shrink-0', shuffle && 'text-primary')}
-                onClick={() => setShuffle(!shuffle)}
-              >
-                <Shuffle className="h-5 w-5" />
-                <span className="sr-only">Toggle shuffle</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={!currentTrack}
-                onClick={playPreviousTrack}
-              >
-                <SkipBack className="h-5 w-5" />
-                <span className="sr-only">Previous track</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={!currentTrack || isLoading}
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? (
-                  <Pause className="h-5 w-5" />
-                ) : (
-                  <Play className="h-5 w-5" />
-                )}
-                <span className="sr-only">
-                  {isPlaying ? 'Pause' : 'Play'}
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={!currentTrack}
-                onClick={playNextTrack}
-              >
-                <SkipForward className="h-5 w-5" />
-                <span className="sr-only">Next track</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('shrink-0', repeat !== 'none' && 'text-primary')}
-                onClick={() => {
-                  setRepeat(
-                    repeat === 'none'
-                      ? 'all'
-                      : repeat === 'all'
-                      ? 'one'
-                      : 'none'
-                  )
-                }}
-              >
-                {repeat === 'one' ? (
-                  <Repeat1 className="h-5 w-5" />
-                ) : (
-                  <Repeat className="h-5 w-5" />
-                )}
-                <span className="sr-only">Toggle repeat</span>
-              </Button>
-            </div>
-            <div className="flex w-full items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {formatTime(currentTime)}
-              </span>
-              <Slider
-                value={[currentTime]}
-                min={0}
-                max={duration}
-                step={1}
-                onValueChange={([value]) => handleSeek(value)}
-                className="w-full"
-                disabled={!currentTrack}
-              />
-              <span className="text-xs text-muted-foreground">
-                {formatTime(duration)}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleMute}
+              onClick={() => setQueueVisible(!isQueueVisible)}
             >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="h-5 w-5" />
-              ) : volume < 0.5 ? (
-                <Volume2 className="h-5 w-5" />
-              ) : (
-                <Volume2 className="h-5 w-5" />
-              )}
-              <span className="sr-only">Toggle mute</span>
+              <ListMusic className="h-5 w-5" />
+              <span className="sr-only">Toggle queue</span>
             </Button>
-            <Slider
-              value={[volume]}
-              min={0}
-              max={1}
-              step={0.1}
-              onValueChange={([value]) => handleVolumeChange(value)}
-              className="w-[100px]"
-            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsControlsMenuOpen(true)}
+            >
+              <MoreVertical className="h-5 w-5" />
+              <span className="sr-only">Open player controls</span>
+            </Button>
           </div>
         </div>
       </div>
-      <audio 
-        ref={audioRef} 
-        onTimeUpdate={handleTimeUpdate} 
-        onLoadedMetadata={handleLoadedMetadata} 
-        onEnded={() => {
-          setIsPlaying(false)
-          if (currentTrack) {
-            incrementPlayCount(currentTrack.id)
-          }
-          if (repeat === 'one') {
-            setIsPlaying(true)
-          } else if (repeat === 'all' || shuffle) {
-            playNextTrack()
-          }
-        }} 
+
+      {/* Player controls menu */}
+      <PlayerControlsMenu
+        isOpen={isControlsMenuOpen}
+        onClose={() => setIsControlsMenuOpen(false)}
+        audioRef={audioRef}
+        isLoading={isLoading}
+        isMuted={isMuted}
+        toggleMute={toggleMute}
+        handleVolumeChange={handleVolumeChange}
+        handleSeek={handleSeek}
+      />
+
+      <audio
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={playNextTrack}
       />
       {isQueueVisible && <PlayingQueue />}
     </div>
