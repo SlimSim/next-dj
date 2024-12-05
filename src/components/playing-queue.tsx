@@ -51,6 +51,7 @@ function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
   }
 
   const removeFromQueue = usePlayerStore((state) => state.removeFromQueue)
+  const removeFromHistory = usePlayerStore((state) => state.removeFromHistory)
   const moveInQueue = usePlayerStore((state) => state.moveInQueue)
   const queue = usePlayerStore((state) => state.queue)
 
@@ -103,8 +104,8 @@ function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
           <DropdownMenuItem onClick={moveToBottom}>
             Move to Bottom
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => removeFromQueue(track.queueId)}>
-            Remove from Queue
+          <DropdownMenuItem onClick={() => isHistory ? removeFromHistory(track.queueId) : removeFromQueue(track.queueId)}>
+            Remove from {isHistory ? 'History' : 'Queue'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -121,6 +122,8 @@ export function PlayingQueue() {
     setQueueVisible,
     clearQueue,
     setQueue,
+    set,
+    clearAll,
   } = usePlayerStore()
 
   // Track drag position for mobile slide
@@ -155,12 +158,21 @@ export function PlayingQueue() {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const oldIndex = queue.findIndex((track) => track.queueId === active.id)
-    const newIndex = queue.findIndex((track) => track.queueId === over.id)
+    const allTracks = [...history, currentTrack, ...queue].filter(Boolean)
+    const oldIndex = allTracks.findIndex((track) => track.queueId === active.id)
+    const newIndex = allTracks.findIndex((track) => track.queueId === over.id)
 
-    const newQueue = arrayMove(queue, oldIndex, newIndex)
+    const newAllTracks = arrayMove(allTracks, oldIndex, newIndex)
+    const newHistory = newAllTracks.filter((_, index) => index < history.length)
+    const newQueue = newAllTracks.filter((_, index) => index >= history.length + 1)
+    const newCurrentTrack = newAllTracks[history.length] || null
+
     setQueue(newQueue)
-  }, [queue, setQueue])
+    set((state) => ({
+      history: newHistory,
+      currentTrack: newCurrentTrack,
+    }))
+  }, [queue, history, currentTrack, setQueue, set])
 
   // Calculate the number of next songs
   const nextSongsCount = queue.length;
@@ -195,10 +207,10 @@ export function PlayingQueue() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 sm:h-9 sm:w-9"
-              onClick={clearQueue}
+              onClick={() => clearAll()}
             >
               <Trash className="h-4 w-4" />
-              <span className="sr-only">Clear Queue</span>
+              <span className="sr-only">Clear All</span>
             </Button>
           </div>
         </div>

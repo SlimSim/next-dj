@@ -24,17 +24,19 @@ interface PlayerActions {
   clearQueue: () => void
   setQueue: (queue: MusicMetadata[]) => void
   addToHistory: (track: MusicMetadata) => void
+  removeFromHistory: (id: string) => void
   clearHistory: () => void
   setIsPlaying: (isPlaying: boolean) => void
   setVolume: (volume: number) => void
   setShuffle: (shuffle: boolean) => void
   setRepeat: (repeat: 'none' | 'one' | 'all') => void
   setDuration: (duration: number) => void
-  setCurrentTime: (time: number) => void
+  setCurrentTime: (currentTime: number) => void
   setQueueVisible: (visible: boolean) => void
   playNextTrack: () => void
   playPreviousTrack: () => void
   triggerRefresh: () => void
+  clearAll: () => void
 }
 
 type PlayerStore = PlayerState & PlayerActions
@@ -87,6 +89,12 @@ export const usePlayerStore = create<PlayerStore>()(
       addToHistory: (track) =>
         set((state) => ({ history: [...state.history, track] })),
       
+      removeFromHistory: (id) =>
+        set((state) => {
+          const newHistory = state.history.filter((track) => track.queueId !== id)
+          return { history: newHistory }
+        }),
+      
       clearHistory: () => set({ history: [] }),
       
       setIsPlaying: (isPlaying) => set({ isPlaying }),
@@ -106,6 +114,11 @@ export const usePlayerStore = create<PlayerStore>()(
       playNextTrack: () => {
         const { queue: currentQueue, currentTrack, shuffle, repeat } = get()
         if (!currentQueue.length) {
+          if (currentTrack) {
+            set((state) => ({
+              history: [...state.history, currentTrack],
+            }))
+          }
           if (repeat === 'all' && currentTrack) {
             const trackWithQueueId = { ...currentTrack, queueId: uuidv4() }
             set({ currentTrack: trackWithQueueId, isPlaying: true })
@@ -157,6 +170,15 @@ export const usePlayerStore = create<PlayerStore>()(
       },
       
       triggerRefresh: () => set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
+      
+      clearAll: () =>
+        set((state) => {
+          if (state.isPlaying && state.currentTrack) {
+            return { queue: [], history: [] }
+          } else {
+            return { queue: [], history: [], currentTrack: null, isPlaying: false }
+          }
+        }),
     }),
     {
       name: 'player-store',
