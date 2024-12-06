@@ -267,8 +267,16 @@ export const AudioPlayer = () => {
   }, [])
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="border-t">
+    <div className={cn(
+      "fixed bottom-0 left-0 right-0 z-40",
+      queue.length === 0 && currentTrack 
+        ? "bg-red-600/40 dark:bg-red-500/50" 
+        : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    )}>
+      <div className={cn(
+        "border-t",
+        queue.length === 0 && currentTrack && "border-red-500/70 dark:border-red-400/70"
+      )}>
         {/* Progress indicator bar - non-interactive */}
         <div className="h-1 bg-muted">
           <div 
@@ -310,11 +318,14 @@ export const AudioPlayer = () => {
               onClick={() => setQueueVisible(!isQueueVisible)}
             >
               <ListMusic className="h-5 w-5" />
-              {queue.length > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium flex items-center justify-center leading-none text-primary-foreground">
-                  {queue.length}
-                </span>
-              )}
+              <span className={cn(
+                "absolute -top-1 -right-1 h-4 w-4 rounded-full text-[10px] font-medium flex items-center justify-center leading-none",
+                queue.length === 0 
+                  ? "bg-red-500 text-white dark:bg-red-600" 
+                  : "bg-primary text-primary-foreground"
+              )}>
+                {queue.length}
+              </span>
               <span className="sr-only">Toggle queue ({queue.length} tracks)</span>
             </Button>
             <Button
