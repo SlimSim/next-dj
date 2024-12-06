@@ -19,7 +19,6 @@ import {
   Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { AudioDeviceSelector } from './audio-device-selector'
 
 interface PlayerControlsMenuProps {
   isOpen: boolean
@@ -204,7 +203,6 @@ export function PlayerControlsMenu({
                   className="w-full"
                 />
               </div>
-              <AudioDeviceSelector />
             </div>
           </div>
         </div>

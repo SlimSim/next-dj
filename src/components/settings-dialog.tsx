@@ -11,6 +11,7 @@ import {
 import { Settings } from 'lucide-react'
 import { FileUpload } from './file-upload'
 import { ThemeToggle } from './theme-toggle'
+import { AudioDeviceSelector } from './audio-device-selector'
 
 export function SettingsDialog() {
   return (
@@ -35,6 +36,10 @@ export function SettingsDialog() {
               <span className="text-sm">Theme:</span>
               <ThemeToggle />
             </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-medium">Audio Settings</h3>
+            <AudioDeviceSelector />
           </div>
         </div>
       </DialogContent>
