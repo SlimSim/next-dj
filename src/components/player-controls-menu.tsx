@@ -19,6 +19,7 @@ import {
   Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AudioDeviceSelector } from './audio-device-selector'
 
 interface PlayerControlsMenuProps {
   isOpen: boolean
@@ -180,27 +181,30 @@ export function PlayerControlsMenu({
             </div>
 
             {/* Volume controls */}
-            <div className="flex items-center gap-4 px-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMute}
-              >
-                {isMuted || volume === 0 ? (
-                  <VolumeX className="h-5 w-5" />
-                ) : (
-                  <Volume2 className="h-5 w-5" />
-                )}
-                <span className="sr-only">Toggle mute</span>
-              </Button>
-              <Slider
-                value={[volume]}
-                min={0}
-                max={1}
-                step={0.1}
-                onValueChange={([value]) => handleVolumeChange(value)}
-                className="w-full"
-              />
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 px-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMute}
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="h-5 w-5" />
+                  ) : (
+                    <Volume2 className="h-5 w-5" />
+                  )}
+                  <span className="sr-only">Toggle mute</span>
+                </Button>
+                <Slider
+                  value={[volume]}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  onValueChange={([value]) => handleVolumeChange(value)}
+                  className="w-full"
+                />
+              </div>
+              <AudioDeviceSelector />
             </div>
           </div>
         </div>

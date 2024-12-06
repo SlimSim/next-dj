@@ -15,6 +15,8 @@ interface PlayerState {
   currentTime: number
   isQueueVisible: boolean
   refreshTrigger: number
+  audioDevices: MediaDeviceInfo[]
+  selectedDeviceId: string
 }
 
 interface PlayerActions {
@@ -38,6 +40,8 @@ interface PlayerActions {
   playPreviousTrack: () => void
   triggerRefresh: () => void
   clearAll: () => void
+  setAudioDevices: (devices: MediaDeviceInfo[]) => void
+  setSelectedDeviceId: (deviceId: string) => void
 }
 
 type PlayerStore = PlayerState & PlayerActions
@@ -56,6 +60,8 @@ export const usePlayerStore = create<PlayerStore>()(
       currentTime: 0,
       isQueueVisible: false,
       refreshTrigger: 0,
+      audioDevices: [],
+      selectedDeviceId: 'default',
 
       setCurrentTrack: (track: MusicMetadata | null) => set({ 
         currentTrack: track ? { ...track, queueId: track.queueId || uuidv4() } : null 
@@ -185,6 +191,9 @@ export const usePlayerStore = create<PlayerStore>()(
             return { queue: [], history: [], currentTrack: null, isPlaying: false }
           }
         }),
+      
+      setAudioDevices: (devices: MediaDeviceInfo[]) => set({ audioDevices: devices }),
+      setSelectedDeviceId: (deviceId: string) => set({ selectedDeviceId: deviceId }),
     }),
     {
       name: 'player-store',
@@ -195,6 +204,8 @@ export const usePlayerStore = create<PlayerStore>()(
         volume: state.volume,
         shuffle: state.shuffle,
         repeat: state.repeat,
+        audioDevices: state.audioDevices,
+        selectedDeviceId: state.selectedDeviceId,
       }),
     }
   )
