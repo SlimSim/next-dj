@@ -1,9 +1,8 @@
 'use client'
 
-import { FileUpload } from '@/components/file-upload'
 import { Playlist } from '@/components/playlist'
 import { AudioPlayer } from '@/components/audio-player'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { SettingsDialog } from '@/components/settings-dialog'
 
 export default function Home() {
   return (
@@ -14,8 +13,7 @@ export default function Home() {
             <h1 className="text-xl sm:text-2xl font-bold text-red-500">Music Player</h1>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <FileUpload />
-            <ThemeToggle />
+            <SettingsDialog />
           </div>
         </div>
       </header>
