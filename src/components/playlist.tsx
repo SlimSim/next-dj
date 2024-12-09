@@ -15,9 +15,12 @@ import { MusicMetadata } from '@/lib/types'
 import { formatTime, cn } from '@/lib/utils'
 import { MoreVertical, Play, Pause, Pencil, Trash } from 'lucide-react'
 
-export function Playlist() {
+interface PlaylistProps {
+  searchQuery: string
+}
+
+export function Playlist({ searchQuery }: PlaylistProps) {
   const [tracks, setTracks] = useState<MusicMetadata[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   
@@ -123,15 +126,6 @@ export function Playlist() {
 
   return (
     <div className="h-full flex flex-col container mx-auto px-3 sm:px-4 py-2">
-      <div className="flex-none mb-4">
-        <Input
-          type="search"
-          placeholder="Search tracks..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full"
-        />
-      </div>
 
       <ScrollArea className="flex-1">
         <div className="pr-4 pb-22">
