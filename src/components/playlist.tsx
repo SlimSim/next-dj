@@ -129,7 +129,7 @@ export function Playlist() {
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
-        <div className="space-y-2 pr-4">
+        <div className="pr-4">
           {filteredTracks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {tracks.length === 0 ? 'No tracks added yet' : 'No tracks found'}
@@ -139,7 +139,7 @@ export function Playlist() {
               <div
                 key={track.id}
                 className={cn(
-                  'group flex items-center justify-between p-2 rounded-lg hover:bg-accent/50',
+                  'mt-0 hej hej group flex items-center justify-between rounded-lg hover:bg-accent/50',
                   currentTrack?.id === track.id && 'bg-accent'
                 )}
               >
@@ -153,26 +153,30 @@ export function Playlist() {
                       {track.album && ` - ${track.album}`}
                     </div>
                   )}
-                  {prelistenTrack?.id === track.id && (
-                    <div className="mt-2 space-y-1">
-                      <div className="flex justify-between text-xs text-muted-foreground">
+                  { (
+                    <div className={cn("THIS_DIV", prelistenTrack?.id === track.id && isPrelistening ? '' : 'invisible')}>
+                      {/* <div className="flex justify-between text-xs text-muted-foreground">
                         <span>{formatTime(prelistenTrack.currentTime || 0)}</span>
                         <span>-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
-                      </div>
-                      <div 
-                        className="relative h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const percentage = x / rect.width;
-                          const newTime = (prelistenTrack.duration || 0) * percentage;
-                          setPrelistenTrack({ ...prelistenTrack, currentTime: newTime });
-                        }}
-                      >
+                      </div> */}
+                      <div className="flex items-center">
+                        <span className="text-xs text-muted-foreground mr-2">{formatTime(prelistenTrack.currentTime || 0)}</span>
                         <div 
-                          className="absolute inset-y-0 left-0 bg-neutral-900 dark:bg-neutral-100 rounded-full" 
-                          style={{ width: `${((prelistenTrack.currentTime || 0) / (prelistenTrack.duration || 1)) * 100}%` }}
-                        />
+                          className="relative flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const percentage = x / rect.width;
+                            const newTime = (prelistenTrack.duration || 0) * percentage;
+                            setPrelistenTrack({ ...prelistenTrack, currentTime: newTime });
+                          }}
+                        >
+                          <div 
+                            className="absolute inset-y-0 left-0 bg-neutral-900 dark:bg-neutral-100 rounded-full" 
+                            style={{ width: `${((prelistenTrack.currentTime || 0) / (prelistenTrack.duration || 1)) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-2">-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
                       </div>
                     </div>
                   )}
