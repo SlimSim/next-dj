@@ -128,8 +128,8 @@ export function Playlist() {
         />
       </div>
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="pr-4">
+      <ScrollArea className="flex-1">
+        <div className="pr-4 pb-22">
           {filteredTracks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {tracks.length === 0 ? 'No tracks added yet' : 'No tracks found'}
