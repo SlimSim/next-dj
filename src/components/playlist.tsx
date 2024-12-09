@@ -154,7 +154,7 @@ export function Playlist() {
                     </div>
                   )}
                   { (
-                    <div className={cn("THIS_DIV", prelistenTrack?.id === track.id && isPrelistening ? '' : 'invisible')}>
+                    <div className={prelistenTrack?.id === track.id && isPrelistening ? '' : 'invisible'}>
                       <div className="flex items-center">
                         <span className="text-xs text-muted-foreground mr-2">{formatTime(prelistenTrack.currentTime || 0)}</span>
                         <div 
@@ -170,7 +170,12 @@ export function Playlist() {
                           <div 
                             className="absolute inset-y-0 left-0 bg-neutral-900 dark:bg-neutral-100 rounded-full" 
                             style={{ width: `${((prelistenTrack.currentTime || 0) / (prelistenTrack.duration || 1)) * 100}%` }}
-                          />
+                          >
+                            <div 
+                              className="absolute right-0 w-3 h-3 bg-white border border-neutral-400 rounded-full transform translate-x-1/2 -translate-y-1/2"
+                              style={{ top: '50%' }}
+                            />
+                          </div>
                         </div>
                         <span className="text-xs text-muted-foreground ml-2">-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
                       </div>
