@@ -46,6 +46,11 @@ export function Playlist() {
     try {
       const metadata = await getAllMetadata()
       setTracks(metadata)
+      // Set first track as prelistenTrack if there isn't one and there are tracks available
+      if (!prelistenTrack && metadata.length > 0) {
+        setPrelistenTrack({ ...metadata[0], currentTime: 0 })
+        setIsPrelistening(false)
+      }
     } catch (error) {
       toast.error('Failed to load tracks')
       console.error(error)
