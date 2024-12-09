@@ -199,40 +199,33 @@ export const AudioPlayer = () => {
       }
     }
 
-    if (currentTrack) {
-      initAudio().then(() => {
-        if (isPlaying && audioRef.current) {
-          audioRef.current.play().catch(error => {
-            console.error('Error playing audio after init:', error);
-          });
-        }
-      });
-    }
-
-    return () => {
-      if (audioRef.current?.src) {
-        URL.revokeObjectURL(audioRef.current.src)
-      }
-    }
-  }, [currentTrack])
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(error => {
-          console.error('Error playing audio:', error);
-        });
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
+    initAudio()
+  }, [currentTrack, setDuration, setIsPlaying])
 
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume
     }
   }, [volume])
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted
+    }
+  }, [isMuted])
+
+  useEffect(() => {
+    if (!audioRef.current || isLoading) return
+
+    if (isPlaying) {
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error)
+        setIsPlaying(false)
+      })
+    } else {
+      audioRef.current.pause()
+    }
+  }, [isPlaying, isLoading, setIsPlaying])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -354,9 +347,17 @@ export const AudioPlayer = () => {
 
       <audio
         ref={audioRef}
+        id="main-audio"
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={playNextTrack}
+        onEnded={() => {
+          if (repeat === 'one') {
+            audioRef.current?.play()
+          } else {
+            playNextTrack()
+          }
+        }}
       />
       {isQueueVisible && <PlayingQueue />}
     </div>

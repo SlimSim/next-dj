@@ -3,6 +3,7 @@
 import { Playlist } from '@/components/playlist'
 import { AudioPlayer } from '@/components/audio-player'
 import { SettingsDialog } from '@/components/settings-dialog'
+import { PrelistenAudioPlayer } from '@/components/prelisten-audio-player'
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
 
       <div className="flex-1 overflow-hidden">
         <Playlist />
+        <PrelistenAudioPlayer />
       </div>
 
       <footer className="flex-none border-t bg-white/95 dark:bg-neutral-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-neutral-950/60 w-full z-20">

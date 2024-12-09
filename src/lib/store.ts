@@ -17,6 +17,9 @@ interface PlayerState {
   refreshTrigger: number
   audioDevices: MediaDeviceInfo[]
   selectedDeviceId: string
+  prelistenDeviceId: string
+  prelistenTrack: MusicMetadata | null
+  isPrelistening: boolean
 }
 
 interface PlayerActions {
@@ -42,6 +45,9 @@ interface PlayerActions {
   clearAll: () => void
   setAudioDevices: (devices: MediaDeviceInfo[]) => void
   setSelectedDeviceId: (deviceId: string) => void
+  setPrelistenDeviceId: (deviceId: string) => void
+  setPrelistenTrack: (track: MusicMetadata | null) => void
+  setIsPrelistening: (isPrelistening: boolean) => void
 }
 
 type PlayerStore = PlayerState & PlayerActions
@@ -62,6 +68,9 @@ export const usePlayerStore = create<PlayerStore>()(
       refreshTrigger: 0,
       audioDevices: [],
       selectedDeviceId: 'default',
+      prelistenDeviceId: 'default',
+      prelistenTrack: null,
+      isPrelistening: false,
 
       setCurrentTrack: (track: MusicMetadata | null) => set({ 
         currentTrack: track ? { ...track, queueId: track.queueId || uuidv4() } : null 
@@ -194,18 +203,21 @@ export const usePlayerStore = create<PlayerStore>()(
       
       setAudioDevices: (devices: MediaDeviceInfo[]) => set({ audioDevices: devices }),
       setSelectedDeviceId: (deviceId: string) => set({ selectedDeviceId: deviceId }),
+      setPrelistenDeviceId: (deviceId: string) => set({ prelistenDeviceId: deviceId }),
+      setPrelistenTrack: (track: MusicMetadata | null) => set({ prelistenTrack: track }),
+      setIsPrelistening: (isPrelistening: boolean) => set({ isPrelistening: isPrelistening }),
     }),
     {
       name: 'player-store',
       partialize: (state) => ({
-        currentTrack: state.currentTrack,
-        queue: state.queue,
-        history: state.history,
         volume: state.volume,
         shuffle: state.shuffle,
         repeat: state.repeat,
         audioDevices: state.audioDevices,
         selectedDeviceId: state.selectedDeviceId,
+        prelistenDeviceId: state.prelistenDeviceId,
+        prelistenTrack: state.prelistenTrack,
+        isPrelistening: state.isPrelistening,
       }),
     }
   )

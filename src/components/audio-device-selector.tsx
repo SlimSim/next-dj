@@ -11,7 +11,14 @@ import {
 } from './ui/select'
 
 export const AudioDeviceSelector = () => {
-  const { audioDevices, selectedDeviceId, setAudioDevices, setSelectedDeviceId } = usePlayerStore()
+  const { 
+    audioDevices, 
+    selectedDeviceId, 
+    setAudioDevices, 
+    setSelectedDeviceId, 
+    prelistenDeviceId, 
+    setPrelistenDeviceId 
+  } = usePlayerStore()
   const [permissionStatus, setPermissionStatus] = useState<'prompt' | 'granted' | 'denied'>('prompt')
 
   useEffect(() => {
@@ -58,7 +65,7 @@ export const AudioDeviceSelector = () => {
 
   const handleDeviceChange = async (deviceId: string) => {
     try {
-      const audioElement = document.querySelector('audio')
+      const audioElement = document.querySelector('#main-audio')
       if (audioElement && 'setSinkId' in audioElement) {
         // @ts-ignore - setSinkId is not in the HTMLAudioElement type yet
         await audioElement.setSinkId(deviceId)
@@ -66,6 +73,19 @@ export const AudioDeviceSelector = () => {
       }
     } catch (error) {
       console.error('Error switching audio output:', error)
+    }
+  }
+
+  const handlePrelistenDeviceChange = async (deviceId: string) => {
+    try {
+      const audioElement = document.querySelector('#prelisten-audio')
+      if (audioElement && 'setSinkId' in audioElement) {
+        // @ts-ignore - setSinkId is not in the HTMLAudioElement type yet
+        await audioElement.setSinkId(deviceId)
+        setPrelistenDeviceId(deviceId)
+      }
+    } catch (error) {
+      console.error('Error switching prelisten audio output:', error)
     }
   }
 
@@ -91,18 +111,29 @@ export const AudioDeviceSelector = () => {
 
   return (
     <div className="flex flex-col gap-2 px-4">
-      <label className="text-sm font-medium">Audio Output</label>
+      <label className="text-sm font-medium">Main Audio Output</label>
       <Select value={selectedDeviceId || 'default'} onValueChange={handleDeviceChange}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select audio output" />
+          <SelectValue placeholder="Select main audio output" />
         </SelectTrigger>
         <SelectContent>
           {audioDevices.map((device) => (
-            <SelectItem 
-              key={device.deviceId} 
-              value={device.deviceId || 'default'}
-            >
-              {device.label || 'Default Speaker'}
+            <SelectItem key={device.deviceId} value={device.deviceId}>
+              {device.label || 'Unnamed device'}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <label className="text-sm font-medium mt-4">Prelisten Audio Output</label>
+      <Select value={prelistenDeviceId || 'default'} onValueChange={handlePrelistenDeviceChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select prelisten audio output" />
+        </SelectTrigger>
+        <SelectContent>
+          {audioDevices.map((device) => (
+            <SelectItem key={device.deviceId} value={device.deviceId}>
+              {device.label || 'Unnamed device'}
             </SelectItem>
           ))}
         </SelectContent>

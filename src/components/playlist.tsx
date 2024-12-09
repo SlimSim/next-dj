@@ -13,7 +13,7 @@ import { usePlayerStore } from '@/lib/store'
 import { getAllMetadata, deleteAudioFile, updateMetadata } from '@/lib/db'
 import { MusicMetadata } from '@/lib/types'
 import { formatTime, cn } from '@/lib/utils'
-import { MoreVertical, Play, Pencil, Trash } from 'lucide-react'
+import { MoreVertical, Play, Pause, Pencil, Trash } from 'lucide-react'
 
 export function Playlist() {
   const [tracks, setTracks] = useState<MusicMetadata[]>([])
@@ -32,6 +32,10 @@ export function Playlist() {
     setIsPlaying,
     setQueue,
     refreshTrigger,
+    prelistenTrack,
+    isPrelistening,
+    setPrelistenTrack,
+    setIsPrelistening,
   } = usePlayerStore()
 
   useEffect(() => {
@@ -151,42 +155,68 @@ export function Playlist() {
                   )}
                 </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                      <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => handleTrackSelect(track)}>
-                      Add to Queue
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      playNext(track)
-                      toast.success(`"${track.title}" will play next`)
-                    }}>
-                      Play Next
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      playLast(track)
-                      toast.success(`Added "${track.title}" to end of queue`)
-                    }}>
-                      Play Last
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditTrack(track)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit metadata
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => handleDeleteTrack(track)}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (prelistenTrack?.id === track.id) {
+                        setIsPrelistening(!isPrelistening);
+                      } else {
+                        setPrelistenTrack(track);
+                        setIsPrelistening(true);
+                      }
+                    }}
+                  >
+                    {prelistenTrack?.id === track.id && isPrelistening ? (
+                      <Pause className="h-4 w-4" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {prelistenTrack?.id === track.id && isPrelistening ? 'Pause' : 'Play'}
+                    </span>
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                        <MoreVertical className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleTrackSelect(track)}>
+                        Add to Queue
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        playNext(track)
+                        toast.success(`"${track.title}" will play next`)
+                      }}>
+                        Play Next
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        playLast(track)
+                        toast.success(`Added "${track.title}" to end of queue`)
+                      }}>
+                        Play Last
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditTrack(track)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit metadata
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => handleDeleteTrack(track)}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             ))
           )}
