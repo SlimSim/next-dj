@@ -128,7 +128,7 @@ export function Playlist({ searchQuery }: PlaylistProps) {
     <div className="h-full flex flex-col container mx-auto px-3 sm:px-4 py-2">
 
       <ScrollArea className="flex-1">
-        <div className="pr-4 pb-22">
+        <div className="pr-4">
           {filteredTracks.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {tracks.length === 0 ? 'No tracks added yet' : 'No tracks found'}
