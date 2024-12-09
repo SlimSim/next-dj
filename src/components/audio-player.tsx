@@ -264,7 +264,7 @@ export const AudioPlayer = () => {
       "fixed bottom-0 left-0 right-0 z-40",
       queue.length === 0 && currentTrack 
         ? "bg-red-600/40 dark:bg-red-500/50" 
-        : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background"
     )}>
       <div className={cn(
         "border-t",
