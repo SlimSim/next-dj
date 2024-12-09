@@ -16,6 +16,7 @@ export const PrelistenAudioPlayer = () => {
     isPrelistening,
     prelistenDeviceId,
     setIsPrelistening,
+    setPrelistenTrack,
   } = usePlayerStore()
 
   useEffect(() => {
@@ -106,7 +107,7 @@ export const PrelistenAudioPlayer = () => {
     }
 
     loadAudio()
-  }, [prelistenTrack, setIsPrelistening])
+  }, [prelistenTrack?.id]) // Only re-run when prelistenTrack.id changes
 
   useEffect(() => {
     if (!audioRef.current || isLoading) return
@@ -135,7 +136,58 @@ export const PrelistenAudioPlayer = () => {
     }
   }, [setIsPrelistening])
 
-  // Handle audio device selection
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handleTimeUpdate = () => {
+      if (prelistenTrack) {
+        const newCurrentTime = audio.currentTime;
+        const newDuration = audio.duration;
+
+        // Only update if there's a significant change
+        if (
+          Math.abs(newCurrentTime - (prelistenTrack.currentTime || 0)) > 0.1 ||
+          newDuration !== prelistenTrack.duration
+        ) {
+          setPrelistenTrack({
+            ...prelistenTrack,
+            currentTime: newCurrentTime,
+            duration: newDuration
+          });
+        }
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (prelistenTrack) {
+        setPrelistenTrack({
+          ...prelistenTrack,
+          duration: audio.duration
+        })
+      }
+    }
+
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate)
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
+    }
+  }, [prelistenTrack, setPrelistenTrack])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !prelistenTrack) return
+
+    // Only update currentTime if the difference is significant
+    const timeDifference = Math.abs(audio.currentTime - (prelistenTrack.currentTime || 0))
+    if (timeDifference > 1) { // Update only if difference is greater than 1 second
+      audio.currentTime = prelistenTrack.currentTime || 0
+    }
+  }, [prelistenTrack?.currentTime])
+
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !('setSinkId' in audio)) return

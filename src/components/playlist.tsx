@@ -153,6 +153,29 @@ export function Playlist() {
                       {track.album && ` - ${track.album}`}
                     </div>
                   )}
+                  {prelistenTrack?.id === track.id && (
+                    <div className="mt-2 space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{formatTime(prelistenTrack.currentTime || 0)}</span>
+                        <span>-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
+                      </div>
+                      <div 
+                        className="relative h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const percentage = x / rect.width;
+                          const newTime = (prelistenTrack.duration || 0) * percentage;
+                          setPrelistenTrack({ ...prelistenTrack, currentTime: newTime });
+                        }}
+                      >
+                        <div 
+                          className="absolute inset-y-0 left-0 bg-neutral-900 dark:bg-neutral-100 rounded-full" 
+                          style={{ width: `${((prelistenTrack.currentTime || 0) / (prelistenTrack.duration || 1)) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
