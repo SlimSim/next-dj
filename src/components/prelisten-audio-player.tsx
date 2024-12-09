@@ -110,9 +110,16 @@ export const PrelistenAudioPlayer = () => {
   }, [prelistenTrack?.id]) // Only re-run when prelistenTrack.id changes
 
   useEffect(() => {
-    if (!audioRef.current || isLoading) return
+    if (!audioRef.current) return
 
-    if (isPrelistening) {
+    if (isPrelistening && !isLoading) {
+      // Check if the audio is actually ready to play
+      if (!audioRef.current.src || audioRef.current.readyState < 2) {
+        console.log('Audio not ready to play yet')
+        setIsPrelistening(false)
+        return
+      }
+
       audioRef.current.play().catch(error => {
         console.error('Error playing prelisten audio:', error)
         setIsPrelistening(false)
