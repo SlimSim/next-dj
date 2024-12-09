@@ -139,7 +139,7 @@ export function Playlist() {
               <div
                 key={track.id}
                 className={cn(
-                  'mt-0 hej hej group flex items-center justify-between rounded-lg hover:bg-accent/50',
+                  'p-1 -mb-2 group flex items-center justify-between rounded-lg hover:bg-accent/50',
                   currentTrack?.id === track.id && 'bg-accent'
                 )}
               >
@@ -155,10 +155,6 @@ export function Playlist() {
                   )}
                   { (
                     <div className={cn("THIS_DIV", prelistenTrack?.id === track.id && isPrelistening ? '' : 'invisible')}>
-                      {/* <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{formatTime(prelistenTrack.currentTime || 0)}</span>
-                        <span>-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
-                      </div> */}
                       <div className="flex items-center">
                         <span className="text-xs text-muted-foreground mr-2">{formatTime(prelistenTrack.currentTime || 0)}</span>
                         <div 
