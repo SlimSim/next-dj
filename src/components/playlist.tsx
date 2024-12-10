@@ -125,125 +125,122 @@ export function Playlist({ searchQuery }: PlaylistProps) {
   }
 
   return (
-    <div className="h-full flex flex-col container mx-auto px-3 sm:px-4 py-2">
-
-      <ScrollArea className="flex-1">
-        <div className="pr-4">
-          {filteredTracks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {tracks.length === 0 ? 'No tracks added yet' : 'No tracks found'}
-            </div>
-          ) : (
-            filteredTracks.map((track) => (
-              <div
-                key={track.id}
-                className={cn(
-                  'p-1 -mb-2 group flex items-center justify-between rounded-lg hover:bg-accent/50',
-                  currentTrack?.id === track.id && 'bg-accent'
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="truncate font-medium text-sm sm:text-base">
-                    {track.title}
+    <div className="h-full flex-1 flex flex-col container mx-auto p-0">
+      <div className="w-full h-full overflow-auto">
+        {filteredTracks.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {tracks.length === 0 ? 'No tracks added yet' : 'No tracks found'}
+          </div>
+        ) : (
+          filteredTracks.map((track) => (
+            <div
+              key={track.id}
+              className={cn(
+                'p-1 -mb-2 group flex items-center rounded-lg hover:bg-accent/50 w-full overflow-hidden',
+                currentTrack?.id === track.id && 'bg-accent'
+              )}
+            >
+              <div className="flex-1 min-w-0 overflow mr-1">
+                <div className="truncate font-medium text-sm sm:text-base">
+                  {track.title}
+                </div>
+                {track.artist && (
+                  <div className="truncate text-xs sm:text-sm text-muted-foreground">
+                    {track.artist}
+                    {track.album && ` - ${track.album}`}
                   </div>
-                  {track.artist && (
-                    <div className="truncate text-xs sm:text-sm text-muted-foreground">
-                      {track.artist}
-                      {track.album && ` - ${track.album}`}
-                    </div>
-                  )}
-                  {prelistenTrack && (
-                    <div className={prelistenTrack.id === track.id && isPrelistening ? '' : 'invisible'}>
-                      <div className="flex items-center">
-                        <span className="text-xs text-muted-foreground mr-2">{formatTime(prelistenTrack.currentTime || 0)}</span>
-                        <div 
-                          className="relative flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
-                          onClick={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const x = e.clientX - rect.left;
-                            const percentage = x / rect.width;
-                            const newTime = (prelistenTrack.duration || 0) * percentage;
-                            setPrelistenTrack({ ...prelistenTrack, currentTime: newTime });
-                          }}
-                        >
-                          <div 
-                            className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"
-                            style={{ width: `${(prelistenTrack.currentTime || 0) / (prelistenTrack.duration || 1) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground ml-2">-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 sm:h-9 sm:w-9"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (prelistenTrack?.id === track.id) {
-                        setIsPrelistening(!isPrelistening);
-                      } else {
-                        setPrelistenTrack(track);
-                        setIsPrelistening(true);
-                      }
-                    }}
-                  >
-                    {prelistenTrack?.id === track.id && isPrelistening ? (
-                      <Pause className="h-4 w-4" />
-                    ) : (
-                      <Play className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">
-                      {prelistenTrack?.id === track.id && isPrelistening ? 'Pause' : 'Play'}
-                    </span>
-                  </Button>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => handleTrackSelect(track)}>
-                        Add to Queue
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        playNext(track)
-                        toast.success(`"${track.title}" will play next`)
-                      }}>
-                        Play Next
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        playLast(track)
-                        toast.success(`Added "${track.title}" to end of queue`)
-                      }}>
-                        Play Last
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditTrack(track)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit metadata
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDeleteTrack(track)}
+                )}
+                {prelistenTrack && (
+                  <div className={prelistenTrack.id === track.id && isPrelistening ? '' : 'invisible'}>
+                    <div className="flex items-center">
+                      <span className="text-xs text-muted-foreground mr-2">{formatTime(prelistenTrack.currentTime || 0)}</span>
+                      <div 
+                        className="relative flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const percentage = x / rect.width;
+                          const newTime = (prelistenTrack.duration || 0) * percentage;
+                          setPrelistenTrack({ ...prelistenTrack, currentTime: newTime });
+                        }}
                       >
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                        <div 
+                          className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"
+                          style={{ width: `${(prelistenTrack.currentTime || 0) / (prelistenTrack.duration || 1) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-2">-{formatTime((prelistenTrack.duration || 0) - (prelistenTrack.currentTime || 0))}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))
-          )}
-        </div>
-      </ScrollArea>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (prelistenTrack?.id === track.id) {
+                      setIsPrelistening(!isPrelistening);
+                    } else {
+                      setPrelistenTrack(track);
+                      setIsPrelistening(true);
+                    }
+                  }}
+                >
+                  {prelistenTrack?.id === track.id && isPrelistening ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {prelistenTrack?.id === track.id && isPrelistening ? 'Pause' : 'Play'}
+                  </span>
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                      <MoreVertical className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => handleTrackSelect(track)}>
+                      Add to Queue
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      playNext(track)
+                      toast.success(`"${track.title}" will play next`)
+                    }}>
+                      Play Next
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      playLast(track)
+                      toast.success(`Added "${track.title}" to end of queue`)
+                    }}>
+                      Play Last
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEditTrack(track)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit metadata
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => handleDeleteTrack(track)}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }
