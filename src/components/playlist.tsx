@@ -141,11 +141,11 @@ export function Playlist({ searchQuery }: PlaylistProps) {
               )}
             >
               <div className="flex-1 min-w-0 overflow mr-1">
-                <div className="truncate font-medium text-sm sm:text-base">
+                <div className="font-medium text-sm sm:text-base">
                   {track.title}
                 </div>
                 {track.artist && (
-                  <div className="truncate text-xs sm:text-sm text-muted-foreground">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     {track.artist}
                     {track.album && ` - ${track.album}`}
                   </div>
