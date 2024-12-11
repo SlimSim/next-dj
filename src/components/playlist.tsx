@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from './ui/dialog'
 import { usePlayerStore } from '@/lib/store'
 import { getAllMetadata, deleteAudioFile, updateMetadata } from '@/lib/db'
 import { MusicMetadata } from '@/lib/types'
@@ -104,14 +105,17 @@ export function Playlist({ searchQuery }: PlaylistProps) {
     setIsEditing(true)
   }
 
-  const handleSaveTrack = async (updatedTrack: MusicMetadata) => {
+  const handleSaveTrack = async (track: MusicMetadata) => {
     try {
-      await updateMetadata(updatedTrack)
-      setIsEditing(false)
-      setEditingTrack(null)
-      await refreshMetadata()
+      const { id, title, artist, album } = track;
+      await updateMetadata(id, { title, artist, album });
+      setIsEditing(false);
+      setEditingTrack(null);
+      await refreshMetadata();
+      toast.success('Track metadata updated');
     } catch (error) {
-      console.error('Error updating track:', error)
+      console.error('Error updating track:', error);
+      toast.error('Failed to update track metadata');
     }
   }
 
@@ -241,6 +245,50 @@ export function Playlist({ searchQuery }: PlaylistProps) {
           ))
         )}
       </div>
+
+      <Dialog open={isEditing} onOpenChange={(open) => !open && setIsEditing(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Track Metadata</DialogTitle>
+          </DialogHeader>
+          {editingTrack && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="title" className="text-sm font-medium">Title</label>
+                <Input
+                  id="title"
+                  value={editingTrack.title}
+                  onChange={(e) => setEditingTrack({ ...editingTrack, title: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="artist" className="text-sm font-medium">Artist</label>
+                <Input
+                  id="artist"
+                  value={editingTrack.artist}
+                  onChange={(e) => setEditingTrack({ ...editingTrack, artist: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="album" className="text-sm font-medium">Album</label>
+                <Input
+                  id="album"
+                  value={editingTrack.album}
+                  onChange={(e) => setEditingTrack({ ...editingTrack, album: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => editingTrack && handleSaveTrack(editingTrack)}>
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
