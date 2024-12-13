@@ -1,4 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
+import { readAudioMetadata } from './metadata'
 
 interface MusicMetadata {
   id: string
@@ -55,9 +56,13 @@ export async function addAudioFile(file: File, metadata: Partial<MusicMetadata>)
   const db = await initDB()
   const id = crypto.randomUUID()
   
+  // Read metadata from the file
+  const fileMetadata = await readAudioMetadata(file)
+  
   console.log('Adding audio file:', {
     originalType: file.type,
-    originalSize: file.size
+    originalSize: file.size,
+    metadata: fileMetadata
   })
   
   // Convert File to Blob for storage
@@ -73,9 +78,9 @@ export async function addAudioFile(file: File, metadata: Partial<MusicMetadata>)
     file: fileBlob,
     metadata: {
       id,
-      title: metadata.title || file.name,
-      artist: metadata.artist || 'Unknown Artist',
-      album: metadata.album || 'Unknown Album',
+      title: fileMetadata.title || metadata.title || file.name,
+      artist: fileMetadata.artist || metadata.artist || 'Unknown Artist',
+      album: fileMetadata.album || metadata.album || 'Unknown Album',
       duration: metadata.duration || 0,
       playCount: 0,
       path: metadata.path,
