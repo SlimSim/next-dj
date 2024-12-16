@@ -96,19 +96,19 @@ export function FileUpload() {
               duration: 0,
               playCount: 0,
               path: newPath,
-              file: file,
             }
-            await addAudioFile(file, metadata)
-            toast.success(`Added ${newPath}`)
+            // Pass the fileHandle instead of file, and set isReference to true
+            await addAudioFile(fileHandle, metadata, true)
+            toast.success(`Added ${metadata.title}`)
           }
         } else if (entry.kind === 'directory') {
-          const subDirHandle = entry as FileSystemDirectoryHandle
-          await processDirectory(subDirHandle, path ? `${path}/${entry.name}` : entry.name)
+          const newPath = path ? `${path}/${entry.name}` : entry.name
+          await processDirectory(entry as FileSystemDirectoryHandle, newPath)
         }
       }
     } catch (error) {
       console.error('Error processing directory:', error)
-      throw error // Propagate error to parent handler
+      toast.error('Failed to process some files in the folder')
     }
   }
 

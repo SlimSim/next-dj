@@ -11,13 +11,14 @@ interface MusicMetadata {
   lastPlayed?: Date
   path?: string
   coverArt?: string
-  file?: File
+  isReference?: boolean
 }
 
 interface AudioFile {
   id: string
-  file: Blob
-  metadata: Omit<MusicMetadata, 'file'>
+  file?: Blob
+  isReference?: boolean
+  fileHandle?: FileSystemFileHandle
 }
 
 interface MusicPlayerDB extends DBSchema {
@@ -28,7 +29,7 @@ interface MusicPlayerDB extends DBSchema {
   }
   metadata: {
     key: string
-    value: MusicMetadata
+    value: MusicMetadata & { isReference?: boolean }
     indexes: { 'by-title': string; 'by-artist': string; 'by-album': string }
   }
 }
@@ -52,72 +53,70 @@ export async function initDB(): Promise<IDBPDatabase<MusicPlayerDB>> {
   })
 }
 
-export async function addAudioFile(file: File, metadata: Partial<MusicMetadata>): Promise<string> {
+export async function addAudioFile(file: File | FileSystemFileHandle, metadata: Partial<MusicMetadata>, isReference = false): Promise<string> {
   const db = await initDB()
   const id = crypto.randomUUID()
   
-  // Read metadata from the file
-  const fileMetadata = await readAudioMetadata(file)
+  let fileMetadata: any
+  let audioFile: AudioFile
   
-  console.log('Adding audio file:', {
-    originalType: file.type,
-    originalSize: file.size,
-    metadata: fileMetadata
-  })
-  
-  // Convert File to Blob for storage
-  const fileBlob = new Blob([await file.arrayBuffer()], { type: file.type })
-  
-  console.log('Created file blob:', {
-    type: fileBlob.type,
-    size: fileBlob.size
-  })
-  
-  const audioFile: AudioFile = {
-    id,
-    file: fileBlob,
-    metadata: {
+  if (file instanceof File) {
+    // For uploaded files, store the actual file
+    fileMetadata = await readAudioMetadata(file)
+    audioFile = {
       id,
-      title: fileMetadata.title || metadata.title || file.name,
-      artist: fileMetadata.artist || metadata.artist || 'Unknown Artist',
-      album: fileMetadata.album || metadata.album || 'Unknown Album',
-      duration: metadata.duration || 0,
-      playCount: 0,
-      path: metadata.path,
-      coverArt: metadata.coverArt,
-    },
+      file: new Blob([await file.arrayBuffer()], { type: file.type }),
+      isReference: false
+    }
+  } else {
+    // For referenced files, just get metadata and store the handle
+    const actualFile = await file.getFile()
+    fileMetadata = await readAudioMetadata(actualFile)
+    audioFile = {
+      id,
+      isReference: true,
+      fileHandle: file
+    }
+  }
+
+  // Store metadata separately
+  const metadataEntry: MusicMetadata & { isReference?: boolean } = {
+    id,
+    title: fileMetadata.title || metadata.title || (file instanceof File ? file.name : (file as FileSystemFileHandle).name),
+    artist: fileMetadata.artist || metadata.artist || 'Unknown Artist',
+    album: fileMetadata.album || metadata.album || 'Unknown Album',
+    duration: metadata.duration || 0,
+    playCount: 0,
+    path: metadata.path,
+    coverArt: metadata.coverArt,
+    isReference
   }
 
   await db.put('audioFiles', audioFile)
-  console.log('Stored audio file in IndexedDB:', id)
-  
-  await db.put('metadata', audioFile.metadata)
-  console.log('Stored metadata in IndexedDB:', id)
+  await db.put('metadata', metadataEntry)
 
   return id
 }
 
 export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
-  console.log('Getting audio file from IndexedDB:', id)
   const db = await initDB()
   const audioFile = await db.get('audioFiles', id)
   
-  console.log('Retrieved audio file:', {
-    found: !!audioFile,
-    hasFile: !!audioFile?.file,
-    fileType: audioFile?.file ? audioFile.file.type : 'none',
-    fileSize: audioFile?.file ? audioFile.file.size : 0
-  })
-  
-  if (audioFile) {
-    // Ensure the file is a proper Blob
-    if (!(audioFile.file instanceof Blob)) {
-      console.error('Retrieved file is not a Blob:', audioFile.file)
-      return undefined
+  if (audioFile?.isReference && audioFile.fileHandle) {
+    try {
+      // Get the actual file from the file system for referenced files
+      const file = await audioFile.fileHandle.getFile()
+      return {
+        ...audioFile,
+        file: new Blob([await file.arrayBuffer()], { type: file.type })
+      }
+    } catch (error) {
+      console.error('Error accessing referenced file:', error)
+      return audioFile
     }
-    return audioFile
   }
-  return undefined
+  
+  return audioFile
 }
 
 export async function updateMetadata(id: string, metadata: Partial<MusicMetadata>): Promise<void> {
@@ -130,25 +129,8 @@ export async function updateMetadata(id: string, metadata: Partial<MusicMetadata
 }
 
 export async function getAllMetadata(): Promise<MusicMetadata[]> {
-  const db = await initDB();
-  const audioFiles = await db.getAll('audioFiles');
-  const metadata = await db.getAll('metadata');
-  
-  console.log('Retrieved audio files:', audioFiles);
-  console.log('Retrieved metadata:', metadata);
-  
-  // Merge the file data with metadata
-  const result = metadata.map(meta => {
-    const audioFile = audioFiles.find(af => af.id === meta.id);
-    console.log(`Merging metadata for ${meta.id}:`, { meta, audioFile });
-    return {
-      ...meta,
-      file: audioFile?.file as File
-    };
-  });
-  
-  console.log('Final merged metadata:', result);
-  return result;
+  const db = await initDB()
+  return await db.getAll('metadata')
 }
 
 export async function incrementPlayCount(id: string): Promise<void> {
