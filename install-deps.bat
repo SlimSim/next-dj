@@ -23,3 +23,6 @@ npm install -D typescript @types/node @types/react @types/react-dom eslint
 npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
 npm install -D @types/node@20.11.30
 npx tailwindcss init -p
+
+REM Install music metadata library
+npm install music-metadata
