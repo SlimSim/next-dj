@@ -6,6 +6,7 @@ import { AudioPlayer } from '@/components/audio-player'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { PrelistenAudioPlayer } from '@/components/prelisten-audio-player'
 import { Input } from '@/components/ui/input'
+import { FolderScanner } from '@/components/folder-scanner' // Added import
 import { cn } from '@/lib/utils'
 
 export default function Home() {
@@ -49,7 +50,12 @@ export default function Home() {
       </header>
 
       <div className="flex-1 overflow-y-auto">
-        <Playlist searchQuery={searchQuery} />
+        <div className="flex flex-col h-screen">
+          <div className="flex-1 container mx-auto p-4">
+            <FolderScanner />
+            <Playlist searchQuery={searchQuery} />
+          </div>
+        </div>
         <PrelistenAudioPlayer />
       </div>
 

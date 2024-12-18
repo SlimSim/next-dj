@@ -32,24 +32,54 @@ declare global {
 export function FileUpload() {
   const [isLoading, setIsLoading] = useState(false)
   const triggerRefresh = usePlayerStore(state => state.triggerRefresh)
+  const addSelectedFolder = usePlayerStore(state => state.addSelectedFolder)
+
+  const processDirectory = async (dirHandle: FileSystemDirectoryHandle, path = '') => {
+    try {
+      const entries = dirHandle.values()
+      for await (const entry of entries) {
+        if (entry.kind === 'file') {
+          const fileHandle = entry as FileSystemFileHandle
+          const file = await fileHandle.getFile()
+          if (isAudioFile(file)) {
+            const newPath = path ? `${path}/${file.name}` : file.name
+            const metadata = {
+              title: file.name.replace(/\.[^/.]+$/, ''),
+              artist: path ? path.split('/')[0] : 'Unknown Artist',
+              album: path ? path.split('/')[1] || 'Unknown Album' : 'Unknown Album',
+              duration: 0,
+              playCount: 0,
+              path: newPath,
+            }
+            await addAudioFile(fileHandle, metadata, true)
+            toast.success(`Added ${metadata.title}`)
+          }
+        } else if (entry.kind === 'directory') {
+          const dirEntry = entry as FileSystemDirectoryHandle
+          const newPath = path ? `${path}/${entry.name}` : entry.name
+          await processDirectory(dirEntry, newPath)
+        }
+      }
+    } catch (error) {
+      console.error('Error processing directory:', error)
+      throw error
+    }
+  }
 
   const handleFileSelect = useCallback(async (files: FileList) => {
     setIsLoading(true)
     try {
       for (const file of Array.from(files)) {
-        console.log('Processing file:', file);
         if (isAudioFile(file)) {
           const metadata = {
-            title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
+            title: file.name.replace(/\.[^/.]+$/, ''),
             artist: 'Unknown Artist',
             album: 'Unknown Album',
             duration: 0,
             playCount: 0,
             file: file,
           }
-          console.log('Adding file with metadata:', metadata);
-          const id = await addAudioFile(file, metadata)
-          console.log('File added with ID:', id);
+          await addAudioFile(file, metadata)
           toast.success(`Added ${metadata.title}`)
         } else {
           toast.error(`${file.name} is not a supported audio file`)
@@ -69,6 +99,8 @@ export function FileUpload() {
     try {
       const dirHandle = await window.showDirectoryPicker()
       await processDirectory(dirHandle)
+      // Store both the folder name and handle
+      await addSelectedFolder(dirHandle.name, dirHandle)
       triggerRefresh()
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -78,39 +110,7 @@ export function FileUpload() {
     } finally {
       setIsLoading(false)
     }
-  }, [triggerRefresh])
-
-  const processDirectory = async (dirHandle: FileSystemDirectoryHandle, path = '') => {
-    try {
-      const entries = dirHandle.values()
-      for await (const entry of entries) {
-        if (entry.kind === 'file') {
-          const fileHandle = entry as FileSystemFileHandle
-          const file = await fileHandle.getFile()
-          if (isAudioFile(file)) {
-            const newPath = path ? `${path}/${file.name}` : file.name
-            const metadata = {
-              title: file.name.replace(/\.[^/.]+$/, ''), // Remove file extension
-              artist: path ? path.split('/')[0] : 'Unknown Artist', // Use first directory as artist
-              album: path ? path.split('/')[1] || 'Unknown Album' : 'Unknown Album', // Use second directory as album
-              duration: 0,
-              playCount: 0,
-              path: newPath,
-            }
-            // Pass the fileHandle instead of file, and set isReference to true
-            await addAudioFile(fileHandle, metadata, true)
-            toast.success(`Added ${metadata.title}`)
-          }
-        } else if (entry.kind === 'directory') {
-          const newPath = path ? `${path}/${entry.name}` : entry.name
-          await processDirectory(entry as FileSystemDirectoryHandle, newPath)
-        }
-      }
-    } catch (error) {
-      console.error('Error processing directory:', error)
-      toast.error('Failed to process some files in the folder')
-    }
-  }
+  }, [triggerRefresh, addSelectedFolder])
 
   return (
     <div className="flex gap-4">

@@ -12,6 +12,7 @@ interface MusicMetadata {
   path?: string
   coverArt?: string
   isReference?: boolean
+  removed?: boolean
 }
 
 interface AudioFile {
@@ -30,7 +31,7 @@ interface MusicPlayerDB extends DBSchema {
   metadata: {
     key: string
     value: MusicMetadata & { isReference?: boolean }
-    indexes: { 'by-title': string; 'by-artist': string; 'by-album': string }
+    indexes: { 'by-title': string; 'by-artist': string; 'by-album': string; 'by-path': string }
   }
 }
 
@@ -49,13 +50,33 @@ export async function initDB(): Promise<IDBPDatabase<MusicPlayerDB>> {
       metadataStore.createIndex('by-title', 'title')
       metadataStore.createIndex('by-artist', 'artist')
       metadataStore.createIndex('by-album', 'album')
+      metadataStore.createIndex('by-path', 'path')
     },
   })
 }
 
 export async function addAudioFile(file: File | FileSystemFileHandle, metadata: Partial<MusicMetadata>, isReference = false): Promise<string> {
+  console.log("Adding audio file:", metadata.path)
   const db = await initDB()
+  
+  // First check if the file exists
+  if (metadata.path) {
+    const tx = db.transaction('metadata', 'readwrite')
+    const existingFile = await tx.store.index('by-path').get(metadata.path)
+    if (existingFile) {
+      console.log("File already exists:", metadata.path)
+      // If the file was previously marked as removed, clear that flag
+      if (existingFile.removed) {
+        console.log("File was previously removed, restoring:", metadata.path)
+        existingFile.removed = false
+        await tx.store.put(existingFile)
+      }
+      return existingFile.id
+    }
+  }
+
   const id = crypto.randomUUID()
+  console.log("Creating new file with ID:", id)
   
   let fileMetadata: any
   let audioFile: AudioFile
@@ -89,13 +110,27 @@ export async function addAudioFile(file: File | FileSystemFileHandle, metadata: 
     playCount: 0,
     path: metadata.path,
     coverArt: metadata.coverArt,
-    isReference
+    isReference,
+    removed: false // Ensure new files are not marked as removed
   }
 
-  await db.put('audioFiles', audioFile)
-  await db.put('metadata', metadataEntry)
+  try {
+    // Store the audio file
+    const audioTx = db.transaction('audioFiles', 'readwrite')
+    await audioTx.store.put(audioFile)
+    await audioTx.done
 
-  return id
+    // Store the metadata
+    const metadataTx = db.transaction('metadata', 'readwrite')
+    await metadataTx.store.put(metadataEntry)
+    await metadataTx.done
+
+    console.log("Successfully added file:", metadata.path)
+    return id
+  } catch (error) {
+    console.error("Error adding file:", error)
+    throw error
+  }
 }
 
 export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
@@ -112,7 +147,7 @@ export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
       }
     } catch (error) {
       console.error('Error accessing referenced file:', error)
-      return audioFile
+      return undefined;
     }
   }
   
@@ -147,4 +182,16 @@ export async function deleteAudioFile(id: string): Promise<void> {
   const db = await initDB()
   await db.delete('audioFiles', id)
   await db.delete('metadata', id)
+}
+
+export async function markFileAsRemoved(filePath: string): Promise<void> {
+  console.log("Marking file as removed:", filePath)
+  const db = await initDB()
+  const tx = db.transaction('metadata', 'readwrite')
+  const file = await tx.store.index('by-path').get(filePath)
+  if (file) {
+    file.removed = true
+    await tx.store.put(file)
+    console.log("File marked as removed:", filePath)
+  }
 }

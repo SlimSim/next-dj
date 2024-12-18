@@ -146,6 +146,7 @@ export function Playlist({ searchQuery }: PlaylistProps) {
             >
               <div className="flex-1 min-w-0 overflow mr-1">
                 <div className="font-medium text-sm sm:text-base">
+                  {track.removed ? <span style={{color: 'red'}}>removed </span> : null}
                   {track.title}
                 </div>
                 {track.artist && (
@@ -180,51 +181,64 @@ export function Playlist({ searchQuery }: PlaylistProps) {
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (prelistenTrack?.id === track.id) {
-                      setIsPrelistening(!isPrelistening);
-                    } else {
-                      setPrelistenTrack(track);
-                      setIsPrelistening(true);
-                    }
-                  }}
-                >
-                  {prelistenTrack?.id === track.id && isPrelistening ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {prelistenTrack?.id === track.id && isPrelistening ? 'Pause' : 'Play'}
-                  </span>
-                </Button>
-
+                {!track.removed && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (prelistenTrack?.id === track.id) {
+                        setIsPrelistening(!isPrelistening);
+                      } else {
+                        setPrelistenTrack(track);
+                        setIsPrelistening(true);
+                      }
+                    }}
+                  >
+                    {prelistenTrack?.id === track.id && isPrelistening ? (
+                      <Pause className="h-4 w-4" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {prelistenTrack?.id === track.id && isPrelistening ? 'Pause' : 'Play'}
+                    </span>
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                       <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
+                      <span className="sr-only">More options</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => handleTrackSelect(track)}>
+                    <DropdownMenuItem
+                      disabled={track.removed}
+                      onClick={() => {
+                        addToQueue(track)
+                        //toast.success(`Added "${track.title}" to queue`)
+                      }}
+                    >
                       Add to Queue
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      playNext(track)
-                      toast.success(`"${track.title}" will play next`)
-                    }}>
+                    <DropdownMenuItem
+                      disabled={track.removed}
+                      onClick={() => {
+                        playNext(track)
+                        toast.success(`"${track.title}" will play next`)
+                      }}
+                    >
                       Play Next
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      playLast(track)
-                      toast.success(`Added "${track.title}" to end of queue`)
-                    }}>
+                    <DropdownMenuItem
+                      disabled={track.removed}
+                      onClick={() => {
+                        playLast(track)
+                        toast.success(`Added "${track.title}" to end of queue`)
+                      }}
+                    >
                       Play Last
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleEditTrack(track)}>

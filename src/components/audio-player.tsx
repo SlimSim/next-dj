@@ -24,6 +24,7 @@ import {
 import { PlayingQueue } from './playing-queue'
 import { PlayerControlsMenu } from './player-controls-menu'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -110,31 +111,17 @@ export const AudioPlayer = () => {
 
       try {
         if (!currentTrack?.id) {
-          console.log('No current track selected')
+          return
+        }
+        
+        const audioFile = await getAudioFile(currentTrack.id)
+        if (!audioFile ||!audioFile.file) {
+          toast.error(`No audio file found for ${currentTrack.title}.\nAdd the file ${currentTrack.path} to play it.`)
+          playNextTrack()
           return
         }
 
-        console.log('InitAudio - Current track state:', currentTrack)
-        console.log('Attempting to restore file from IndexedDB')
-        
-        const audioFile = await getAudioFile(currentTrack.id)
-        if (!audioFile) {
-          throw new Error(`No audio file found for id: ${currentTrack.id}`)
-        }
-
-        if (!audioFile.file) {
-          throw new Error(`Audio file is null for id: ${currentTrack.id}`)
-        }
-
-        console.log('Retrieved audio file:', {
-          id: currentTrack.id,
-          type: audioFile.file.type,
-          size: audioFile.file.size,
-          isBlob: audioFile.file instanceof Blob
-        })
-
         if (!mountedRef.current) {
-          console.log('Component unmounted, aborting initialization')
           return
         }
 
@@ -151,7 +138,6 @@ export const AudioPlayer = () => {
         
         // Create new URL and set it
         const url = URL.createObjectURL(audioFile.file)
-        console.log('Created object URL:', url)
         audioRef.current.src = url
 
         // Wait for the audio to be loaded
@@ -162,7 +148,6 @@ export const AudioPlayer = () => {
           }
 
           const handleCanPlay = () => {
-            console.log('Audio can play event received')
             if (mountedRef.current) {
               setIsLoading(false)
               setDuration(audioRef.current?.duration || 0)
@@ -183,7 +168,6 @@ export const AudioPlayer = () => {
           audioRef.current.load()
         })
         
-        console.log('Audio loaded successfully')
       } catch (error) {
         console.error('Error initializing audio:', error)
         setIsPlaying(false)

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { MusicMetadata } from './types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -20,6 +20,7 @@ interface PlayerState {
   prelistenDeviceId: string
   prelistenTrack: MusicMetadata | null
   isPrelistening: boolean
+  selectedFolderNames: string[]
 }
 
 interface PlayerActions {
@@ -48,9 +49,38 @@ interface PlayerActions {
   setPrelistenDeviceId: (deviceId: string) => void
   setPrelistenTrack: (track: MusicMetadata | null) => void
   setIsPrelistening: (isPrelistening: boolean) => void
+  addSelectedFolder: (folderName: string, handle: FileSystemDirectoryHandle) => void
+  clearSelectedFolders: () => void
 }
 
 type PlayerStore = PlayerState & PlayerActions
+
+// Helper function to work with IndexedDB
+const storeHandle = async (folderName: string, handle: FileSystemDirectoryHandle) => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('next-dj', 1);
+    
+    request.onerror = () => reject(request.error);
+    
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('handles')) {
+        db.createObjectStore('handles');
+      }
+    };
+    
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction(['handles'], 'readwrite');
+      const store = transaction.objectStore('handles');
+      
+      const storeRequest = store.put(handle, folderName);
+      
+      storeRequest.onsuccess = () => resolve(undefined);
+      storeRequest.onerror = () => reject(storeRequest.error);
+    };
+  });
+};
 
 export const usePlayerStore = create<PlayerStore>()(
   persist(
@@ -71,6 +101,7 @@ export const usePlayerStore = create<PlayerStore>()(
       prelistenDeviceId: 'default',
       prelistenTrack: null,
       isPrelistening: false,
+      selectedFolderNames: [],
 
       setCurrentTrack: (track: MusicMetadata | null) => set({ 
         currentTrack: track ? { ...track, queueId: track.queueId || uuidv4() } : null 
@@ -138,6 +169,8 @@ export const usePlayerStore = create<PlayerStore>()(
           if (currentTrack) {
             set((state) => ({
               history: [...state.history, currentTrack],
+              currentTrack: null,
+              isPlaying: false
             }))
           }
           if (repeat === 'all' && currentTrack) {
@@ -162,7 +195,7 @@ export const usePlayerStore = create<PlayerStore>()(
 
         if (currentTrack) {
           set((state) => ({
-            history: [...state.history, currentTrack],
+            history: [...state.history, currentTrack]
           }))
         }
 
@@ -180,14 +213,17 @@ export const usePlayerStore = create<PlayerStore>()(
           const trackWithQueueId = { ...currentTrack, queueId: uuidv4() }
           set((state) => ({
             queue: [trackWithQueueId, ...state.queue],
+            history: newHistory,
+            currentTrack: previousTrack,
+            isPlaying: true
           }))
+        } else {
+          set({
+            currentTrack: previousTrack,
+            history: newHistory,
+            isPlaying: true
+          })
         }
-
-        set({
-          currentTrack: previousTrack,
-          history: newHistory,
-          isPlaying: true,
-        })
       },
       
       triggerRefresh: () => set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
@@ -205,7 +241,26 @@ export const usePlayerStore = create<PlayerStore>()(
       setSelectedDeviceId: (deviceId: string) => set({ selectedDeviceId: deviceId }),
       setPrelistenDeviceId: (deviceId: string) => set({ prelistenDeviceId: deviceId }),
       setPrelistenTrack: (track: MusicMetadata | null) => set({ prelistenTrack: track }),
-      setIsPrelistening: (isPrelistening: boolean) => set({ isPrelistening: isPrelistening }),
+      setIsPrelistening: (isPrelistening: boolean) => set({ isPrelistening }),
+      addSelectedFolder: async (folderName, handle) => {
+        // Store the handle in IndexedDB
+        await storeHandle(folderName, handle)
+
+        set((state) => ({
+          selectedFolderNames: [...state.selectedFolderNames, folderName]
+        }))
+      },
+      clearSelectedFolders: () => {
+        // Clear handles from IndexedDB
+        const request = indexedDB.open('next-dj', 1)
+        request.onsuccess = () => {
+          const db = request.result
+          const transaction = db.transaction(['handles'], 'readwrite')
+          const store = transaction.objectStore('handles')
+          store.clear()
+        }
+        set({ selectedFolderNames: [] })
+      },
     }),
     {
       name: 'player-store',
@@ -213,11 +268,9 @@ export const usePlayerStore = create<PlayerStore>()(
         volume: state.volume,
         shuffle: state.shuffle,
         repeat: state.repeat,
-        audioDevices: state.audioDevices,
         selectedDeviceId: state.selectedDeviceId,
         prelistenDeviceId: state.prelistenDeviceId,
-        prelistenTrack: state.prelistenTrack,
-        isPrelistening: state.isPrelistening,
+        selectedFolderNames: state.selectedFolderNames,
       }),
     }
   )

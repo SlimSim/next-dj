@@ -37,7 +37,6 @@ export const PrelistenAudioPlayer = () => {
       setIsLoading(true)
 
       try {
-        console.log('Loading prelisten audio for track:', prelistenTrack.id)
         const audioFile = await getAudioFile(prelistenTrack.id)
         
         if (!audioFile || !audioFile.file) {
@@ -59,7 +58,6 @@ export const PrelistenAudioPlayer = () => {
 
         // Create new URL and set it
         const url = URL.createObjectURL(audioFile.file)
-        console.log('Created prelisten object URL:', url)
         audioRef.current.src = url
 
         // Wait for the audio to be loaded
@@ -70,7 +68,6 @@ export const PrelistenAudioPlayer = () => {
           }
 
           const handleCanPlay = () => {
-            console.log('Prelisten audio can play')
             if (mountedRef.current) {
               setIsLoading(false)
             }
@@ -90,7 +87,6 @@ export const PrelistenAudioPlayer = () => {
           audioRef.current.load()
         })
 
-        console.log('Prelisten audio loaded successfully')
       } catch (error) {
         console.error('Error loading prelisten audio:', error)
         setIsPrelistening(false)
@@ -115,7 +111,6 @@ export const PrelistenAudioPlayer = () => {
     if (isPrelistening && !isLoading) {
       // Check if the audio is actually ready to play
       if (!audioRef.current.src || audioRef.current.readyState < 2) {
-        console.log('Audio not ready to play yet')
         setIsPrelistening(false)
         return
       }
