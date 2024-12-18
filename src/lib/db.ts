@@ -56,7 +56,6 @@ export async function initDB(): Promise<IDBPDatabase<MusicPlayerDB>> {
 }
 
 export async function addAudioFile(file: File | FileSystemFileHandle, metadata: Partial<MusicMetadata>, isReference = false): Promise<string> {
-  console.log("Adding audio file:", metadata.path)
   const db = await initDB()
   
   // First check if the file exists
@@ -64,10 +63,8 @@ export async function addAudioFile(file: File | FileSystemFileHandle, metadata: 
     const tx = db.transaction('metadata', 'readwrite')
     const existingFile = await tx.store.index('by-path').get(metadata.path)
     if (existingFile) {
-      console.log("File already exists:", metadata.path)
       // If the file was previously marked as removed, clear that flag
       if (existingFile.removed) {
-        console.log("File was previously removed, restoring:", metadata.path)
         existingFile.removed = false
         await tx.store.put(existingFile)
       }
@@ -76,7 +73,6 @@ export async function addAudioFile(file: File | FileSystemFileHandle, metadata: 
   }
 
   const id = crypto.randomUUID()
-  console.log("Creating new file with ID:", id)
   
   let fileMetadata: any
   let audioFile: AudioFile
@@ -125,7 +121,6 @@ export async function addAudioFile(file: File | FileSystemFileHandle, metadata: 
     await metadataTx.store.put(metadataEntry)
     await metadataTx.done
 
-    console.log("Successfully added file:", metadata.path)
     return id
   } catch (error) {
     console.error("Error adding file:", error)
@@ -185,13 +180,11 @@ export async function deleteAudioFile(id: string): Promise<void> {
 }
 
 export async function markFileAsRemoved(filePath: string): Promise<void> {
-  console.log("Marking file as removed:", filePath)
   const db = await initDB()
   const tx = db.transaction('metadata', 'readwrite')
   const file = await tx.store.index('by-path').get(filePath)
   if (file) {
     file.removed = true
     await tx.store.put(file)
-    console.log("File marked as removed:", filePath)
   }
 }

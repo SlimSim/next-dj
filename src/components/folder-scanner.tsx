@@ -8,7 +8,6 @@ import { addAudioFile, markFileAsRemoved, initDB } from '@/lib/db'
 
 // Helper function to get handle from IndexedDB
 const getHandle = async (folderName: string): Promise<FileSystemDirectoryHandle | null> => {
-  console.log("get handle for:", folderName)
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('next-dj', 1)
     request.onerror = () => reject(request.error)
@@ -23,22 +22,17 @@ const getHandle = async (folderName: string): Promise<FileSystemDirectoryHandle 
   })
 }
 
-console.log("folder scanner module loaded")
 
 export function FolderScanner() {
-  console.log("FolderScanner rendered")
   const triggerRefresh = usePlayerStore(state => state.triggerRefresh)
   const selectedFolderNames = usePlayerStore(state => state.selectedFolderNames)
-  console.log("Selected folders:", selectedFolderNames)
 
   const processDirectory = async (dirHandle: FileSystemDirectoryHandle, path = '', isCancelled: () => boolean) => {
-    console.log("Processing directory:", path || dirHandle.name)
     try {
       const entries = dirHandle.values()
       const existingFiles = new Set<string>()
       for await (const entry of entries) {
         if (isCancelled()) {
-          console.log("Processing cancelled")
           return
         }
 
@@ -48,7 +42,6 @@ export function FolderScanner() {
           
           if (isAudioFile(file)) {
             const newPath = path ? `${path}/${file.name}` : file.name
-            console.log("Found audio file:", newPath)
             existingFiles.add(newPath)
             const metadata = {
               title: file.name.replace(/\.[^/.]+$/, ''),
@@ -83,34 +76,27 @@ export function FolderScanner() {
   }
 
   useEffect(() => {
-    console.log("useEffect running, selectedFolderNames:", selectedFolderNames)
     if (selectedFolderNames.length === 0) {
-      console.log("No folders selected, skipping scan")
       return
     }
 
     let isCancelled = false
 
     const scanFolders = async () => {
-      console.log("Starting folder scan")
       try {
         for (const folderName of selectedFolderNames) {
           if (isCancelled) {
-            console.log("Scan cancelled")
             return
           }
 
-          console.log("Scanning folder:", folderName)
           try {
             const handle = await getHandle(folderName)
             if (!handle) {
-              console.log("No handle found for:", folderName)
               continue
             }
 
             const permissionStatus = await handle.queryPermission({ mode: 'read' })
             if (permissionStatus === 'granted') {
-              console.log("Permission granted for:", folderName)
               await processDirectory(handle, '', () => isCancelled)
             }
           } catch (error) {
@@ -119,7 +105,6 @@ export function FolderScanner() {
           }
         }
         if (!isCancelled) {
-          console.log("Scan complete, triggering refresh")
           triggerRefresh()
         }
       } catch (error) {
@@ -133,7 +118,6 @@ export function FolderScanner() {
 
     // Cleanup function to cancel any in-progress scan
     return () => {
-      console.log("Cleanup: cancelling scan")
       isCancelled = true
     }
   }, [selectedFolderNames, triggerRefresh])
