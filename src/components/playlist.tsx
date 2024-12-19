@@ -130,7 +130,7 @@ export function Playlist({ searchQuery }: PlaylistProps) {
 
   return (
     <div className="h-full flex-1 flex flex-col container mx-auto p-0">
-      <div className="w-full h-full overflow-auto">
+      <div className="w-full h-full">
         {filteredTracks.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             {tracks.length === 0 ? 'No tracks added yet' : 'No tracks found'}
