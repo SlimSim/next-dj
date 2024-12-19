@@ -25,7 +25,8 @@ import { PlayingQueue } from './playing-queue'
 import { PlayerControlsMenu } from './player-controls-menu'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import OpenSongListButton from './open-song-list-button'
+import OpenPlayingQueueButton from './open-playing-queue-button'
+import OpenPlayerControlsButton from './open-player-controls-button'
 
 export const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -35,6 +36,8 @@ export const AudioPlayer = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [audioFile, setAudioFile] = useState<AudioFile | null>(null)
   const [isControlsMenuOpen, setIsControlsMenuOpen] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [isButtonVisible, setIsButtonVisible] = useState(true)
 
   const {
     currentTrack,
@@ -227,9 +230,28 @@ export const AudioPlayer = () => {
     return () => audio.removeEventListener('ended', handleEnded)
   }, [currentTrack])
 
+  useEffect(() => {
+    if (!isPlaying && !isButtonVisible) {
+      const timeout = setTimeout(() => {
+        setIsButtonVisible(true);
+        // Add a small delay before removing animation class
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 50);
+      }, 200);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isPlaying, isButtonVisible]);
+
   const togglePlay = useCallback(() => {
     if (!audioRef.current || !currentTrack || isLoading || loadingRef.current) return
     setIsPlaying(!isPlaying)
+    setIsAnimating(true)
+    setTimeout(() => {
+      setIsAnimating(false)
+      setIsButtonVisible(false)
+    }, 1000)
   }, [currentTrack, isPlaying, isLoading])
 
   const cleanup = useCallback(() => {
@@ -263,7 +285,7 @@ export const AudioPlayer = () => {
         </div>
         <div className="container flex items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-4">
-            <OpenSongListButton number={queue.length} onClick={() => setQueueVisible(!isQueueVisible)} />
+            <OpenPlayingQueueButton number={queue.length} onClick={() => setQueueVisible(!isQueueVisible)} />
             {currentTrack?.coverArt && (
               <img
                 src={currentTrack.coverArt}
@@ -289,14 +311,26 @@ export const AudioPlayer = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsControlsMenuOpen(true)}
-            >
-              <MoreVertical className="h-5 w-5" />
-              <span className="sr-only">Open player controls</span>
-            </Button>
+            {isButtonVisible && (
+              <Button
+                variant="default"
+                size="icon"
+                onClick={togglePlay}
+                className={`transition-transform duration-1000 ease-in-out ${
+                  isAnimating ? 'transform scale-0 translate-x-11' : 'transform scale-100 translate-x-0'
+                }`}
+              >
+                {!isPlaying ? (
+                  <Play className="h-5 w-5" />
+                ):(
+                  <Pause className="h-5 w-5" />
+                )}
+                <span className="sr-only">
+                  "Play / Pause"
+                </span>
+              </Button>
+            )}
+            <OpenPlayerControlsButton onClick={() => setIsControlsMenuOpen(!isControlsMenuOpen)} />
           </div>
         </div>
       </div>
