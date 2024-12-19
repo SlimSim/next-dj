@@ -8,7 +8,7 @@ interface OpenSongListButtonProps {
   number: number;
 }
 
-const OpenSongListButton: React.FC<OpenSongListButtonProps> = ({ onClick, number }) => {
+const OpenPlayingQueueButton: React.FC<OpenSongListButtonProps> = ({ onClick, number }) => {
 
   return (
     <Button
@@ -32,4 +32,4 @@ const OpenSongListButton: React.FC<OpenSongListButtonProps> = ({ onClick, number
 
 };
 
-export default OpenSongListButton;
+export default OpenPlayingQueueButton;
