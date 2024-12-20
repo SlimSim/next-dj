@@ -1,37 +1,43 @@
-// hooks/useAudioPlayer.ts
 import { useCallback, useRef, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { getAudioFile, incrementPlayCount } from "@/lib/db";
 import { toast } from "sonner";
 
-export const useAudioPlayer = () => {
+export const useAudioPlayer = (trackProp = "currentTrack") => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentFileRef = useRef<Blob | null>(null);
   const loadingRef = useRef(false);
   const mountedRef = useRef(true);
   const [isLoading, setIsLoading] = useState(false);
+  const track = usePlayerStore((state) => state[trackProp]);
 
   const {
-    currentTrack,
     isPlaying,
     volume,
     setIsPlaying,
     setDuration,
     setCurrentTime,
     playNextTrack,
+    setPrelistenDuration,
   } = usePlayerStore();
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+      if (trackProp === "currentTrack") {
+        setCurrentTime(audioRef.current.currentTime);
+      }
     }
-  }, [setCurrentTime]);
+  }, [setCurrentTime, trackProp]);
 
   const handleLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
-      setDuration(audioRef.current.duration);
+      if (trackProp === "currentTrack") {
+        setDuration(audioRef.current.duration);
+      } else {
+        setPrelistenDuration(audioRef.current.duration);
+      }
     }
-  }, [setDuration]);
+  }, [setDuration, setPrelistenDuration, trackProp]);
 
   const initAudio = async () => {
     if (loadingRef.current) return;
@@ -40,12 +46,14 @@ export const useAudioPlayer = () => {
     setIsLoading(true);
 
     try {
-      if (!currentTrack?.id) return;
+      if (!track?.id) return;
 
-      const audioFile = await getAudioFile(currentTrack.id);
+      const audioFile = await getAudioFile(track.id);
       if (!audioFile?.file) {
-        toast.error(`No audio file found for ${currentTrack.title}`);
-        playNextTrack();
+        toast.error(`No audio file found for ${track.title}`);
+        if (trackProp === "currentTrack") {
+          playNextTrack();
+        }
         return;
       }
 
@@ -70,7 +78,11 @@ export const useAudioPlayer = () => {
         const handleCanPlay = () => {
           if (mountedRef.current) {
             setIsLoading(false);
-            setDuration(audioRef.current?.duration || 0);
+            if (trackProp === "currentTrack") {
+              setDuration(audioRef.current?.duration || 0);
+            } else {
+              setPrelistenDuration(audioRef.current?.duration || 0);
+            }
           }
           resolve();
         };
