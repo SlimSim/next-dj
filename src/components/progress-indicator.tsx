@@ -19,7 +19,3 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ value, max }) => 
 };
 
 export default ProgressIndicator;
-
-        
-        
-        

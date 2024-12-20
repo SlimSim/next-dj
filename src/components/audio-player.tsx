@@ -28,6 +28,7 @@ import { toast } from 'sonner'
 import OpenPlayingQueueButton from './open-playing-queue-button'
 import OpenPlayerControlsButton from './open-player-controls-button'
 import ProgressIndicator from './progress-indicator'
+import CurrentSongInfo from './current-song-info'
 
 export const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -281,29 +282,7 @@ export const AudioPlayer = () => {
         <div className="container flex items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-4">
             <OpenPlayingQueueButton number={queue.length} onClick={() => setQueueVisible(!isQueueVisible)} />
-            {currentTrack?.coverArt && (
-              <img
-                src={currentTrack.coverArt}
-                alt={currentTrack.title}
-                width={40}
-                height={40}
-                className="aspect-square rounded-md object-cover"
-              />
-            )}
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium leading-none">
-                {currentTrack?.title || 'No track playing'}
-              </h3>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <span>{currentTrack?.artist || 'Unknown artist'}</span>
-                <span className="mx-2">•</span>
-                <span>{formatTime(currentTime)}</span>
-                <span className="mx-1">/</span>
-                <span>{formatTime(duration)}</span>
-                <span className="mx-2">•</span>
-                <span>-{formatTime(duration - currentTime)}</span>
-              </div>
-            </div>
+            <CurrentSongInfo track={currentTrack} duration={duration} currentTime={currentTime} />
           </div>
           <div className="flex items-center gap-2">
             {isButtonVisible && (
