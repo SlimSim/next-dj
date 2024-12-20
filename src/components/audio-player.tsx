@@ -20,16 +20,12 @@ export const AudioPlayer = () => {
   const loadingRef = useRef(false);
   const mountedRef = useRef(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [audioFile, setAudioFile] = useState<AudioFile | null>(null);
   const [isControlsMenuOpen, setIsControlsMenuOpen] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isButtonVisible, setIsButtonVisible] = useState(true);
 
   const {
     currentTrack,
     isPlaying,
     volume,
-    shuffle,
     repeat,
     duration,
     currentTime,
@@ -37,13 +33,10 @@ export const AudioPlayer = () => {
     queue,
     setIsPlaying,
     setVolume,
-    setShuffle,
-    setRepeat,
     setDuration,
     setCurrentTime,
     setQueueVisible,
     playNextTrack,
-    playPreviousTrack,
   } = usePlayerStore();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -233,38 +226,12 @@ export const AudioPlayer = () => {
     return () => audio.removeEventListener("ended", handleEnded);
   }, [currentTrack]);
 
-  useEffect(() => {
-    if (!isPlaying && !isButtonVisible) {
-      const timeout = setTimeout(() => {
-        setIsButtonVisible(true);
-        // Add a small delay before removing animation class
-        setTimeout(() => {
-          setIsAnimating(false);
-        }, 50);
-      }, 200);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isPlaying, isButtonVisible]);
-
   const togglePlay = useCallback(() => {
     if (!audioRef.current || !currentTrack || isLoading || loadingRef.current)
       return;
 
     setIsPlaying(!isPlaying);
   }, [currentTrack, isPlaying, isLoading]);
-
-  const cleanup = useCallback(() => {
-    if (currentFileRef.current) {
-      URL.revokeObjectURL(URL.createObjectURL(currentFileRef.current));
-      currentFileRef.current = null;
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-      audioRef.current.load();
-    }
-  }, []);
 
   return (
     <div
