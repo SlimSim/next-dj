@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import OpenPlayingQueueButton from './open-playing-queue-button'
 import OpenPlayerControlsButton from './open-player-controls-button'
+import ProgressIndicator from './progress-indicator'
 
 export const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -276,13 +277,7 @@ export const AudioPlayer = () => {
         "border-t",
         queue.length === 0 && currentTrack && "border-red-500/70 dark:border-red-400/70"
       )}>
-        {/* Progress indicator bar - non-interactive */}
-        <div className="h-1 bg-muted">
-          <div 
-            className="h-full bg-primary transition-all duration-200"
-            style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
-          />
-        </div>
+        <ProgressIndicator value={currentTime} max={duration} />
         <div className="container flex items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-4">
             <OpenPlayingQueueButton number={queue.length} onClick={() => setQueueVisible(!isQueueVisible)} />
