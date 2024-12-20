@@ -1,1 +1,1 @@
-This is a PWA-music player for DJ's!
+This is Next DJ, a PWA-music player optimized for DJ's!

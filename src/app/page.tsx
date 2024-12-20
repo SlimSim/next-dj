@@ -24,12 +24,12 @@ export default function Home() {
             )}
           >
             <h1 className="text-xl sm:text-2xl font-bold text-red-500">
-              Music Player
+              Next DJ
             </h1>
           </div>
           <div
             className={cn(
-              "transition-all duration-200",
+              "transition-all duration-200 px-0 sm:px-4",
               isSearchFocused ? "flex-1" : "flex-1 mx-4"
             )}
           >

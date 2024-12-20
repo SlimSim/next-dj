@@ -1,7 +1,9 @@
 {
-  "name": "Music Player PWA",
-  "short_name": "Music PWA",
-  "description": "A Progressive Web App for playing music with offline support",
+  "name": "Next DJ",
+  "short_name": "Next DJ",
+  "description": "A music player designed for DJ'ing with uninterrupted playback. Featuring protections against accidental song changes by hiding the pause and skip buttons, it ensures a smooth and continuous music flow.",
+  "scope": "/",
+  "orientation": "portrait",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
