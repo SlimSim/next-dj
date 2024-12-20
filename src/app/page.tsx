@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Playlist } from "@/components/playlist";
 import { AudioPlayer } from "@/components/audio-player";
 import { SettingsDialog } from "@/components/settings-dialog";
-import { PrelistenAudioPlayer } from "@/components/prelisten-audio-player";
+import {
+  PrelistenAudioPlayer,
+  PrelistenAudioRef,
+} from "@/components/prelisten-audio-player";
 import { Input } from "@/components/ui/input";
 import { FolderScanner } from "@/components/folder-scanner"; // Added import
 import { cn } from "@/lib/utils";
@@ -12,6 +15,7 @@ import { cn } from "@/lib/utils";
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const prelistenRef = useRef<PrelistenAudioRef>(null);
 
   return (
     <main className="flex h-dvh flex-col bg-white dark:bg-neutral-950">
@@ -61,10 +65,10 @@ export default function Home() {
         <div className="flex flex-col">
           <div className="flex-1 container mx-auto p-4">
             <FolderScanner />
-            <Playlist searchQuery={searchQuery} />
+            <Playlist searchQuery={searchQuery} prelistenRef={prelistenRef} />
           </div>
         </div>
-        <PrelistenAudioPlayer />
+        <PrelistenAudioPlayer ref={prelistenRef} />
       </div>
 
       <footer className="flex-none border-t bg-white/95 dark:bg-neutral-950/95 w-full">

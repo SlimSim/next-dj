@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useImperativeHandle, forwardRef } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { useAudioControls } from "../hooks/useAudioControls";
 import { useAudioDevice } from "../hooks/useAudioDevice";
 
-export const PrelistenAudioPlayer = () => {
+export interface PrelistenAudioRef {
+  seek: (time: number) => void;
+}
+
+export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>((props, ref) => {
   const {
     prelistenTrack,
     isPrelistening,
@@ -28,6 +32,14 @@ export const PrelistenAudioPlayer = () => {
   const { togglePlay } = useAudioControls(audioRef, isLoading);
 
   useAudioDevice(audioRef, prelistenDeviceId);
+
+  useImperativeHandle(ref, () => ({
+    seek: (time: number) => {
+      if (audioRef.current) {
+        audioRef.current.currentTime = time;
+      }
+    }
+  }));
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -87,4 +99,4 @@ export const PrelistenAudioPlayer = () => {
   }, [isPrelistening, isLoading, setIsPrelistening]);
 
   return <audio ref={audioRef} id="prelisten-audio" preload="auto" />;
-};
+});

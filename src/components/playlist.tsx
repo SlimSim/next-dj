@@ -21,12 +21,14 @@ import { getAllMetadata, deleteAudioFile, updateMetadata } from "@/lib/db";
 import { MusicMetadata } from "@/lib/types";
 import { formatTime, cn } from "@/lib/utils";
 import { MoreVertical, Play, Pause, Pencil, Trash } from "lucide-react";
+import { PrelistenAudioRef } from "./prelisten-audio-player";
 
 interface PlaylistProps {
   searchQuery: string;
+  prelistenRef: PrelistenAudioRef;
 }
 
-export function Playlist({ searchQuery }: PlaylistProps) {
+export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
   const [tracks, setTracks] = useState<MusicMetadata[]>([]);
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -134,6 +136,22 @@ export function Playlist({ searchQuery }: PlaylistProps) {
     handleDelete(track);
   };
 
+  const handlePrelistenTimelineClick = (
+    e: React.MouseEvent,
+    track: MusicMetadata
+  ) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const newTime = (track.duration || 0) * percentage;
+
+    prelistenRef.current?.seek(newTime);
+    setPrelistenTrack({
+      ...track,
+      currentTime: newTime,
+    });
+  };
+
   return (
     <div className="h-full flex-1 flex flex-col container mx-auto p-0">
       <div className="w-full h-full">
@@ -177,17 +195,20 @@ export function Playlist({ searchQuery }: PlaylistProps) {
                       </span>
                       <div
                         className="relative flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const percentage = x / rect.width;
-                          const newTime =
-                            (prelistenTrack.duration || 0) * percentage;
-                          setPrelistenTrack({
-                            ...prelistenTrack,
-                            currentTime: newTime,
-                          });
-                        }}
+                        onClick={(e) =>
+                          handlePrelistenTimelineClick(e, prelistenTrack)
+                        }
+                        // onClick={(e) => {
+                        //   const rect = e.currentTarget.getBoundingClientRect();
+                        //   const x = e.clientX - rect.left;
+                        //   const percentage = x / rect.width;
+                        //   const newTime =
+                        //     (prelistenTrack.duration || 0) * percentage;
+                        //   setPrelistenTrack({
+                        //     ...prelistenTrack,
+                        //     currentTime: newTime,
+                        //   });
+                        // }}
                       >
                         <div
                           className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"
