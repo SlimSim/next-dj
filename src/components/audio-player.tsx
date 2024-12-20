@@ -299,12 +299,7 @@ export const AudioPlayer = () => {
             <PlayButton
               isPlaying={isPlaying}
               onClick={togglePlay}
-              // disabled={
-              //   !audioRef.current ||
-              //   !currentTrack ||
-              //   isLoading ||
-              //   loadingRef.current
-              // }
+              disabled={!currentTrack || isLoading}
             />
             <OpenPlayerControlsButton
               onClick={() => setIsControlsMenuOpen(!isControlsMenuOpen)}
