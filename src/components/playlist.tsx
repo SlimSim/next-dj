@@ -18,7 +18,7 @@ import {
 } from "./ui/dialog";
 import { usePlayerStore } from "@/lib/store";
 import { getAllMetadata, deleteAudioFile, updateMetadata } from "@/lib/db";
-import { MusicMetadata } from "@/lib/types";
+import { MusicMetadata } from "@/lib/types/types";
 import { formatTime, cn } from "@/lib/utils";
 import { MoreVertical, Play, Pause, Pencil, Trash } from "lucide-react";
 import { PrelistenAudioRef } from "./prelisten-audio-player";

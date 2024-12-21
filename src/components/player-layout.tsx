@@ -1,4 +1,4 @@
-import { AudioFile, MusicMetadata } from "@/lib/types";
+import { AudioFile, MusicMetadata } from "@/lib/types/types";
 import { PlayingQueue } from "./playing-queue";
 import { PlayerControlsMenu } from "./player-controls-menu";
 import { cn } from "@/lib/utils";

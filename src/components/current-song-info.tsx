@@ -1,4 +1,4 @@
-import { MusicMetadata } from "@/lib/types";
+import { MusicMetadata } from "@/lib/types/types";
 import { formatTime } from "@/lib/utils";
 import React from "react";
 

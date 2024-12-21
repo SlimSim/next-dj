@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { MusicMetadata } from '@/lib/types'
+import { MusicMetadata } from '@/lib/types/types'
 
 interface QueueItemProps {
   track: MusicMetadata

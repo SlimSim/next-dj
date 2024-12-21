@@ -27,3 +27,4 @@ export interface PlaybackState {
   volume: number
   isMuted: boolean
 }
+
