@@ -4,21 +4,24 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { usePlayerStore } from '@/lib/store'
 import { isAudioFile } from '@/lib/utils'
-import { addAudioFile, markFileAsRemoved, initDB } from '@/lib/db'
+import { addAudioFile } from '@/db/audio-operations'
+import { markFileAsRemoved } from '@/db/metadata-operations'
+import { initMusicDB } from '@/db/schema'
+
+
+// TODO: flytta dessa handle-funktioner till handle-operations.ts???
+
 
 // Helper function to get handle from IndexedDB
-const getHandle = async (folderName: string): Promise<FileSystemDirectoryHandle | null> => {
+
+export const getHandle = async (folderName: string): Promise<FileSystemDirectoryHandle | null> => {
+  const db = await initMusicDB()
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('next-dj', 1)
-    request.onerror = () => reject(request.error)
-    request.onsuccess = () => {
-      const db = request.result
-      const transaction = db.transaction(['handles'], 'readonly')
-      const store = transaction.objectStore('handles')
-      const getRequest = store.get(folderName)
-      getRequest.onsuccess = () => resolve(getRequest.result)
-      getRequest.onerror = () => reject(getRequest.error)
-    }
+    const transaction = db.transaction(['handles'], 'readonly')
+    const store = transaction.objectStore('handles')
+    const getRequest = store.get(folderName)
+    getRequest.onsuccess = () => resolve(getRequest.result)
+    getRequest.onerror = () => reject(getRequest.error)
   })
 }
 
@@ -61,11 +64,11 @@ export function FolderScanner() {
       }
 
       // Mark files as removed if they are no longer in the directory
-      const db = await initDB()
+      const db = await initMusicDB()
       const tx = db.transaction('metadata', 'readonly')
       const allFiles = await tx.store.getAll()
       for (const file of allFiles) {
-        if (!existingFiles.has(file.path)) {
+        if (file.path && !existingFiles.has(file.path)) {
           await markFileAsRemoved(file.path)
         }
       }

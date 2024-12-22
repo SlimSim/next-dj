@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Button } from './ui/button'
 import { Upload, Folder } from 'lucide-react'
 import { isAudioFile } from '@/lib/utils'
-import { addAudioFile } from '@/lib/db'
+import { addAudioFile } from '@/db/audio-operations'
 import { usePlayerStore } from '@/lib/store'
 
 interface FileSystemHandle {

@@ -1,7 +1,5 @@
-export interface MusicMetadata {
-    queueId?: string;
-    // Add other music metadata properties here
-  }
+import { MusicMetadata } from "./types";
+
   
   export interface PlayerState {
     currentTrack: MusicMetadata | null;

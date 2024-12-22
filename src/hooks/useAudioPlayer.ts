@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
-import { getAudioFile, incrementPlayCount } from "@/lib/db";
 import { toast } from "sonner";
+import { getAudioFile } from "@/db/audio-operations";
 
 export const useAudioPlayer = (trackProp = "currentTrack") => {
   const audioRef = useRef<HTMLAudioElement>(null);

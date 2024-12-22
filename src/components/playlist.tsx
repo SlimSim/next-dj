@@ -17,11 +17,13 @@ import {
   DialogFooter,
 } from "./ui/dialog";
 import { usePlayerStore } from "@/lib/store";
-import { getAllMetadata, deleteAudioFile, updateMetadata } from "@/lib/db";
+// import { getAllMetadata, deleteAudioFile, updateMetadata } from "@/db/audio-operations";
 import { MusicMetadata } from "@/lib/types/types";
 import { formatTime, cn } from "@/lib/utils";
 import { MoreVertical, Play, Pause, Pencil, Trash } from "lucide-react";
 import { PrelistenAudioRef } from "./prelisten-audio-player";
+import { getAllMetadata, updateMetadata } from "@/db/metadata-operations";
+import { deleteAudioFile } from "@/db/audio-operations";
 
 interface PlaylistProps {
   searchQuery: string;

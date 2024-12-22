@@ -16,6 +16,8 @@ export interface AudioFile {
   id: string
   file: Blob
   metadata: MusicMetadata
+  isReference?: boolean
+  fileHandle?: FileSystemFileHandle
 }
 
 export type RepeatMode = 'none' | 'one' | 'all'

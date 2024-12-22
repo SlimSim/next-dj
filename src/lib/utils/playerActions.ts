@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import { MusicMetadata, PlayerState } from "../types/player";
+import { PlayerState } from "../types/player";
+import { MusicMetadata } from "../types/types";
 
 export const createQueueActions = (set: any, get: () => PlayerState) => ({
   addToQueue: (track: MusicMetadata) =>
