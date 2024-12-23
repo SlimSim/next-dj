@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { usePlayerStore } from '@/lib/store'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import {
   DndContext,
   DragEndEvent,
@@ -25,8 +25,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu'
-import { cn } from '@/lib/utils'
+} from '../ui/dropdown-menu'
+import { cn } from '@/lib/utils/common'
 import { MusicMetadata } from '@/lib/types/types'
 
 interface QueueItemProps {

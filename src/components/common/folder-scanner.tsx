@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { usePlayerStore } from '@/lib/store'
-import { isAudioFile } from '@/lib/utils'
+import { isAudioFile } from '@/lib/utils/common'
 import { addAudioFile } from '@/db/audio-operations'
 import { markFileAsRemoved } from '@/db/metadata-operations'
 import { initMusicDB } from '@/db/schema'

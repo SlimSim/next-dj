@@ -2,9 +2,9 @@
 
 import { useEffect, useImperativeHandle, forwardRef } from "react";
 import { usePlayerStore } from "@/lib/store";
-import { useAudioPlayer } from "../hooks/useAudioPlayer";
-import { useAudioControls } from "../hooks/useAudioControls";
-import { useAudioDevice } from "../hooks/useAudioDevice";
+import { useAudioPlayer } from "../../features/audio/hooks/useAudioPlayer";
+import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
+import { useAudioDevice } from "../../features/audio/hooks/useAudioDevice";
 
 export interface PrelistenAudioRef {
   seek: (time: number) => void;

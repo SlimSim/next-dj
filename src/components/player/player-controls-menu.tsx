@@ -1,10 +1,9 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Button } from './ui/button'
-import { Slider } from './ui/slider'
+import { Button } from '../ui/button'
+import { Slider } from '../ui/slider'
 import { usePlayerStore } from '@/lib/store'
-import { formatTime } from '@/lib/utils'
 import {
   Play,
   Pause,
@@ -18,7 +17,8 @@ import {
   X,
   Settings
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/common'
+import { formatTime } from '@/lib/utils/formatting'
 
 interface PlayerControlsMenuProps {
   isOpen: boolean

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { PlayerStore, PlayerState } from "./types/player";
-import { createQueueActions, createPlaybackActions } from "./utils/playerActions";
+import { createQueueActions, createPlaybackActions } from "../features/audio/utils/playerActions";
 import { MusicMetadata } from "./types/types";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 

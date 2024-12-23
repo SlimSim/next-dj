@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from './ui/button';
+import { Button } from '../ui/button';
 import { ListMusic } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/common';
 
 interface OpenSongListButtonProps {
   onClick: () => void;

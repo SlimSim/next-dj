@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Playlist } from "@/components/playlist";
-import { AudioPlayer } from "@/components/audio-player";
-import { SettingsDialog } from "@/components/settings-dialog";
+import { Playlist } from "@/components/player/playlist";
+import { AudioPlayer } from "@/components/player/audio-player";
+import { SettingsDialog } from "@/components/settings/settings-dialog";
 import {
   PrelistenAudioPlayer,
   PrelistenAudioRef,
-} from "@/components/prelisten-audio-player";
+} from "@/components/player/prelisten-audio-player";
 import { Input } from "@/components/ui/input";
-import { FolderScanner } from "@/components/folder-scanner"; // Added import
-import { cn } from "@/lib/utils";
+import { FolderScanner } from "@/components/common/folder-scanner"; // Added import
+import { cn } from "@/lib/utils/common";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");

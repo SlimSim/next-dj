@@ -1,17 +1,17 @@
 'use client'
 
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog'
+} from '../ui/dialog'
 import { Settings } from 'lucide-react'
-import { FileUpload } from './file-upload'
-import { ThemeToggle } from './theme-toggle'
-import { AudioDeviceSelector } from './audio-device-selector'
+import { FileUpload } from '../common/file-upload'
+import { ThemeToggle } from '../common/theme-toggle'
+import { AudioDeviceSelector } from '../player/audio-device-selector'
 
 export function SettingsDialog() {
   return (

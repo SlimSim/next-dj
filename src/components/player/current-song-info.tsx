@@ -1,5 +1,5 @@
 import { MusicMetadata } from "@/lib/types/types";
-import { formatTime } from "@/lib/utils";
+import { formatTime } from "@/lib/utils/formatting";
 import React from "react";
 
 interface CurrentSongInfoProps {

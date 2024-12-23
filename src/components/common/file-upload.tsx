@@ -2,11 +2,11 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import { Upload, Folder } from 'lucide-react'
-import { isAudioFile } from '@/lib/utils'
 import { addAudioFile } from '@/db/audio-operations'
 import { usePlayerStore } from '@/lib/store'
+import { isAudioFile } from '@/features/audio/utils/file-utils'
 
 interface FileSystemHandle {
   kind: 'file' | 'directory'

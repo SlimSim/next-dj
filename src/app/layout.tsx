@@ -1,10 +1,10 @@
 import { Metadata, Viewport } from "next";
 import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "sonner";
-import { ThemeProvider } from "@/components/theme-provider";
-import { StoreProvider } from "@/components/store-provider";
-import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/common/theme-provider";
+import { StoreProvider } from "@/components/common/store-provider";
 import "./globals.css";
+import { cn } from "@/lib/utils/common";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={cn(
+        className={cn (
           "bg-background font-sans antialiased overflow-hidden h-dvh",
           fontSans.variable
         )}

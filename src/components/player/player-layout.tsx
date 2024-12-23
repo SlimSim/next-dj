@@ -1,10 +1,10 @@
 import { AudioFile, MusicMetadata } from "@/lib/types/types";
 import { PlayingQueue } from "./playing-queue";
 import { PlayerControlsMenu } from "./player-controls-menu";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/common";
 import OpenPlayingQueueButton from "./open-playing-queue-button";
 import OpenPlayerControlsButton from "./open-player-controls-button";
-import ProgressIndicator from "./progress-indicator";
+import ProgressIndicator from "../common/progress-indicator";
 import CurrentSongInfo from "./current-song-info";
 import { useState } from "react";
 import { PlayButton } from "./play-button";

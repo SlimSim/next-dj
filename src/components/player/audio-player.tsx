@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useAudioPlayer } from "../hooks/useAudioPlayer";
-import { useAudioControls } from "../hooks/useAudioControls";
+import { useAudioPlayer } from "../../features/audio/hooks/useAudioPlayer";
+import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
 import { PlayerLayout } from "./player-layout";
 import { usePlayerStore } from "@/lib/store";
 
