@@ -15,10 +15,13 @@ import {
   Volume2,
   VolumeX,
   X,
-  Settings
+  Settings,
+  AlertCircle,
+  HelpCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils/common'
 import { formatTime } from '@/lib/utils/formatting'
+import { ConfirmButton } from '../ui/confirm-button'
 
 interface PlayerControlsMenuProps {
   isOpen: boolean
@@ -120,8 +123,9 @@ export function PlayerControlsMenu({
                 <Shuffle className="h-6 w-6" />
                 <span className="sr-only">Toggle shuffle</span>
               </Button>
-              <Button
+              <ConfirmButton
                 variant="ghost"
+                // confirmText={<HelpCircle className="h-6 w-6" />}
                 size="icon"
                 className="h-12 w-12"
                 disabled={!currentTrack}
@@ -129,24 +133,36 @@ export function PlayerControlsMenu({
               >
                 <SkipBack className="h-6 w-6" />
                 <span className="sr-only">Previous track</span>
-              </Button>
-              <Button
-                variant="default"
-                size="icon"
-                className="h-16 w-16"
-                disabled={!currentTrack || isLoading}
-                onClick={togglePlay}
-              >
-                {isPlaying ? (
+              </ConfirmButton>
+
+              {isPlaying ? (
+                <ConfirmButton
+                  variant="default"
+                  size="icon"
+                  className="h-16 w-16"
+                  disabled={!currentTrack || isLoading}
+                  onClick={togglePlay}
+                >
                   <Pause className="h-8 w-8" />
-                ) : (
+                  <span className="sr-only">
+                    Pause
+                  </span>
+                </ConfirmButton>
+              ) : (
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-16 w-16"
+                  disabled={!currentTrack || isLoading}
+                  onClick={togglePlay}
+                >
                   <Play className="h-8 w-8" />
-                )}
-                <span className="sr-only">
-                  {isPlaying ? 'Pause' : 'Play'}
-                </span>
-              </Button>
-              <Button
+                  <span className="sr-only">
+                    Play
+                  </span>
+                </Button>
+              )}
+              <ConfirmButton
                 variant="ghost"
                 size="icon"
                 className="h-12 w-12"
@@ -155,7 +171,7 @@ export function PlayerControlsMenu({
               >
                 <SkipForward className="h-6 w-6" />
                 <span className="sr-only">Next track</span>
-              </Button>
+              </ConfirmButton>
               <Button
                 variant="ghost"
                 size="icon"
@@ -182,7 +198,7 @@ export function PlayerControlsMenu({
             {/* Volume controls */}
             <div className="space-y-4">
               <div className="flex items-center gap-4 px-4">
-                <Button
+                <ConfirmButton
                   variant="ghost"
                   size="icon"
                   onClick={toggleMute}
@@ -193,7 +209,7 @@ export function PlayerControlsMenu({
                     <Volume2 className="h-5 w-5" />
                   )}
                   <span className="sr-only">Toggle mute</span>
-                </Button>
+                </ConfirmButton>
                 <Slider
                   value={[volume]}
                   min={0}
