@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, ButtonProps } from './button';
 import { HelpCircle } from 'lucide-react';
 
-interface ConfirmButtonProps extends ButtonProps {
+export interface ConfirmButtonProps extends ButtonProps {
   confirmText?: React.ReactNode;
   children: React.ReactNode;
 }

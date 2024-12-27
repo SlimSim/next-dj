@@ -15,13 +15,11 @@ import {
   Volume2,
   VolumeX,
   X,
-  Settings,
-  AlertCircle,
-  HelpCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils/common'
 import { formatTime } from '@/lib/utils/formatting'
 import { ConfirmButton } from '../ui/confirm-button'
+import ConfirmToggleButton from '../ui/confirm-toggle-button'
 
 interface PlayerControlsMenuProps {
   isOpen: boolean
@@ -135,33 +133,17 @@ export function PlayerControlsMenu({
                 <span className="sr-only">Previous track</span>
               </ConfirmButton>
 
-              {isPlaying ? (
-                <ConfirmButton
-                  variant="default"
-                  size="icon"
-                  className="h-16 w-16"
-                  disabled={!currentTrack || isLoading}
-                  onClick={togglePlay}
-                >
-                  <Pause className="h-8 w-8" />
-                  <span className="sr-only">
-                    Pause
-                  </span>
-                </ConfirmButton>
-              ) : (
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="h-16 w-16"
-                  disabled={!currentTrack || isLoading}
-                  onClick={togglePlay}
-                >
-                  <Play className="h-8 w-8" />
-                  <span className="sr-only">
-                    Play
-                  </span>
-                </Button>
-              )}
+              <ConfirmToggleButton
+                isToggled={isPlaying}
+                onToggle={togglePlay}
+                disabled={!currentTrack || isLoading}
+                className="h-16 w-16"
+                variant="default"
+                toggledIcon={<><Pause className="h-8 w-8" /><span className="sr-only">Pause</span></>}
+              >
+                <Play className="h-8 w-8" />
+                <span className="sr-only">Play</span>
+              </ConfirmToggleButton>
               <ConfirmButton
                 variant="ghost"
                 size="icon"
@@ -196,29 +178,26 @@ export function PlayerControlsMenu({
             </div>
 
             {/* Volume controls */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 px-4">
-                <ConfirmButton
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleMute}
-                >
-                  {isMuted || volume === 0 ? (
-                    <VolumeX className="h-5 w-5" />
-                  ) : (
-                    <Volume2 className="h-5 w-5" />
-                  )}
-                  <span className="sr-only">Toggle mute</span>
-                </ConfirmButton>
-                <Slider
-                  value={[volume]}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  onValueChange={([value]) => handleVolumeChange(value)}
-                  className="w-full"
-                />
-              </div>
+            <div className="flex items-center gap-4 px-4">
+              <ConfirmToggleButton
+                variant="ghost"
+                size="icon"
+                toggledIcon={<><Volume2 className="h-5 w-5" />
+                <span className="sr-only">Turn volume on</span></>}
+                isToggled={!(isMuted || volume === 0)}
+                onToggle={toggleMute}
+              >
+                <VolumeX className="h-5 w-5" />
+                <span className="sr-only">Unmute</span>
+              </ConfirmToggleButton>
+              <Slider
+                value={[volume]}
+                min={0}
+                max={1}
+                step={0.01}
+                onValueChange={([value]) => handleVolumeChange(value)}
+                className="w-full"
+              />
             </div>
           </div>
         </div>
