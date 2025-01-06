@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { usePlayerStore } from "@/lib/store";
+import { useSettings } from "../settings/settings-context";
 // import { getAllMetadata, deleteAudioFile, updateMetadata } from "@/db/audio-operations";
 import { MusicMetadata } from "@/lib/types/types";
 import { cn } from "@/lib/utils/common";
@@ -35,7 +36,6 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
   const [tracks, setTracks] = useState<MusicMetadata[]>([]);
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-
   const {
     currentTrack,
     isPlaying,
@@ -52,6 +52,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
     setPrelistenTrack,
     setIsPrelistening,
   } = usePlayerStore();
+  const { showPreListenButtons } = useSettings();
 
   useEffect(() => {
     loadTracks();
@@ -237,7 +238,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                {!track.removed && (
+                {!track.removed && showPreListenButtons && (
                   <Button
                     variant="ghost"
                     size="icon"

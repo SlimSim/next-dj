@@ -3,6 +3,7 @@ import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import { StoreProvider } from "@/components/common/store-provider";
+import { SettingsProvider } from "@/components/settings/settings-context";
 import "./globals.css";
 import { cn } from "@/lib/utils/common";
 
@@ -34,7 +35,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={cn (
+        className={cn(
           "bg-background font-sans antialiased overflow-hidden h-dvh",
           fontSans.variable
         )}
@@ -46,8 +47,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <StoreProvider>
-            {children}
-            <Toaster />
+            <SettingsProvider>
+              {children}
+              <Toaster />
+            </SettingsProvider>
           </StoreProvider>
         </ThemeProvider>
       </body>

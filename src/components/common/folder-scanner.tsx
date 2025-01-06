@@ -3,10 +3,10 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { usePlayerStore } from '@/lib/store'
-import { isAudioFile } from '@/lib/utils/common'
 import { addAudioFile } from '@/db/audio-operations'
 import { markFileAsRemoved } from '@/db/metadata-operations'
 import { initMusicDB } from '@/db/schema'
+import { isAudioFile } from '@/features/audio/utils/file-utils'
 
 
 // TODO: flytta dessa handle-funktioner till handle-operations.ts???
