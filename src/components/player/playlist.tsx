@@ -64,7 +64,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
       setTracks(metadata);
       // Set first track as prelistenTrack if there isn't one and there are tracks available
       if (!prelistenTrack && metadata.length > 0) {
-        setPrelistenTrack({ ...metadata[0], currentTime: 0 });
+        setPrelistenTrack(metadata[0]);
         setIsPrelistening(false);
       }
     } catch (error) {
