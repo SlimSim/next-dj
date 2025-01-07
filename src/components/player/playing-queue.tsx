@@ -158,7 +158,7 @@ export function PlayingQueue() {
     const { active, over } = event
     if (!over || active.id === over.id) return
 
-    const allTracks = [...history, currentTrack, ...queue].filter(Boolean)
+    const allTracks = [...history, currentTrack, ...queue].filter((track): track is NonNullable<typeof track> => Boolean(track))
     const draggedTrack = allTracks.find(track => track.queueId === active.id)
     const targetTrack = allTracks.find(track => track.queueId === over.id)
     
