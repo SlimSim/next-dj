@@ -20,8 +20,19 @@ export const getHandle = async (
     const transaction = db.transaction(["handles"], "readonly");
     const store = transaction.objectStore("handles");
     const getRequest = store.get(folderName);
-    getRequest.onsuccess = () => resolve(getRequest.result);
-    getRequest.onerror = () => reject(getRequest.error);
+    console.log("slim sim here is the important code!");
+    getRequest
+      .then((directoryHandle) => {
+        if (directoryHandle) {
+          resolve(directoryHandle);
+        } else {
+          resolve(null);
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting directory handle:", error);
+        reject(error);
+      });
   });
 };
 
