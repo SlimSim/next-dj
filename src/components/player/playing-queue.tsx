@@ -286,17 +286,21 @@ export function PlayingQueue() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={[...history, currentTrack, ...queue].filter(Boolean)}
+                items={[...history, currentTrack, ...queue]
+                  .filter((track): track is NonNullable<typeof track> => Boolean(track))
+                  .map(track => ({ id: track.queueId }))}
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
-                  {[...history, currentTrack, ...queue].filter(Boolean).map((track, index) => (
-                    <QueueItem
-                      key={`${track.id}-${index}`}
-                      track={track}
-                      isPlaying={currentTrack?.id === track.id}
-                      isHistory={index < history.length}
-                    />
+                  {[...history, currentTrack, ...queue]
+                    .filter((track): track is NonNullable<typeof track> => Boolean(track))
+                    .map((track, index) => (
+                      <QueueItem
+                        key={`${track.id}-${index}`}
+                        track={track}
+                        isPlaying={currentTrack?.id === track.id}
+                        isHistory={index < history.length}
+                      />
                   ))}
                 </div>
               </SortableContext>
