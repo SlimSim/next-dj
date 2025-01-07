@@ -36,7 +36,13 @@ export async function addAudioFile(
     audioFile = {
       id,
       file: new Blob([await file.arrayBuffer()], { type: file.type }),
-      isReference: false
+      isReference: false,
+      metadata: {
+        ...fileMetadata,
+        ...metadata,
+        id,
+        queueId: crypto.randomUUID()
+      }
     }
   } else {
     const actualFile = await file.getFile()
@@ -44,7 +50,14 @@ export async function addAudioFile(
     audioFile = {
       id,
       isReference: true,
-      fileHandle: file
+      fileHandle: file,
+      file: new Blob([await actualFile.arrayBuffer()], { type: actualFile.type }),
+      metadata: {
+        ...fileMetadata,
+        ...metadata,
+        id,
+        queueId: crypto.randomUUID()
+      }
     }
   }
 
@@ -58,7 +71,8 @@ export async function addAudioFile(
     path: metadata.path,
     coverArt: metadata.coverArt,
     isReference,
-    removed: false
+    removed: false,
+    queueId: crypto.randomUUID()
   }
 
   try {

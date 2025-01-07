@@ -2,8 +2,11 @@ import { useCallback, useRef, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { toast } from "sonner";
 import { getAudioFile } from "@/db/audio-operations";
+import { PlayerState } from "@/lib/types/player";
 
-export const useAudioPlayer = (trackProp = "currentTrack") => {
+type TrackPropKey = keyof Pick<PlayerState, "currentTrack" | "prelistenTrack">;
+
+export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentFileRef = useRef<Blob | null>(null);
   const loadingRef = useRef(false);
