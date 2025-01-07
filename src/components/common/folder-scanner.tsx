@@ -20,7 +20,6 @@ export const getHandle = async (
     const transaction = db.transaction(["handles"], "readonly");
     const store = transaction.objectStore("handles");
     const getRequest = store.get(folderName);
-    console.log("slim sim here is the important code!");
     getRequest
       .then((directoryHandle) => {
         if (directoryHandle) {
@@ -45,14 +44,14 @@ export function FolderScanner() {
   const processDirectory = async (
     dirHandle: FileSystemDirectoryHandle,
     path = "",
-    isCancelled: () => boolean
+    isCancelled: () => boolean,
+    existingFiles = new Set<string>()
   ) => {
     try {
       const entries = (dirHandle as any).values();
-      const existingFiles = new Set<string>();
       for await (const entry of entries) {
         if (isCancelled()) {
-          return;
+          return existingFiles;
         }
 
         if (entry.kind === "file") {
@@ -77,19 +76,24 @@ export function FolderScanner() {
         } else if (entry.kind === "directory") {
           const dirEntry = entry as FileSystemDirectoryHandle;
           const newPath = path ? `${path}/${entry.name}` : entry.name;
-          await processDirectory(dirEntry, newPath, isCancelled);
+          await processDirectory(dirEntry, newPath, isCancelled, existingFiles);
         }
       }
 
-      // Mark files as removed if they are no longer in the directory
-      const db = await initMusicDB();
-      const tx = db.transaction("metadata", "readonly");
-      const allFiles = await tx.store.getAll();
-      for (const file of allFiles) {
-        if (file.path && !existingFiles.has(file.path)) {
-          await markFileAsRemoved(file.path);
+      // Only mark files as removed in the root call
+      if (!path) {
+        // Mark files as removed if they are no longer in the directory
+        const db = await initMusicDB();
+        const tx = db.transaction("metadata", "readonly");
+        const allFiles = await tx.store.getAll();
+        for (const file of allFiles) {
+          if (file.path && !existingFiles.has(file.path)) {
+            await markFileAsRemoved(file.path);
+          }
         }
       }
+
+      return existingFiles;
     } catch (error) {
       console.error("Error processing directory:", error);
       throw error;
