@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, RefObject } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -29,7 +29,7 @@ import { formatTime } from "@/lib/utils/formatting";
 
 interface PlaylistProps {
   searchQuery: string;
-  prelistenRef: PrelistenAudioRef;
+  prelistenRef: RefObject<PrelistenAudioRef>;
 }
 
 export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
