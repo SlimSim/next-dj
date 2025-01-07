@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useImperativeHandle, forwardRef } from "react";
+import { useEffect, useImperativeHandle, forwardRef, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { useAudioPlayer } from "../../features/audio/hooks/useAudioPlayer";
 import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
@@ -36,28 +36,7 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
 
     useAudioDevice(audioRef, prelistenDeviceId);
 
-    useImperativeHandle(ref, () => ({
-      seek: (time: number) => {
-        if (audioRef.current) {
-          audioRef.current.currentTime = time;
-        }
-      },
-      getCurrentTime: () => {
-        return audioRef.current?.currentTime || 0;
-      },
-      getDuration: () => {
-        return audioRef.current?.duration || 0;
-      }
-    }));
-
-    useEffect(() => {
-      const audio = audioRef.current;
-      if (!audio) return;
-
-      const handleEnded = () => setIsPrelistening(false);
-      audio.addEventListener("ended", handleEnded);
-      return () => audio.removeEventListener("ended", handleEnded);
-    }, [setIsPrelistening]);
+    const [localCurrentTime, setLocalCurrentTime] = useState(0);
 
     useEffect(() => {
       const updateTrackInfo = () => {
@@ -66,13 +45,11 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
         const newCurrentTime = audioRef.current.currentTime;
         const newDuration = prelistenDuration;
 
-        if (
-          Math.abs(newCurrentTime - (prelistenTrack.currentTime || 0)) > 0.1 ||
-          newDuration !== prelistenTrack.duration
-        ) {
+        setLocalCurrentTime(newCurrentTime);
+
+        if (newDuration !== prelistenTrack.duration) {
           setPrelistenTrack({
             ...prelistenTrack,
-            currentTime: newCurrentTime,
             duration: newDuration,
           });
         }
@@ -89,6 +66,29 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
         audio.removeEventListener("loadedmetadata", updateTrackInfo);
       };
     }, [prelistenTrack, setPrelistenTrack, prelistenDuration]);
+
+    useImperativeHandle(ref, () => ({
+      seek: (time: number) => {
+        if (audioRef.current) {
+          audioRef.current.currentTime = time;
+        }
+      },
+      getCurrentTime: () => {
+        return localCurrentTime;
+      },
+      getDuration: () => {
+        return prelistenDuration;
+      }
+    }));
+
+    useEffect(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const handleEnded = () => setIsPrelistening(false);
+      audio.addEventListener("ended", handleEnded);
+      return () => audio.removeEventListener("ended", handleEnded);
+    }, [setIsPrelistening]);
 
     useEffect(() => {
       initAudio();
