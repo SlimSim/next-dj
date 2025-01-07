@@ -287,8 +287,10 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                     <DropdownMenuItem
                       disabled={track.removed}
                       onClick={() => {
-                        playNextTrack(track);
-                        toast.success(`"${track.title}" will play next`);
+                        console.log("to be implemented");
+                        // addToQueue(track);
+
+                        // toast.success(`"${track.title}" will play next`);
                       }}
                     >
                       Play Next
@@ -296,7 +298,8 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                     <DropdownMenuItem
                       disabled={track.removed}
                       onClick={() => {
-                        playPreviousTrack(track);
+                        console.log("to be implemented");
+                        // playPreviousTrack(track);
                         toast.success(`Added "${track.title}" to end of queue`);
                       }}
                     >
