@@ -14,7 +14,7 @@ export const SettingsProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [showPreListenButtons, setShowPreListenButtons] = useState(true);
+  const [showPreListenButtons, setShowPreListenButtons] = useState(false);
 
   return (
     <SettingsContext.Provider
