@@ -32,6 +32,14 @@ export const createQueueActions = (set: any, get: () => PlayerState) => ({
     })),
 
   setQueue: (queue: MusicMetadata[]) => set({ queue }),
+
+  moveInQueue: (fromIndex: number, toIndex: number) =>
+    set((state: PlayerState) => {
+      const newQueue = [...state.queue];
+      const [removed] = newQueue.splice(fromIndex, 1);
+      newQueue.splice(toIndex, 0, removed);
+      return { queue: newQueue };
+    }),
 });
 
 export const createPlaybackActions = (set: any, get: () => PlayerState) => ({

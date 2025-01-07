@@ -48,7 +48,7 @@ export function FolderScanner() {
     isCancelled: () => boolean
   ) => {
     try {
-      const entries = dirHandle.values();
+      const entries = (dirHandle as any).values();
       const existingFiles = new Set<string>();
       for await (const entry of entries) {
         if (isCancelled()) {
@@ -116,7 +116,7 @@ export function FolderScanner() {
               continue;
             }
 
-            const permissionStatus = await handle.queryPermission({
+            const permissionStatus = await (handle as any).queryPermission({
               mode: "read",
             });
             if (permissionStatus === "granted") {
