@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { Button } from '../ui/button'
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog'
-import { Play, Settings } from 'lucide-react'
-import { FileUpload } from '../common/file-upload'
-import { ThemeToggle } from '../common/theme-toggle'
-import { AudioDeviceSelector } from '../player/audio-device-selector'
-import { Switch } from '../ui/switch'
-import { useSettings } from './settings-context'
-import { Label } from '@radix-ui/react-select'
+} from "../ui/dialog";
+import { Play, Settings } from "lucide-react";
+import { FileUpload } from "../common/file-upload";
+import { ThemeToggle } from "../common/theme-toggle";
+import { AudioDeviceSelector } from "../player/audio-device-selector";
+import { Switch } from "../ui/switch";
+import { useSettings } from "./settings-context";
+import { Label } from "@radix-ui/react-select";
 // import { Label } from '../ui/label'
 
 export function SettingsDialog() {
@@ -45,10 +45,8 @@ export function SettingsDialog() {
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Playback Settings</h3>
-            <label   className="cursor-pointer flex items-center justify-between w-full text-sm">
-              <span>
-              Show Pre-listen
-              </span>
+            <label className="cursor-pointer flex items-center justify-between w-full text-sm">
+              <span>Show Pre-listen</span>
               <Switch
                 checked={showPreListenButtons}
                 onCheckedChange={setShowPreListenButtons}
@@ -62,5 +60,5 @@ export function SettingsDialog() {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
