@@ -8,21 +8,6 @@ import { addAudioFile } from '@/db/audio-operations'
 import { usePlayerStore } from '@/lib/store'
 import { isAudioFile } from '@/features/audio/utils/file-utils'
 
-interface FileSystemHandle {
-  kind: 'file' | 'directory'
-  name: string
-}
-
-interface FileSystemFileHandle extends FileSystemHandle {
-  kind: 'file'
-  getFile(): Promise<File>
-}
-
-interface FileSystemDirectoryHandle extends FileSystemHandle {
-  kind: 'directory'
-  values(): AsyncIterableIterator<FileSystemHandle>
-}
-
 declare global {
   interface Window {
     showDirectoryPicker(): Promise<FileSystemDirectoryHandle>
