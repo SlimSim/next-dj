@@ -15,10 +15,35 @@ import { AudioDeviceSelector } from "../player/audio-device-selector";
 import { Switch } from "../ui/switch";
 import { useSettings } from "./settings-context";
 import { Label } from "@radix-ui/react-select";
-// import { Label } from '../ui/label'
+import { useState } from "react";
 
 export function SettingsDialog() {
   const { showPreListenButtons, setShowPreListenButtons } = useSettings();
+  const [permissionStatus, setPermissionStatus] = useState<
+    "prompt" | "granted" | "denied"
+  >("prompt");
+
+  const handlePreListenChange = async (checked: boolean) => {
+    if (checked) {
+      try {
+        // Request microphone permission
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        // Stop the stream immediately as we don't need it
+        stream.getTracks().forEach((track) => track.stop());
+
+        setPermissionStatus("granted");
+        setShowPreListenButtons(true);
+      } catch (error) {
+        console.error("Error accessing audio devices:", error);
+        setPermissionStatus("denied");
+        setShowPreListenButtons(false);
+      }
+    } else {
+      setShowPreListenButtons(false);
+    }
+  };
 
   return (
     <Dialog>
@@ -45,18 +70,31 @@ export function SettingsDialog() {
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Playback Settings</h3>
-            <label className="cursor-pointer flex items-center justify-between w-full text-sm">
-              <span>Show Pre-listen</span>
-              <Switch
-                checked={showPreListenButtons}
-                onCheckedChange={setShowPreListenButtons}
-              />
+            <label className="cursor-pointer text-sm">
+              <div className="flex items-center justify-between w-full">
+                <span>Use Pre-listen</span>
+                <Switch
+                  checked={showPreListenButtons}
+                  onCheckedChange={handlePreListenChange}
+                />
+              </div>
+              {!showPreListenButtons && (
+                <p className="text-sm text-muted-foreground pt-2">
+                  Preview tracks in the song list while the main track plays.
+                  For best results, use external sound card to separate the
+                  outputs.
+                </p>
+              )}
+              {permissionStatus === "denied" && (
+                <span className="text-destructive">
+                  {" "}
+                  Microphone access was denied. Please enable it in your browser
+                  settings to use this feature.
+                </span>
+              )}
             </label>
           </div>
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">Audio Settings</h3>
-            <AudioDeviceSelector />
-          </div>
+          {showPreListenButtons && <AudioDeviceSelector />}
         </div>
       </DialogContent>
     </Dialog>
