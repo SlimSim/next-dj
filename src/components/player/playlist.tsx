@@ -150,10 +150,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
     const newTime = (track.duration || 0) * percentage;
 
     prelistenRef.current?.seek(newTime);
-    setPrelistenTrack({
-      ...track,
-      currentTime: newTime,
-    });
+    setPrelistenTrack(track);
   };
 
   return (
@@ -202,17 +199,6 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                         onClick={(e) =>
                           handlePrelistenTimelineClick(e, prelistenTrack)
                         }
-                        // onClick={(e) => {
-                        //   const rect = e.currentTarget.getBoundingClientRect();
-                        //   const x = e.clientX - rect.left;
-                        //   const percentage = x / rect.width;
-                        //   const newTime =
-                        //     (prelistenTrack.duration || 0) * percentage;
-                        //   setPrelistenTrack({
-                        //     ...prelistenTrack,
-                        //     currentTime: newTime,
-                        //   });
-                        // }}
                       >
                         <div
                           className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"

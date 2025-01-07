@@ -10,6 +10,7 @@ export interface MusicMetadata {
   coverArt?: string
   file?: File
   queueId: string
+  removed?: boolean
 }
 
 export interface AudioFile {
@@ -29,4 +30,3 @@ export interface PlaybackState {
   volume: number
   isMuted: boolean
 }
-
