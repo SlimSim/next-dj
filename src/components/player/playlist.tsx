@@ -279,6 +279,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                       disabled={track.removed}
                       onClick={() => {
                         addToQueue(track);
+                        //toast.success(`Added "${track.title}" to queue`)
                       }}
                     >
                       Add to Queue
