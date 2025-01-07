@@ -8,6 +8,8 @@ import { useAudioDevice } from "../../features/audio/hooks/useAudioDevice";
 
 export interface PrelistenAudioRef {
   seek: (time: number) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
 }
 
 export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
@@ -40,6 +42,12 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
           audioRef.current.currentTime = time;
         }
       },
+      getCurrentTime: () => {
+        return audioRef.current?.currentTime || 0;
+      },
+      getDuration: () => {
+        return audioRef.current?.duration || 0;
+      }
     }));
 
     useEffect(() => {

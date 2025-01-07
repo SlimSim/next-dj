@@ -36,6 +36,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
   const [tracks, setTracks] = useState<MusicMetadata[]>([]);
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [prelistenCurrentTime, setPrelistenCurrentTime] = useState(0);
   const {
     currentTrack,
     isPlaying,
@@ -72,6 +73,17 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    const updateTime = () => {
+      if (prelistenRef.current) {
+        setPrelistenCurrentTime(prelistenRef.current.getCurrentTime());
+      }
+    };
+
+    const interval = setInterval(updateTime, 100);
+    return () => clearInterval(interval);
+  }, [prelistenRef]);
 
   const refreshMetadata = async () => {
     try {
@@ -192,7 +204,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                   >
                     <div className="flex items-center">
                       <span className="text-xs text-muted-foreground mr-2">
-                        {formatTime(prelistenTrack.currentTime || 0)}
+                        {formatTime(prelistenCurrentTime)}
                       </span>
                       <div
                         className="relative flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
@@ -204,7 +216,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                           className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"
                           style={{
                             width: `${
-                              ((prelistenTrack.currentTime || 0) /
+                              ((prelistenCurrentTime || 0) /
                                 (prelistenTrack.duration || 1)) *
                               100
                             }%`,
@@ -215,7 +227,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                         -
                         {formatTime(
                           (prelistenTrack.duration || 0) -
-                            (prelistenTrack.currentTime || 0)
+                            (prelistenCurrentTime || 0)
                         )}
                       </span>
                     </div>
