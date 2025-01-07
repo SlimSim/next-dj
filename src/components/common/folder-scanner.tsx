@@ -49,7 +49,7 @@ export function FolderScanner() {
     existingFiles = new Set<string>()
   ) => {
     try {
-      const entries = (dirHandle as any).values();
+      const entries = await (dirHandle as any).entries();
       for await (const entry of entries) {
         if (isCancelled()) {
           return existingFiles;
@@ -124,7 +124,7 @@ export function FolderScanner() {
             // Try to verify the folder still exists by attempting to read its contents
             try {
               // Try to get an iterator of the directory contents
-              const entries = await handle.values();
+              const entries = await (handle as any).keys();
               // Try to get the first entry to verify we can actually access the directory
               await entries.next();
             } catch (error) {
