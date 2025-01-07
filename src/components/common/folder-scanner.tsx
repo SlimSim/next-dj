@@ -48,7 +48,7 @@ export function FolderScanner() {
     existingFiles = new Set<string>()
   ) => {
     try {
-      const entries = await (dirHandle as any).entries();
+      const entries = (dirHandle as any).values();
       for await (const entry of entries) {
         if (isCancelled()) {
           return existingFiles;
@@ -117,6 +117,63 @@ export function FolderScanner() {
           try {
             const handle = await getHandle(folderName);
             if (!handle) {
+              continue;
+            }
+
+            // Try to verify the folder still exists by attempting to read its contents
+            try {
+              // Try to get an iterator of the directory contents
+              const entries = await handle.values();
+              // Try to get the first entry to verify we can actually access the directory
+              await entries.next();
+            } catch (error) {
+              console.error("scanFolders: Catch error:", error);
+              toast.error(
+                `Folder "${folderName}" no longer exists or was renamed`
+              );
+
+              // Remove the handle from the database
+              await removeHandle(folderName);
+
+              // Mark all files from this folder and its subfolders as removed
+              const db = await initMusicDB();
+              const tx = db.transaction("metadata", "readwrite");
+              const store = tx.objectStore("metadata");
+
+              // Get all files in the database
+              let cursor = await store.openCursor();
+              let processedFiles = 0;
+              let markedAsRemoved = 0;
+
+              while (cursor) {
+                const metadata = cursor.value;
+                processedFiles++;
+
+                if (metadata.path) {
+                  // Normalize the paths to handle spaces and different separators
+                  const normalizedPath = metadata.path.replace(/\\/g, "/");
+                  const normalizedFolder = folderName.replace(/\\/g, "/");
+
+                  // Check if the normalized path starts with the normalized folder name
+                  if (
+                    normalizedPath.startsWith(normalizedFolder + "/") ||
+                    normalizedPath === normalizedFolder
+                  ) {
+                    metadata.removed = true;
+                    await store.put(metadata);
+                    markedAsRemoved++;
+                  }
+                }
+                cursor = await cursor.continue();
+              }
+
+              // Update the selected folders list by filtering out the invalid folder
+              const state = usePlayerStore.getState();
+              usePlayerStore.setState({
+                selectedFolderNames: state.selectedFolderNames.filter(
+                  (name) => name !== folderName
+                ),
+              });
               continue;
             }
 
