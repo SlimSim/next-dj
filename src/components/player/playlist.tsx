@@ -40,8 +40,8 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
     currentTrack,
     isPlaying,
     addToQueue,
-    playNext,
-    playLast,
+    playNextTrack,
+    playPreviousTrack,
     setQueueVisible,
     setCurrentTrack,
     setIsPlaying,
@@ -289,7 +289,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                     <DropdownMenuItem
                       disabled={track.removed}
                       onClick={() => {
-                        playNext(track);
+                        playNextTrack(track);
                         toast.success(`"${track.title}" will play next`);
                       }}
                     >
@@ -298,7 +298,7 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
                     <DropdownMenuItem
                       disabled={track.removed}
                       onClick={() => {
-                        playLast(track);
+                        playPreviousTrack(track);
                         toast.success(`Added "${track.title}" to end of queue`);
                       }}
                     >
