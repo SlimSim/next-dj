@@ -49,6 +49,7 @@ export interface PlayerActions {
   setPrelistenDeviceId: (deviceId: string) => void;
   setPrelistenTrack: (track: MusicMetadata | null) => void;
   setIsPrelistening: (isPrelistening: boolean) => void;
+  removeRemovedSongs: () => Promise<void>;
   addSelectedFolder: (
     folderName: string,
     handle: FileSystemDirectoryHandle

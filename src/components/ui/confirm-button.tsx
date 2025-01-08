@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Button, ButtonProps } from './button';
-import { HelpCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { Button, ButtonProps } from "./button";
+import { HelpCircle } from "lucide-react";
 
 export interface ConfirmButtonProps extends ButtonProps {
   confirmText?: React.ReactNode;
@@ -8,20 +8,26 @@ export interface ConfirmButtonProps extends ButtonProps {
 }
 
 const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
-  ({
-    onClick,
-    children,
-    confirmText = <div 
-    className="flex items-center text-center w-fit flex-col gap-2" 
-        style={{
-            minWidth: "100px"
-        }}>
-            <HelpCircle className="h-6 w-6" />
-            Click again to confirm
-        </div>,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      onClick,
+      children,
+      confirmText = (
+        <div
+          className="flex items-center text-center w-fit flex-col gap-2"
+          style={{
+            minWidth: "100px",
+          }}
+        >
+          <HelpCircle className="h-6 w-6" />
+          Click again to confirm
+        </div>
+      ),
+      className,
+      ...props
+    },
+    ref
+  ) => {
     const [isConfirmed, setIsConfirmed] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
 
@@ -43,18 +49,24 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
     };
 
     return (
-      <div style={{ position: 'relative' }}>
+      <div
+        style={{
+          position: "relative",
+          display: "inline-block",
+          width: "fit-content",
+        }}
+      >
         <Button
           {...props}
           ref={ref}
           onClick={handleClick}
           onMouseLeave={handleMouseLeave}
-          className={`transition-all duration-200 ${className || ''}`}
+          className={`transition-all duration-200 ${className || ""}`}
         >
           {children}
         </Button>
         {showTooltip && (
-          <div className="tooltip flex flex-col absolute bottom-full left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-70 text-white rounded-md p-2 gap-2"> 
+          <div className="tooltip flex flex-col absolute bottom-full left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-70 text-white rounded-md p-2 gap-2">
             {confirmText}
           </div>
         )}

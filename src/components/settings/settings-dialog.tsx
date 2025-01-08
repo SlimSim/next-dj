@@ -8,7 +8,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { Settings, ChevronDown, ChevronUp, Folder } from "lucide-react";
+import {
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  Folder,
+  X,
+  Music,
+  Music2,
+} from "lucide-react";
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
@@ -16,6 +24,7 @@ import { Switch } from "../ui/switch";
 import { useSettings } from "./settings-context";
 import { useState } from "react";
 import { usePlayerStore } from "@/lib/store";
+import { ConfirmButton } from "../ui/confirm-button";
 
 export function SettingsDialog() {
   const { showPreListenButtons, setShowPreListenButtons } = useSettings();
@@ -104,6 +113,16 @@ export function SettingsDialog() {
                 ))}
               </div>
             )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <ConfirmButton
+              variant="ghost"
+              className="flex items-center gap-2 w-fit"
+              onClick={() => usePlayerStore.getState().removeRemovedSongs()}
+            >
+              <Music className="h-4 w-4" />
+              Remove all removed songs
+            </ConfirmButton>
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Appearance</h3>

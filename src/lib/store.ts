@@ -9,6 +9,7 @@ import {
 import { MusicMetadata } from "./types/types";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
+import { getRemovedSongs, deleteAudioFile } from "@/db/audio-operations";
 
 const initialState: PlayerState = {
   currentTrack: null,
@@ -151,6 +152,27 @@ export const usePlayerStore = create<PlayerStore>()(
           set((state) => ({
             refreshTrigger: state.refreshTrigger + 1,
           }));
+        },
+
+        removeRemovedSongs: async () => {
+          const removedSongs = await getRemovedSongs();
+          const removedIds = removedSongs.map((song) => song.queueId);
+
+          set((state) => ({
+            queue: state.queue.filter(
+              (track) => !removedIds.includes(track.queueId)
+            ),
+            history: state.history.filter(
+              (track) => !removedIds.includes(track.queueId)
+            ),
+          }));
+
+          // Optionally, remove these entries from the database
+          for (const song of removedSongs) {
+            await deleteAudioFile(song.id);
+          }
+
+          get().triggerRefresh();
         },
 
         clearSelectedFolders: async () => {
