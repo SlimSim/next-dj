@@ -16,3 +16,10 @@ export async function clearHandles(): Promise<void> {
   const store = tx.objectStore('handles')
   await store.clear()
 }
+
+export async function removeHandle(folderName: string): Promise<void> {
+  const db = await initMusicDB()
+  const tx = db.transaction('handles', 'readwrite')
+  const store = tx.objectStore('handles')
+  await store.delete(folderName)
+}

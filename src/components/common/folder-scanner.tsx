@@ -7,6 +7,7 @@ import { addAudioFile } from "@/db/audio-operations";
 import { markFileAsRemoved } from "@/db/metadata-operations";
 import { initMusicDB } from "@/db/schema";
 import { isAudioFile } from "@/features/audio/utils/file-utils";
+import { getHandle, removeHandle } from "@/db/handle-operations";
 
 // TODO: flytta dessa handle-funktioner till handle-operations.ts???
 
@@ -59,7 +60,11 @@ export function FolderScanner() {
           const file = await fileHandle.getFile();
 
           if (isAudioFile(file)) {
-            const newPath = path ? `${path}/${file.name}` : file.name;
+            // Include the folder name in the path
+            const basePath = dirHandle.name;
+            const newPath = path
+              ? `${basePath}/${path}/${file.name}`
+              : `${basePath}/${file.name}`;
             existingFiles.add(newPath);
             const metadata = {
               title: file.name.replace(/\.[^/.]+$/, ""),
@@ -86,9 +91,22 @@ export function FolderScanner() {
         const db = await initMusicDB();
         const tx = db.transaction("metadata", "readonly");
         const allFiles = await tx.store.getAll();
+        const currentFolderPath = dirHandle.name;
+
         for (const file of allFiles) {
-          if (file.path && !existingFiles.has(file.path)) {
-            await markFileAsRemoved(file.path);
+          if (file.path) {
+            // Only check files that belong to the current folder
+            const normalizedPath = file.path.replace(/\\/g, "/");
+            const normalizedFolder = currentFolderPath.replace(/\\/g, "/");
+
+            if (
+              normalizedPath.startsWith(normalizedFolder + "/") ||
+              normalizedPath === normalizedFolder
+            ) {
+              if (!existingFiles.has(file.path)) {
+                await markFileAsRemoved(file.path);
+              }
+            }
           }
         }
       }

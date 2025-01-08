@@ -112,7 +112,7 @@ export const usePlayerStore = create<PlayerStore>()(
 
         removeFolder: async (folderName: string) => {
           const db = await initMusicDB();
-          
+
           // Remove the folder handle
           const handlesTx = db.transaction(["handles"], "readwrite");
           const handlesStore = handlesTx.objectStore("handles");
@@ -122,11 +122,21 @@ export const usePlayerStore = create<PlayerStore>()(
           const metadataTx = db.transaction(["metadata"], "readwrite");
           const metadataStore = metadataTx.objectStore("metadata");
           const allMetadata = await metadataStore.getAll();
-          
+
+          const folderParts = folderName.split(/[\\/]/); // Split on both forward and back slashes
+          const folderBaseName = folderParts[folderParts.length - 1];
+
           for (const metadata of allMetadata) {
-            if (metadata.path && metadata.path.startsWith(folderName)) {
-              metadata.removed = true;
-              await metadataStore.put(metadata);
+            if (metadata.path) {
+              // The stored path is relative to the folder, so it should start with the folder's base name
+              const normalizedPath = metadata.path.replace(/\\/g, "/");
+              const pathParts = normalizedPath.split("/");
+
+              // Check if this file belongs to the folder we're removing
+              if (pathParts[0] === folderBaseName) {
+                metadata.removed = true;
+                await metadataStore.put(metadata);
+              }
             }
           }
 
@@ -136,7 +146,7 @@ export const usePlayerStore = create<PlayerStore>()(
               (name) => name !== folderName
             ),
           }));
-          
+
           // Trigger refresh to update the song list
           set((state) => ({
             refreshTrigger: state.refreshTrigger + 1,
