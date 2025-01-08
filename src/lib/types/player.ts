@@ -53,6 +53,7 @@ export interface PlayerActions {
     folderName: string,
     handle: FileSystemDirectoryHandle
   ) => void;
+  removeFolder: (folderName: string) => void;
   clearSelectedFolders: () => void;
 }
 

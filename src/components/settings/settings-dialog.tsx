@@ -8,20 +8,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { Play, Settings } from "lucide-react";
+import { Settings, ChevronDown, ChevronUp, Folder } from "lucide-react";
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
 import { Switch } from "../ui/switch";
 import { useSettings } from "./settings-context";
-import { Label } from "@radix-ui/react-select";
 import { useState } from "react";
+import { usePlayerStore } from "@/lib/store";
 
 export function SettingsDialog() {
   const { showPreListenButtons, setShowPreListenButtons } = useSettings();
   const [permissionStatus, setPermissionStatus] = useState<
     "prompt" | "granted" | "denied"
   >("prompt");
+  const selectedFolderNames = usePlayerStore(
+    (state) => state.selectedFolderNames
+  );
+  const removeFolder = usePlayerStore((state) => state.removeFolder);
+  const [showFolderList, setShowFolderList] = useState(false);
 
   const handlePreListenChange = async (checked: boolean) => {
     if (checked) {
@@ -59,7 +64,46 @@ export function SettingsDialog() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Music Library</h3>
-            <FileUpload />
+            <div className="flex gap-4">
+              <FileUpload />
+              {selectedFolderNames.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFolderList(!showFolderList)}
+                    className="flex items-center gap-2"
+                  >
+                    <Folder className="h-4 w-4" />
+                    Manage Folders
+                    {showFolderList ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+            {showFolderList && (
+              <div className="flex flex-col gap-2 pl-4">
+                {selectedFolderNames.map((folder) => (
+                  <div
+                    key={folder}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="text-sm truncate">{folder}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => removeFolder(folder)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Appearance</h3>

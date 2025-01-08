@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
-import { Upload, Folder } from "lucide-react";
+import { FolderPlus, FilePlus } from "lucide-react";
 import { addAudioFile } from "@/db/audio-operations";
 import { usePlayerStore } from "@/lib/store";
 import { isAudioFile } from "@/features/audio/utils/file-utils";
@@ -105,14 +105,14 @@ export function FileUpload() {
   }, [triggerRefresh, addSelectedFolder]);
 
   return (
-    <div className="flex gap-4">
+    <>
       <Button
         variant="outline"
         onClick={() => document.getElementById("file-upload")?.click()}
         disabled={isLoading}
       >
-        <Upload className="w-4 h-4 mr-2" />
-        Upload Files
+        <FilePlus className="w-4 h-4 mr-2" />
+        Add Files
       </Button>
       <input
         id="file-upload"
@@ -127,9 +127,9 @@ export function FileUpload() {
         onClick={handleFolderSelect}
         disabled={isLoading || !("showDirectoryPicker" in window)}
       >
-        <Folder className="w-4 h-4 mr-2" />
-        Select Folder
+        <FolderPlus className="w-4 h-4 mr-2" />
+        Add Folder
       </Button>
-    </div>
+    </>
   );
 }

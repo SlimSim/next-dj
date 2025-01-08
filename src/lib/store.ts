@@ -2,9 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { PlayerStore, PlayerState } from "./types/player";
-import { createQueueActions, createPlaybackActions } from "../features/audio/utils/playerActions";
+import {
+  createQueueActions,
+  createPlaybackActions,
+} from "../features/audio/utils/playerActions";
 import { MusicMetadata } from "./types/types";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
+import { initMusicDB } from "@/db/schema";
 
 const initialState: PlayerState = {
   currentTrack: null,
@@ -38,7 +42,8 @@ export const usePlayerStore = create<PlayerStore>()(
         ...queueActions,
         ...playbackActions,
 
-        setPrelistenDuration: (duration) => set({ prelistenDuration: duration }),
+        setPrelistenDuration: (duration) =>
+          set({ prelistenDuration: duration }),
         setCurrentTrack: (track: MusicMetadata | null) =>
           set({
             currentTrack: track
@@ -95,14 +100,50 @@ export const usePlayerStore = create<PlayerStore>()(
           set({ prelistenTrack: track }),
         setIsPrelistening: (isPrelistening: boolean) => set({ isPrelistening }),
 
-        addSelectedFolder: async (folderName: string, handle: FileSystemDirectoryHandle) => {
+        addSelectedFolder: async (
+          folderName: string,
+          handle: FileSystemDirectoryHandle
+        ) => {
           await storeHandle(folderName, handle);
           set((state) => ({
             selectedFolderNames: [...state.selectedFolderNames, folderName],
           }));
         },
 
-        clearSelectedFolders: () => {
+        removeFolder: async (folderName: string) => {
+          const db = await initMusicDB();
+          
+          // Remove the folder handle
+          const handlesTx = db.transaction(["handles"], "readwrite");
+          const handlesStore = handlesTx.objectStore("handles");
+          await handlesStore.delete(folderName);
+
+          // Mark all songs from this folder as removed
+          const metadataTx = db.transaction(["metadata"], "readwrite");
+          const metadataStore = metadataTx.objectStore("metadata");
+          const allMetadata = await metadataStore.getAll();
+          
+          for (const metadata of allMetadata) {
+            if (metadata.path && metadata.path.startsWith(folderName)) {
+              metadata.removed = true;
+              await metadataStore.put(metadata);
+            }
+          }
+
+          // Remove from state and trigger refresh
+          set((state) => ({
+            selectedFolderNames: state.selectedFolderNames.filter(
+              (name) => name !== folderName
+            ),
+          }));
+          
+          // Trigger refresh to update the song list
+          set((state) => ({
+            refreshTrigger: state.refreshTrigger + 1,
+          }));
+        },
+
+        clearSelectedFolders: async () => {
           clearHandles();
           set({ selectedFolderNames: [] });
         },
