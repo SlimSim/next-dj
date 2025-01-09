@@ -22,6 +22,8 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
     currentTrack,
     prelistenTrack,
     isPrelistening,
+    queue,
+    history,
   } = usePlayerStore();
   
   const { showPreListenButtons } = useSettings();
@@ -77,6 +79,11 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
               isPrelistening={isPrelistening}
               prelistenCurrentTime={prelistenCurrentTime}
               showPreListenButtons={showPreListenButtons}
+              isInQueue={
+                (currentTrack?.id === track.id) ||
+                queue?.some(t => t.id === track.id) ||
+                history?.some(t => t.id === track.id)
+              }
               onPrelistenTimelineClick={handlePrelistenTimelineClick}
               onPrelistenToggle={handlePrelistenToggle}
               onAddToQueue={addToQueue}

@@ -19,6 +19,7 @@ interface TrackItemProps {
   isPrelistening: boolean;
   prelistenCurrentTime: number;
   showPreListenButtons: boolean;
+  isInQueue?: boolean;
   onPrelistenTimelineClick: (e: React.MouseEvent, track: MusicMetadata) => void;
   onPrelistenToggle: (track: MusicMetadata) => void;
   onAddToQueue: (track: MusicMetadata) => void;
@@ -33,6 +34,7 @@ export function TrackItem({
   isPrelistening,
   prelistenCurrentTime,
   showPreListenButtons,
+  isInQueue,
   onPrelistenTimelineClick,
   onPrelistenToggle,
   onAddToQueue,
@@ -47,9 +49,12 @@ export function TrackItem({
       )}
     >
       <div className="flex-1 min-w-0 overflow mr-1">
-        <div className="font-medium text-sm sm:text-base">
+        <div className="font-medium text-sm sm:text-base flex items-center gap-2">
           {track.removed ? <span style={{ color: "red" }}>removed </span> : null}
           {track.title}
+          {isInQueue && (
+            <span className="text-xs text-muted-foreground bg-accent/50 px-2 py-0.5 rounded">In Queue</span>
+          )}
         </div>
         {track.artist && (
           <div className="text-xs sm:text-sm text-muted-foreground">
