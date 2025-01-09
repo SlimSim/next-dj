@@ -10,32 +10,6 @@ import { isAudioFile } from "@/features/audio/utils/file-utils";
 import { getHandle, removeHandle } from "@/db/handle-operations";
 
 // TODO: flytta dessa handle-funktioner till handle-operations.ts???
-
-// Helper function to get handle from IndexedDB
-
-export const getHandle = async (
-  folderName: string
-): Promise<FileSystemDirectoryHandle | null> => {
-  const db = await initMusicDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(["handles"], "readonly");
-    const store = transaction.objectStore("handles");
-    const getRequest = store.get(folderName);
-    getRequest
-      .then((directoryHandle) => {
-        if (directoryHandle) {
-          resolve(directoryHandle);
-        } else {
-          resolve(null);
-        }
-      })
-      .catch((error) => {
-        console.error("Error getting directory handle:", error);
-        reject(error);
-      });
-  });
-};
-
 export function FolderScanner() {
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
   const selectedFolderNames = usePlayerStore(
