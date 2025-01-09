@@ -37,7 +37,6 @@ export function SettingsDialog() {
   );
   const removeFolder = usePlayerStore((state) => state.removeFolder);
   const [showFolderList, setShowFolderList] = useState(false);
-
   const [hasRemovedSongs, setHasRemovedSongs] = useState(false);
 
   const checkForRemovedSongs = useCallback(async () => {
@@ -85,24 +84,22 @@ export function SettingsDialog() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Music Library</h3>
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
               <FileUpload />
               {selectedFolderNames.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowFolderList(!showFolderList)}
-                    className="flex items-center gap-2"
-                  >
-                    <Folder className="h-4 w-4" />
-                    Manage Folders
-                    {showFolderList ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFolderList(!showFolderList)}
+                  className="flex items-center gap-2"
+                >
+                  <Folder className="h-4 w-4" />
+                  Manage Folders
+                  {showFolderList ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
               )}
             </div>
             {showFolderList && (
@@ -130,7 +127,7 @@ export function SettingsDialog() {
             <div className="flex flex-col gap-2">
               <ConfirmButton
                 variant="ghost"
-                className="flex items-center gap-2 w-fit"
+                className="flex items-center gap-2 w-full sm:w-fit"
                 onClick={() => usePlayerStore.getState().removeRemovedSongs()}
               >
                 <Music className="h-4 w-4" />
@@ -164,7 +161,6 @@ export function SettingsDialog() {
               )}
               {permissionStatus === "denied" && (
                 <span className="text-destructive">
-                  {" "}
                   Microphone access was denied. Please enable it in your browser
                   settings to use this feature.
                 </span>
