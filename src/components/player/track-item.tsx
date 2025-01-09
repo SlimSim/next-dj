@@ -113,7 +113,7 @@ export function TrackItem({
             </span>
           </Button>
         )}
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
               <MoreVertical className="h-4 w-4" />
