@@ -8,7 +8,14 @@ import {
 } from "../ui/dropdown-menu";
 import { MusicMetadata } from "@/lib/types/types";
 import { cn } from "@/lib/utils/common";
-import { MoreVertical, Play, Pause, Pencil, Trash } from "lucide-react";
+import {
+  MoreVertical,
+  Play,
+  Pause,
+  Pencil,
+  Trash,
+  ListMusic,
+} from "lucide-react";
 import { formatTime } from "@/lib/utils/formatting";
 import { PrelistenAudioRef } from "./prelisten-audio-player";
 
@@ -44,17 +51,21 @@ export function TrackItem({
   return (
     <div
       className={cn(
-        "p-1 -mb-2 group flex items-center rounded-lg hover:bg-accent/50 w-full overflow-hidden",
+        "p-1 -mb-2 group flex items-stretch rounded-lg hover:bg-accent/50 w-full overflow-hidden",
         currentTrack?.id === track.id && "bg-accent"
       )}
     >
-      <div className="flex-1 min-w-0 overflow mr-1">
-        <div className="font-medium text-sm sm:text-base flex items-center gap-2">
-          {track.removed ? <span style={{ color: "red" }}>removed </span> : null}
-          {track.title}
-          {isInQueue && (
-            <span className="text-xs text-muted-foreground bg-accent/50 px-2 py-0.5 rounded">In Queue</span>
-          )}
+      <div className="w-5 flex justify-center pt-1">
+        {isInQueue && <ListMusic className="h-3 w-3 text-muted-foreground" />}
+      </div>
+      <div className="flex-1 min-w-0 overflow mr-1 ">
+        <div className="font-medium text-sm sm:text-base flex items-center ">
+          <div className="flex items-center gap-2 min-w-0">
+            {track.removed ? (
+              <span style={{ color: "red" }}>removed </span>
+            ) : null}
+            {track.title}
+          </div>
         </div>
         {track.artist && (
           <div className="text-xs sm:text-sm text-muted-foreground">
@@ -65,7 +76,9 @@ export function TrackItem({
         {prelistenTrack && (
           <div
             className={
-              prelistenTrack.id === track.id && isPrelistening ? "" : "invisible"
+              prelistenTrack.id === track.id && isPrelistening
+                ? ""
+                : "invisible"
             }
           >
             <div className="flex items-center">
@@ -88,7 +101,10 @@ export function TrackItem({
                 />
               </div>
               <span className="text-xs text-muted-foreground ml-2">
-                -{formatTime((prelistenTrack.duration || 0) - (prelistenCurrentTime || 0))}
+                -
+                {formatTime(
+                  (prelistenTrack.duration || 0) - (prelistenCurrentTime || 0)
+                )}
               </span>
             </div>
           </div>
@@ -120,7 +136,11 @@ export function TrackItem({
         )}
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-9"
+            >
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">More options</span>
             </Button>
