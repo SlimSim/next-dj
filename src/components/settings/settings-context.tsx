@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import { usePersistedState } from "@/hooks/use-persisted-state";
+import { usePlayerStore } from "@/lib/store";
 
 interface SettingsContextType {
   showPreListenButtons: boolean;
@@ -19,20 +19,12 @@ export const SettingsProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [showPreListenButtons, setShowPreListenButtons] = usePersistedState(
-    "settings.preListenEnabled",
-    true
-  );
-
-  const [recentPlayHours, setRecentPlayHours] = usePersistedState(
-    "settings.recentPlayHours",
-    18
-  );
-
-  const [monthlyPlayDays, setMonthlyPlayDays] = usePersistedState(
-    "settings.monthlyPlayDays",
-    42
-  );
+  const showPreListenButtons = usePlayerStore((state) => state.showPreListenButtons);
+  const setShowPreListenButtons = usePlayerStore((state) => state.setShowPreListenButtons);
+  const recentPlayHours = usePlayerStore((state) => state.recentPlayHours);
+  const setRecentPlayHours = usePlayerStore((state) => state.setRecentPlayHours);
+  const monthlyPlayDays = usePlayerStore((state) => state.monthlyPlayDays);
+  const setMonthlyPlayDays = usePlayerStore((state) => state.setMonthlyPlayDays);
 
   return (
     <SettingsContext.Provider

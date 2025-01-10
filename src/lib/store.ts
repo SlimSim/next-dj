@@ -30,6 +30,9 @@ const initialState: PlayerState = {
   isPrelistening: false,
   selectedFolderNames: [],
   prelistenDuration: 0,
+  showPreListenButtons: true,
+  recentPlayHours: 18,
+  monthlyPlayDays: 42,
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -100,6 +103,9 @@ export const usePlayerStore = create<PlayerStore>()(
         setPrelistenTrack: (track: MusicMetadata | null) =>
           set({ prelistenTrack: track }),
         setIsPrelistening: (isPrelistening: boolean) => set({ isPrelistening }),
+        setShowPreListenButtons: (show: boolean) => set({ showPreListenButtons: show }),
+        setRecentPlayHours: (hours: number) => set({ recentPlayHours: hours }),
+        setMonthlyPlayDays: (days: number) => set({ monthlyPlayDays: days }),
 
         addSelectedFolder: async (
           folderName: string,
@@ -193,7 +199,10 @@ export const usePlayerStore = create<PlayerStore>()(
         queue: state.queue,
         history: state.history,
         currentTrack: state.currentTrack,
-        isQueueVisible: state.isQueueVisible
+        isQueueVisible: state.isQueueVisible,
+        showPreListenButtons: state.showPreListenButtons,
+        recentPlayHours: state.recentPlayHours,
+        monthlyPlayDays: state.monthlyPlayDays,
       }),
     }
   )

@@ -19,6 +19,9 @@ export interface PlayerState {
   isPrelistening: boolean;
   prelistenDuration: number;
   selectedFolderNames: string[];
+  showPreListenButtons: boolean;
+  recentPlayHours: number;
+  monthlyPlayDays: number;
 }
 
 export interface PlayerActions {
@@ -56,6 +59,9 @@ export interface PlayerActions {
   ) => void;
   removeFolder: (folderName: string) => void;
   clearSelectedFolders: () => void;
+  setShowPreListenButtons: (show: boolean) => void;
+  setRecentPlayHours: (hours: number) => void;
+  setMonthlyPlayDays: (days: number) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;
