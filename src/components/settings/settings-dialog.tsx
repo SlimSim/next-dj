@@ -20,7 +20,6 @@ import {
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
-import { Switch } from "../ui/switch";
 import { useSettings } from "./settings-context";
 import { useCallback, useEffect, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
@@ -44,7 +43,7 @@ interface SettingsDialogProps {
 export function SettingsDialog({
   triggerButton = true,
   open,
-  onOpenChange
+  onOpenChange,
 }: SettingsDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
@@ -52,14 +51,12 @@ export function SettingsDialog({
   const handleOpenChange = isControlled ? onOpenChange : setInternalOpen;
 
   const {
-    showPreListenButtons,
-    setShowPreListenButtons,
     recentPlayHours,
     setRecentPlayHours,
     monthlyPlayDays,
     setMonthlyPlayDays,
   } = useSettings();
-  const [permissionStatus, setPermissionStatus] = useState<"prompt" | "granted" | "denied">("prompt");
+
   const selectedFolderNames = usePlayerStore(
     (state) => state.selectedFolderNames
   );
@@ -75,28 +72,6 @@ export function SettingsDialog({
   useEffect(() => {
     checkForRemovedSongs();
   }, [checkForRemovedSongs]);
-
-  const handlePreListenChange = async (checked: boolean) => {
-    if (checked) {
-      try {
-        // Request microphone permission
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        // Stop the stream immediately as we don't need it
-        stream.getTracks().forEach((track) => track.stop());
-
-        setPermissionStatus("granted");
-        setShowPreListenButtons(true);
-      } catch (error) {
-        console.error("Error accessing audio devices:", error);
-        setPermissionStatus("denied");
-        setShowPreListenButtons(false);
-      }
-    } else {
-      setShowPreListenButtons(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -187,20 +162,7 @@ export function SettingsDialog({
 
             <div className="flex flex-col gap-2">
               <h3 className="text-sm font-medium">Playback Settings</h3>
-              <label className="cursor-pointer text-sm">
-                <div className="flex items-center justify-between w-full">
-                  <span>Enable Pre-listen</span>
-                  <Switch
-                    checked={showPreListenButtons}
-                    onCheckedChange={handlePreListenChange}
-                  />
-                </div>
-              </label>
-              {showPreListenButtons && (
-                <div className="pl-4 space-y-4">
-                  <AudioDeviceSelector />
-                </div>
-              )}
+              <AudioDeviceSelector />
             </div>
           </TabsContent>
 

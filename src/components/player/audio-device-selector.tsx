@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Switch } from "../ui/switch";
 
 export const AudioDeviceSelector = () => {
   const {
@@ -18,6 +19,8 @@ export const AudioDeviceSelector = () => {
     setSelectedDeviceId,
     prelistenDeviceId,
     setPrelistenDeviceId,
+    showPreListenButtons,
+    setShowPreListenButtons,
   } = usePlayerStore();
   const [permissionStatus, setPermissionStatus] = useState<
     "prompt" | "granted" | "denied"
@@ -128,41 +131,55 @@ export const AudioDeviceSelector = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium">Main Audio Output</label>
-      <Select
-        value={selectedDeviceId || "default"}
-        onValueChange={handleDeviceChange}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select main audio output" />
-        </SelectTrigger>
-        <SelectContent>
-          {audioDevices.map((device) => (
-            <SelectItem key={device.deviceId} value={device.deviceId}>
-              {device.label || "Unnamed device"}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <label className="text-sm font-medium mt-4">
-        Pre-listen Audio Output
+      <label className="cursor-pointer text-sm">
+        <div className="flex items-center justify-between w-full">
+          <span>Enable Pre-listen</span>
+          <Switch
+            checked={showPreListenButtons}
+            onCheckedChange={setShowPreListenButtons}
+          />
+        </div>
       </label>
-      <Select
-        value={prelistenDeviceId || "default"}
-        onValueChange={handlePrelistenDeviceChange}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select prelisten audio output" />
-        </SelectTrigger>
-        <SelectContent>
-          {audioDevices.map((device) => (
-            <SelectItem key={device.deviceId} value={device.deviceId}>
-              {device.label || "Unnamed device"}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+
+      {showPreListenButtons && (
+        <>
+          <label className="text-sm font-medium">Main Audio Output</label>
+          <Select
+            value={selectedDeviceId || "default"}
+            onValueChange={handleDeviceChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select main audio output" />
+            </SelectTrigger>
+            <SelectContent>
+              {audioDevices.map((device) => (
+                <SelectItem key={device.deviceId} value={device.deviceId}>
+                  {device.label || "Unnamed device"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <label className="text-sm font-medium mt-4">
+            Pre-listen Audio Output
+          </label>
+          <Select
+            value={prelistenDeviceId || "default"}
+            onValueChange={handlePrelistenDeviceChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select prelisten audio output" />
+            </SelectTrigger>
+            <SelectContent>
+              {audioDevices.map((device) => (
+                <SelectItem key={device.deviceId} value={device.deviceId}>
+                  {device.label || "Unnamed device"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </>
+      )}
     </div>
   );
 };
