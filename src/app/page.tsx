@@ -63,7 +63,7 @@ export default function Home() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col">
-          <div className="flex-1 container mx-auto p-4">
+          <div className="flex-1 container mx-auto p-0">
             <FolderScanner />
             <Playlist searchQuery={searchQuery} prelistenRef={prelistenRef} />
           </div>

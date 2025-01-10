@@ -1,4 +1,3 @@
-import { RefObject } from "react";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -14,10 +13,24 @@ import {
   Pause,
   Pencil,
   Trash,
-  ListMusic,
+  MessageSquare,
 } from "lucide-react";
 import { formatTime } from "@/lib/utils/formatting";
-import { PrelistenAudioRef } from "./prelisten-audio-player";
+import { NumberBadge } from "../ui/number-badge";
+import { StarRating } from "../ui/star-rating";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import { useState } from "react";
+import {
+  getPlaysInLastHours,
+  getPlaysInCurrentMonth,
+  getTotalPlays,
+} from "@/lib/utils/play-history";
+import { useSettings } from "../settings/settings-context";
 
 interface TrackItemProps {
   track: MusicMetadata;
@@ -48,6 +61,9 @@ export function TrackItem({
   onEditTrack,
   onDeleteTrack,
 }: TrackItemProps) {
+  const [isCommentExpanded, setIsCommentExpanded] = useState(false);
+  const { recentPlayHours, monthlyPlayDays } = useSettings();
+
   return (
     <div
       className={cn(
@@ -55,8 +71,88 @@ export function TrackItem({
         currentTrack?.id === track.id && "bg-accent"
       )}
     >
-      <div className="w-5 flex justify-center pt-1">
-        {isInQueue && <ListMusic className="h-3 w-3 text-muted-foreground" />}
+      <div className="w-5 flex flex-col items-center pt-1 gap-1">
+        <div className="h-3">
+          <TooltipProvider>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">
+                  {track.rating !== undefined && (
+                    <StarRating
+                      fillLevel={track.rating}
+                      className="text-muted-foreground w-3 h-3"
+                    />
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center" className="text-xs">
+                {track.rating !== undefined
+                  ? `Rating: ${Math.round(track.rating * 5)}/5`
+                  : "No rating"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="h-3">
+          <TooltipProvider>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <p className="text-[0.625rem] text-muted-foreground">
+                  {formatTime(track.duration || 0)}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center" className="text-xs">
+                Duration: {formatTime(track.duration || 0)}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="h-3">
+          <TooltipProvider>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 cursor-help">
+                  <p className="text-[0.625rem] text-muted-foreground">
+                    {track.bpm || ""}
+                  </p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center" className="text-xs">
+                Tempo in Beats Per Minute
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+      <div className="w-5 flex flex-col items-center pt-1 gap-1">
+        <NumberBadge
+          number={getPlaysInLastHours(track.playHistory || [], recentPlayHours)}
+          size="sm"
+          variant={isInQueue ? "primary" : "ghost"}
+          tooltip={`${
+            isInQueue ? "Song is in queue. " : ""
+          } Played ${getPlaysInLastHours(
+            track.playHistory || [],
+            recentPlayHours
+          )} times in the last ${recentPlayHours} hours`}
+        />
+        <NumberBadge
+          number={getPlaysInCurrentMonth(track.playHistory || [], monthlyPlayDays)}
+          size="sm"
+          variant="muted"
+          tooltip={`Played ${getPlaysInCurrentMonth(
+            track.playHistory || [],
+            monthlyPlayDays
+          )} times in the last ${monthlyPlayDays} days`}
+        />
+        <NumberBadge
+          number={getTotalPlays(track.playHistory || [])}
+          size="sm"
+          variant="muted"
+          tooltip={`Played ${getTotalPlays(
+            track.playHistory || []
+          )} times total`}
+        />
       </div>
       <div className="flex-1 min-w-0 overflow mr-1 ">
         <div className="font-medium text-sm sm:text-base flex items-center ">
@@ -68,9 +164,119 @@ export function TrackItem({
           </div>
         </div>
         {track.artist && (
-          <div className="text-xs sm:text-sm text-muted-foreground">
-            {track.artist}
-            {track.album && ` - ${track.album}`}
+          <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+            {track.artist && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger className="cursor-help">
+                      <span className="truncate">{track.artist}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      Artist
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span>•</span>
+              </div>
+            )}
+            {track.album && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger className="cursor-help">
+                      <span className="truncate">{track.album}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      Album
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span>•</span>
+              </div>
+            )}
+            {track.track && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger className="cursor-help">
+                      <span className="truncate">#{track.track}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      Track
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span>•</span>
+              </div>
+            )}
+            {track.year && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger className="cursor-help">
+                      <span>{track.year}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      Year
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span>•</span>
+              </div>
+            )}
+            {track.genre && track.genre.length > 0 && (
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger className="cursor-help">
+                      <span className="truncate">{track.genre.join(", ")}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      Genre
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {track.comment && <span>•</span>}
+              </div>
+            )}
+            {track.comment && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCommentExpanded(!isCommentExpanded);
+                  }}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors"
+                >
+                  <TooltipProvider>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 cursor-help">
+                          <MessageSquare className="h-3 w-3" />
+                          <span className="truncate max-w-[150px]">
+                            {track.comment.length > 20
+                              ? `${track.comment.substring(0, 20)}...`
+                              : track.comment}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="start">
+                        Comment
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {isCommentExpanded && track.comment && (
+          <div
+            className="mt-1 text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap "
+            onClick={(e) => e.stopPropagation()}
+          >
+            {track.comment}
           </div>
         )}
         {prelistenTrack && (

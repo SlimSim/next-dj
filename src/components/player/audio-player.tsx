@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAudioPlayer } from "../../features/audio/hooks/useAudioPlayer";
 import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
 import { PlayerLayout } from "./player-layout";
 import { usePlayerStore } from "@/lib/store";
+import { recordPlayEvent } from "@/db/metadata-operations";
 
 export const AudioPlayer = () => {
   const {
@@ -30,6 +31,8 @@ export const AudioPlayer = () => {
     playNextTrack,
   } = usePlayerStore();
 
+  const lastTrackRef = useRef<string | null>(null);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -47,15 +50,29 @@ export const AudioPlayer = () => {
   useEffect(() => {
     if (!audioRef.current || isLoading) return;
 
-    if (isPlaying) {
-      audioRef.current.play().catch((error) => {
-        console.error("Error playing audio:", error);
-        setIsPlaying(false);
-      });
+    if (isPlaying && currentTrack) {
+      audioRef.current
+        .play()
+        .then(() => {
+          // Only record play event for main player, not pre-listen
+          // And only when the track changes (not when auto-playing next track)
+          if (currentTrack.id !== lastTrackRef.current) {
+            recordPlayEvent(currentTrack.id).catch((error) => {
+              console.error("Error recording play event:", error);
+            });
+            lastTrackRef.current = currentTrack.id;
+          }
+        })
+        .catch((error) => {
+          console.error("Error playing audio:", error);
+          setIsPlaying(false);
+        });
     } else {
       audioRef.current.pause();
+      // Reset lastTrackRef when paused so next play will record
+      lastTrackRef.current = null;
     }
-  }, [isPlaying, isLoading, setIsPlaying]);
+  }, [isPlaying, isLoading, setIsPlaying, currentTrack]);
 
   return (
     <PlayerLayout

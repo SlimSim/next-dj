@@ -6,11 +6,19 @@ export interface MusicMetadata {
   duration: number
   playCount: number
   lastPlayed?: Date
+  playHistory: PlayHistoryEvent[]
   path?: string
   coverArt?: string
   file?: File
   queueId: string
   removed?: boolean
+  tempo?: number
+  rating?: number
+  comment?: string
+  track?: number
+  bpm?: number
+  year?: number
+  genre?: string[]
 }
 
 export interface AudioFile {
@@ -29,4 +37,12 @@ export interface PlaybackState {
   duration: number
   volume: number
   isMuted: boolean
+}
+
+export interface PlayHistoryEvent {
+  timestamp: string;
+  // We can easily add more fields here in the future, like:
+  // source?: 'main-player' | 'pre-listen';
+  // durationPlayed?: number;
+  // deviceId?: string;
 }

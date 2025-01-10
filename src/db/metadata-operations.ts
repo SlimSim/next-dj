@@ -1,5 +1,6 @@
-import { MusicMetadata } from '@/lib/types/types'
+import { MusicMetadata, PlayHistoryEvent } from '@/lib/types/types'
 import { initMusicDB } from './schema'
+import { usePlayerStore } from '@/lib/store'
 
 export async function updateMetadata(id: string, metadata: Partial<MusicMetadata>): Promise<void> {
   const db = await initMusicDB()
@@ -33,4 +34,30 @@ export async function markFileAsRemoved(filePath: string): Promise<void> {
     file.removed = true
     await tx.store.put(file)
   }
+}
+
+export async function recordPlayEvent(id: string): Promise<void> {
+  const db = await initMusicDB();
+  const tx = db.transaction('metadata', 'readwrite');
+  const store = tx.objectStore('metadata');
+  
+  const metadata = await store.get(id);
+  if (!metadata) return;
+
+  const newEvent: PlayHistoryEvent = {
+    timestamp: new Date().toISOString(),
+  };
+
+  const updatedMetadata = {
+    ...metadata,
+    playCount: (metadata.playCount || 0) + 1,
+    lastPlayed: new Date(),
+    playHistory: [...(metadata.playHistory || []), newEvent]
+  };
+
+  await store.put(updatedMetadata);
+  await tx.done;
+
+  // Trigger a refresh to update the UI
+  usePlayerStore.getState().triggerRefresh();
 }
