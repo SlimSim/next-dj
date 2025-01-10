@@ -151,8 +151,8 @@ export function SettingsDialog() {
                   <ConfirmButton
                     variant="outline"
                     size="sm"
-                    onConfirm={() => {
-                      removeRemovedSongs();
+                    onClick={() => {
+                      usePlayerStore.getState().removeRemovedSongs();
                       checkForRemovedSongs();
                     }}
                   >
@@ -183,7 +183,7 @@ export function SettingsDialog() {
               </label>
               {showPreListenButtons && (
                 <div className="pl-4 space-y-4">
-                  <AudioDeviceSelector className="w-full" />
+                  <AudioDeviceSelector />
                 </div>
               )}
             </div>
@@ -208,7 +208,8 @@ export function SettingsDialog() {
                       <TooltipContent>
                         <p className="text-xs text-muted-foreground">
                           Set the time window for the first play counter. <br />
-                          Only counts plays within the last X hours (default: 18)
+                          Only counts plays within the last X hours (default:
+                          18)
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -240,7 +241,8 @@ export function SettingsDialog() {
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="text-xs text-muted-foreground">
-                          Set the time window for the second play counter. <br />
+                          Set the time window for the second play counter.{" "}
+                          <br />
                           Only counts plays within the last X days (default: 42)
                         </p>
                       </TooltipContent>
