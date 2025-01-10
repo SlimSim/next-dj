@@ -190,6 +190,10 @@ export const usePlayerStore = create<PlayerStore>()(
         selectedDeviceId: state.selectedDeviceId,
         prelistenDeviceId: state.prelistenDeviceId,
         selectedFolderNames: state.selectedFolderNames,
+        queue: state.queue,
+        history: state.history,
+        currentTrack: state.currentTrack,
+        isQueueVisible: state.isQueueVisible
       }),
     }
   )
