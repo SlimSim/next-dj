@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { Button } from "../ui/button";
+import { formatTime } from "@/lib/utils/formatting";
 import {
   DndContext,
   DragEndEvent,
@@ -88,8 +89,18 @@ function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
       </Button>
       <div className="flex-1 min-w-0">
         <div className="font-medium truncate">{track.title}</div>
-        <div className="text-sm text-muted-foreground truncate">
-          {track.artist}
+        <div className="flex items-center flex-wrap text-sm text-muted-foreground">
+          <span className="truncate">{track.artist}</span>
+          <span className="mx-2">•</span>
+          {track.bpm && (
+            <>
+              <span>
+                {Math.round(track.bpm)} <span className="text-[10px]">BPM</span>
+              </span>
+              <span className="mx-2">•</span>
+            </>
+          )}
+          <span>{formatTime(track.duration)}</span>
         </div>
       </div>
       <DropdownMenu>

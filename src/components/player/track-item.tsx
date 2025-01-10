@@ -97,20 +97,6 @@ export function TrackItem({
           <TooltipProvider>
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
-                <p className="text-[0.625rem] text-muted-foreground">
-                  {formatTime(track.duration || 0)}
-                </p>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center" className="text-xs">
-                Duration: {formatTime(track.duration || 0)}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <div className="h-3">
-          <TooltipProvider>
-            <Tooltip delayDuration={300}>
-              <TooltipTrigger asChild>
                 <div className="flex items-center gap-1 cursor-help">
                   <p className="text-[0.625rem] text-muted-foreground">
                     {track.bpm || ""}
@@ -119,6 +105,20 @@ export function TrackItem({
               </TooltipTrigger>
               <TooltipContent side="right" align="center" className="text-xs">
                 Tempo in Beats Per Minute
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="h-3">
+          <TooltipProvider>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <p className="text-[0.625rem] text-muted-foreground">
+                  {formatTime(track.duration || 0)}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent side="right" align="center" className="text-xs">
+                Duration: {formatTime(track.duration || 0)}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -137,7 +137,10 @@ export function TrackItem({
           )} times in the last ${recentPlayHours} hours`}
         />
         <NumberBadge
-          number={getPlaysInCurrentMonth(track.playHistory || [], monthlyPlayDays)}
+          number={getPlaysInCurrentMonth(
+            track.playHistory || [],
+            monthlyPlayDays
+          )}
           size="sm"
           variant="muted"
           tooltip={`Played ${getPlaysInCurrentMonth(
