@@ -1,11 +1,17 @@
+'use client'
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePlayerStore } from '@/lib/store';
 
 export function NavigationGuard() {
   const router = useRouter();
+  const isPlaying = usePlayerStore((state) => state.isPlaying);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isPlaying) return;
+      
       e.preventDefault();
       // Chrome requires returnValue to be set
       e.returnValue = '';
@@ -13,6 +19,8 @@ export function NavigationGuard() {
     };
 
     const handlePopState = (e: PopStateEvent) => {
+      if (!isPlaying) return;
+
       // Prevent navigation
       window.history.pushState(null, '', window.location.href);
       
@@ -35,7 +43,7 @@ export function NavigationGuard() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [router]);
+  }, [router, isPlaying]);
 
   return null;
 }
