@@ -6,7 +6,6 @@ import OpenPlayingQueueButton from "./open-playing-queue-button";
 import OpenPlayerControlsButton from "./open-player-controls-button";
 import ProgressIndicator from "../common/progress-indicator";
 import CurrentSongInfo from "./current-song-info";
-import NextSongInfo from "./next-song-info";
 import { useState } from "react";
 import { PlayButton } from "./play-button";
 
@@ -75,8 +74,15 @@ export const PlayerLayout = ({
                 track={currentTrack}
                 duration={duration}
                 currentTime={currentTime}
+                variant="current"
               />
-              {queue.length > 0 && <NextSongInfo track={queue[0]} />}
+              {queue.length > 0 && (
+                <CurrentSongInfo
+                  track={queue[0]}
+                  duration={queue[0].duration}
+                  variant="next"
+                />
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -1,18 +1,23 @@
 import { MusicMetadata } from "@/lib/types/types";
 import { formatTime } from "@/lib/utils/formatting";
+import { cn } from "@/lib/utils/common";
 import React from "react";
 
 interface CurrentSongInfoProps {
   track: MusicMetadata | null;
-  currentTime: number;
-  duration: number;
+  currentTime?: number;
+  duration?: number;
+  variant?: "current" | "next";
 }
 
 const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
   track,
-  duration,
-  currentTime,
+  duration = 0,
+  currentTime = 0,
+  variant = "current",
 }) => {
+  const isNext = variant === "next";
+
   return (
     <>
       {track?.coverArt && (
@@ -25,17 +30,37 @@ const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
         />
       )}
       <div className="space-y-1">
-        <h3 className="text-sm font-medium leading-none">
-          {track?.title || "No track playing"}
-        </h3>
+        <div className="flex items-center gap-1">
+          {isNext && (
+            <span className="hidden sm:inline text-sm text-muted-foreground">
+              Next:
+            </span>
+          )}
+          <h3
+            className={cn(
+              "text-sm font-medium leading-none",
+              isNext && "text-muted-foreground"
+            )}
+          >
+            {track?.title}
+          </h3>
+        </div>
         <div className="flex items-center text-xs text-muted-foreground">
-          <span>{track?.artist || "Unknown artist"}</span>
+          <span>{track?.artist}</span>
           <span className="mx-2">•</span>
-          <span>{formatTime(currentTime)}</span>
-          <span className="mx-1">/</span>
+          {!isNext && (
+            <>
+              <span>{formatTime(currentTime)}</span>
+              <span className="mx-1">/</span>
+            </>
+          )}
           <span>{formatTime(duration)}</span>
-          <span className="mx-2">•</span>
-          <span>-{formatTime(duration - currentTime)}</span>
+          {!isNext && (
+            <>
+              <span className="mx-2">•</span>
+              <span>-{formatTime(duration - currentTime)}</span>
+            </>
+          )}
         </div>
       </div>
     </>
