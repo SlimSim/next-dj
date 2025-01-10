@@ -221,7 +221,7 @@ export function SettingsDialog() {
                       min="0"
                       value={recentPlayHours}
                       onChange={(e) => {
-                        let val = parseFloat(e.target.value);
+                        let val = Number(e.target.value);
                         setRecentPlayHours(typeof val === "number" ? val : 18);
                       }}
                       className="w-24"
@@ -255,7 +255,7 @@ export function SettingsDialog() {
                       min="0"
                       value={monthlyPlayDays}
                       onChange={(e) => {
-                        let val = parseFloat(e.target.value);
+                        let val = Number(e.target.value);
                         setMonthlyPlayDays(typeof val === "number" ? val : 42);
                       }}
                       className="w-24"
