@@ -33,6 +33,7 @@ const initialState: PlayerState = {
   showPreListenButtons: true,
   recentPlayHours: 18,
   monthlyPlayDays: 42,
+  hasShownPreListenWarning: false,
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -106,6 +107,8 @@ export const usePlayerStore = create<PlayerStore>()(
         setShowPreListenButtons: (show: boolean) => set({ showPreListenButtons: show }),
         setRecentPlayHours: (hours: number) => set({ recentPlayHours: hours }),
         setMonthlyPlayDays: (days: number) => set({ monthlyPlayDays: days }),
+        setHasShownPreListenWarning: (shown: boolean) =>
+          set({ hasShownPreListenWarning: shown }),
 
         addSelectedFolder: async (
           folderName: string,
@@ -190,19 +193,16 @@ export const usePlayerStore = create<PlayerStore>()(
     {
       name: "player-store",
       partialize: (state) => ({
+        queue: state.queue,
+        history: state.history,
         volume: state.volume,
         shuffle: state.shuffle,
         repeat: state.repeat,
-        selectedDeviceId: state.selectedDeviceId,
-        prelistenDeviceId: state.prelistenDeviceId,
         selectedFolderNames: state.selectedFolderNames,
-        queue: state.queue,
-        history: state.history,
-        currentTrack: state.currentTrack,
-        isQueueVisible: state.isQueueVisible,
         showPreListenButtons: state.showPreListenButtons,
         recentPlayHours: state.recentPlayHours,
         monthlyPlayDays: state.monthlyPlayDays,
+        // Don't persist hasShownPreListenWarning so it resets on page load
       }),
     }
   )

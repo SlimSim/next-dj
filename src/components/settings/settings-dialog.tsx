@@ -35,7 +35,22 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 
-export function SettingsDialog() {
+interface SettingsDialogProps {
+  triggerButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function SettingsDialog({
+  triggerButton = true,
+  open,
+  onOpenChange
+}: SettingsDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const handleOpenChange = isControlled ? onOpenChange : setInternalOpen;
+
   const {
     showPreListenButtons,
     setShowPreListenButtons,
@@ -44,9 +59,7 @@ export function SettingsDialog() {
     monthlyPlayDays,
     setMonthlyPlayDays,
   } = useSettings();
-  const [permissionStatus, setPermissionStatus] = useState<
-    "prompt" | "granted" | "denied"
-  >("prompt");
+  const [permissionStatus, setPermissionStatus] = useState<"prompt" | "granted" | "denied">("prompt");
   const selectedFolderNames = usePlayerStore(
     (state) => state.selectedFolderNames
   );
@@ -86,12 +99,14 @@ export function SettingsDialog() {
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Settings className="h-[1.2rem] w-[1.2rem]" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {triggerButton && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Settings className="h-[1.2rem] w-[1.2rem]" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>

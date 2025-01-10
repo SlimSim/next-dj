@@ -30,16 +30,25 @@ export function PreListenDialog({
         <DialogHeader>
           <DialogTitle>Pre-Listen Output Warning</DialogTitle>
           <DialogDescription>
-            The pre-listen output is set to the same device as your main output. This could interrupt your main mix.
+            The pre-listen output is set to the same device as your main output.
+            This could interrupt your main mix.
+          </DialogDescription>
+          <DialogDescription>
+            You can configure the pre-listen output or disable pre-listen in the
+            settings.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">
-          <Button onClick={onContinue} variant="default">
-            Continue Anyway
-          </Button>
-          <Button onClick={onConfigureOutput} variant="outline" className="gap-2">
+          <Button
+            onClick={onConfigureOutput}
+            variant="default"
+            className="gap-2"
+          >
             <Settings className="h-4 w-4" />
             Configure Different Output
+          </Button>
+          <Button onClick={onContinue} variant="outline">
+            Continue Anyway
           </Button>
           <Button onClick={onDisable} variant="ghost">
             Disable Pre-Listen

@@ -33,6 +33,8 @@ import {
 import { useSettings } from "../settings/settings-context";
 import { PreListenDialog } from "./pre-listen-dialog";
 import { usePlayerStore } from "@/lib/store";
+import { Dialog, DialogContent } from "../ui/dialog";
+import { SettingsDialog } from "../settings/settings-dialog";
 
 interface TrackItemProps {
   track: MusicMetadata;
@@ -65,17 +67,32 @@ export function TrackItem({
 }: TrackItemProps) {
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
   const [showPreListenDialog, setShowPreListenDialog] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { recentPlayHours, monthlyPlayDays } = useSettings();
   const selectedDeviceId = usePlayerStore((state) => state.selectedDeviceId);
   const prelistenDeviceId = usePlayerStore((state) => state.prelistenDeviceId);
   const setShowPreListenButtons = usePlayerStore(
     (state) => state.setShowPreListenButtons
   );
+  const hasShownPreListenWarning = usePlayerStore(
+    (state) => state.hasShownPreListenWarning
+  );
+  const setHasShownPreListenWarning = usePlayerStore(
+    (state) => state.setHasShownPreListenWarning
+  );
   const setIsQueueVisible = usePlayerStore((state) => state.setQueueVisible);
 
   const handlePreListenClick = (track: MusicMetadata) => {
-    if (selectedDeviceId === prelistenDeviceId) {
+    // If we're already prelistening to this track, just pause it
+    if (prelistenTrack?.id === track.id && isPrelistening) {
+      onPrelistenToggle(track);
+      return;
+    }
+
+    // If we haven't shown the warning this session and outputs are the same
+    if (!hasShownPreListenWarning && selectedDeviceId === prelistenDeviceId) {
       setShowPreListenDialog(true);
+      setHasShownPreListenWarning(true);
     } else {
       onPrelistenToggle(track);
     }
@@ -93,7 +110,7 @@ export function TrackItem({
 
   const handleConfigureOutput = () => {
     setShowPreListenDialog(false);
-    setIsQueueVisible(true); // Queue view contains the audio settings
+    setShowSettings(true);
   };
 
   return (
@@ -429,6 +446,11 @@ export function TrackItem({
         onContinue={handleContinueAnyway}
         onDisable={handleDisablePreListen}
         onConfigureOutput={handleConfigureOutput}
+      />
+      <SettingsDialog
+        triggerButton={false}
+        open={showSettings}
+        onOpenChange={setShowSettings}
       />
     </div>
   );
