@@ -131,38 +131,33 @@ export const AudioDeviceSelector = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="cursor-pointer text-sm">
+      <label className="text-sm font-medium">Main Audio Output</label>
+      <Select
+        value={selectedDeviceId || "default"}
+        onValueChange={handleDeviceChange}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select main audio output" />
+        </SelectTrigger>
+        <SelectContent>
+          {audioDevices.map((device) => (
+            <SelectItem key={device.deviceId} value={device.deviceId}>
+              {device.label || "Unnamed device"}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <label className="cursor-pointer text-sm font-medium mt-4">
         <div className="flex items-center justify-between w-full">
-          <span>Enable Pre-listen</span>
+          <span>Pre-listen Audio Output</span>
           <Switch
             checked={showPreListenButtons}
             onCheckedChange={setShowPreListenButtons}
           />
         </div>
       </label>
-
       {showPreListenButtons && (
         <>
-          <label className="text-sm font-medium">Main Audio Output</label>
-          <Select
-            value={selectedDeviceId || "default"}
-            onValueChange={handleDeviceChange}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select main audio output" />
-            </SelectTrigger>
-            <SelectContent>
-              {audioDevices.map((device) => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Unnamed device"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <label className="text-sm font-medium mt-4">
-            Pre-listen Audio Output
-          </label>
           <Select
             value={prelistenDeviceId || "default"}
             onValueChange={handlePrelistenDeviceChange}
