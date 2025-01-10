@@ -63,7 +63,7 @@ export const PlayerLayout = ({
         )}
       >
         <ProgressIndicator value={currentTime} max={duration} />
-        <div className="container flex gap-4 py-4">
+        <div className="container flex gap-4 py-4 px-1">
           <div className="flex items-center gap-4 w-full">
             <OpenPlayingQueueButton
               number={queue.length}
