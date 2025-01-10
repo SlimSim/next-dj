@@ -45,9 +45,17 @@ const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
             {track?.title}
           </h3>
         </div>
-        <div className="flex items-center text-xs text-muted-foreground">
+        <div className="flex items-center flex-wrap text-xs text-muted-foreground">
           <span>{track?.artist}</span>
           <span className="mx-2">•</span>
+          {track?.bpm && (
+            <>
+              <span>
+                {Math.round(track.bpm)} <span className="text-[10px]">BPM</span>
+              </span>
+              <span className="mx-2">•</span>
+            </>
+          )}
           {!isNext && (
             <>
               <span>{formatTime(currentTime)}</span>
