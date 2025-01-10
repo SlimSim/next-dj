@@ -31,6 +31,8 @@ import {
   getTotalPlays,
 } from "@/lib/utils/play-history";
 import { useSettings } from "../settings/settings-context";
+import { PreListenDialog } from "./pre-listen-dialog";
+import { usePlayerStore } from "@/lib/store";
 
 interface TrackItemProps {
   track: MusicMetadata;
@@ -62,7 +64,37 @@ export function TrackItem({
   onDeleteTrack,
 }: TrackItemProps) {
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
+  const [showPreListenDialog, setShowPreListenDialog] = useState(false);
   const { recentPlayHours, monthlyPlayDays } = useSettings();
+  const selectedDeviceId = usePlayerStore((state) => state.selectedDeviceId);
+  const prelistenDeviceId = usePlayerStore((state) => state.prelistenDeviceId);
+  const setShowPreListenButtons = usePlayerStore(
+    (state) => state.setShowPreListenButtons
+  );
+  const setIsQueueVisible = usePlayerStore((state) => state.setQueueVisible);
+
+  const handlePreListenClick = (track: MusicMetadata) => {
+    if (selectedDeviceId === prelistenDeviceId) {
+      setShowPreListenDialog(true);
+    } else {
+      onPrelistenToggle(track);
+    }
+  };
+
+  const handleContinueAnyway = () => {
+    setShowPreListenDialog(false);
+    onPrelistenToggle(track);
+  };
+
+  const handleDisablePreListen = () => {
+    setShowPreListenDialog(false);
+    setShowPreListenButtons(false);
+  };
+
+  const handleConfigureOutput = () => {
+    setShowPreListenDialog(false);
+    setIsQueueVisible(true); // Queue view contains the audio settings
+  };
 
   return (
     <div
@@ -328,7 +360,7 @@ export function TrackItem({
             className="h-8 w-8 sm:h-9 sm:w-9"
             onClick={(e) => {
               e.stopPropagation();
-              onPrelistenToggle(track);
+              handlePreListenClick(track);
             }}
           >
             {prelistenTrack?.id === track.id && isPrelistening ? (
@@ -391,6 +423,13 @@ export function TrackItem({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <PreListenDialog
+        isOpen={showPreListenDialog}
+        onClose={() => setShowPreListenDialog(false)}
+        onContinue={handleContinueAnyway}
+        onDisable={handleDisablePreListen}
+        onConfigureOutput={handleConfigureOutput}
+      />
     </div>
   );
 }
