@@ -193,6 +193,7 @@ export const usePlayerStore = create<PlayerStore>()(
     {
       name: "player-store",
       partialize: (state) => ({
+        currentTrack: state.currentTrack,
         queue: state.queue,
         history: state.history,
         volume: state.volume,

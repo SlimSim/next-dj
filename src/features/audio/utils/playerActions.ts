@@ -7,7 +7,7 @@ export const createQueueActions = (set: any, get: () => PlayerState) => ({
     set((state: PlayerState) => {
       const trackWithId = { ...track, queueId: track.queueId || uuidv4() };
       if (!state.currentTrack) {
-        return { currentTrack: trackWithId, queue: [] };
+        return { currentTrack: trackWithId };
       }
       return { queue: [...state.queue, trackWithId] };
     }),
