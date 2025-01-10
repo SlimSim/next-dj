@@ -7,6 +7,8 @@ import { TrackItem } from "./track-item";
 import { EditTrackDialog } from "./edit-track-dialog";
 import { usePlaylistActions } from "./use-playlist-actions";
 import { useTrackList } from "./use-track-list";
+import { FileUpload } from "../common/file-upload";
+import { GearIcon } from "@radix-ui/react-icons";
 
 interface PlaylistProps {
   searchQuery: string;
@@ -17,15 +19,10 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [prelistenCurrentTime, setPrelistenCurrentTime] = useState(0);
-  
-  const {
-    currentTrack,
-    prelistenTrack,
-    isPrelistening,
-    queue,
-    history,
-  } = usePlayerStore();
-  
+
+  const { currentTrack, prelistenTrack, isPrelistening, queue, history } =
+    usePlayerStore();
+
   const { showPreListenButtons } = useSettings();
   const { filteredTracks, loadTracks } = useTrackList(searchQuery);
   const {
@@ -66,8 +63,13 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
     <div className="h-full flex-1 flex flex-col container mx-auto p-0">
       <div className="w-full h-full">
         {filteredTracks.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No tracks found
+          <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground">
+            <p>No tracks found</p>
+            <p>
+              Add tracks in the settings (<GearIcon className="inline-block" />)
+              or with this button:
+            </p>
+            <FileUpload onlyFolderUpload />
           </div>
         ) : (
           filteredTracks.map((track) => (
@@ -80,9 +82,9 @@ export function Playlist({ searchQuery, prelistenRef }: PlaylistProps) {
               prelistenCurrentTime={prelistenCurrentTime}
               showPreListenButtons={showPreListenButtons}
               isInQueue={
-                (currentTrack?.id === track.id) ||
-                queue?.some(t => t.id === track.id) ||
-                history?.some(t => t.id === track.id)
+                currentTrack?.id === track.id ||
+                queue?.some((t) => t.id === track.id) ||
+                history?.some((t) => t.id === track.id)
               }
               onPrelistenTimelineClick={handlePrelistenTimelineClick}
               onPrelistenToggle={handlePrelistenToggle}

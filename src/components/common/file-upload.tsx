@@ -14,7 +14,11 @@ declare global {
   }
 }
 
-export function FileUpload() {
+interface FileUploadProps {
+  onlyFolderUpload?: boolean;
+}
+
+export function FileUpload({ onlyFolderUpload = false }: FileUploadProps) {
   const [isLoading, setIsLoading] = useState(false);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
   const addSelectedFolder = usePlayerStore((state) => state.addSelectedFolder);
@@ -105,31 +109,35 @@ export function FileUpload() {
   }, [triggerRefresh, addSelectedFolder]);
 
   return (
-    <>
-      <Button
-        variant="outline"
-        onClick={() => document.getElementById("file-upload")?.click()}
-        disabled={isLoading}
-      >
-        <FilePlus className="w-4 h-4 mr-2" />
-        Add Files
-      </Button>
-      <input
-        id="file-upload"
-        type="file"
-        multiple
-        accept="audio/*"
-        className="hidden"
-        onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
-      />
-      <Button
-        variant="outline"
-        onClick={handleFolderSelect}
-        disabled={isLoading || !("showDirectoryPicker" in window)}
-      >
-        <FolderPlus className="w-4 h-4 mr-2" />
-        Add Folder
-      </Button>
-    </>
+    <div className="flex gap-2 items-center">
+      {(!onlyFolderUpload || !("showDirectoryPicker" in window)) && (
+        <>
+          <label htmlFor="file-upload">
+            <Button variant="outline" disabled={isLoading}>
+              <FilePlus className="w-4 h-4 mr-2" />
+              Add Files
+            </Button>
+          </label>
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+          />
+        </>
+      )}
+      {(!onlyFolderUpload || "showDirectoryPicker" in window) && (
+        <Button
+          variant="outline"
+          onClick={handleFolderSelect}
+          disabled={isLoading || !("showDirectoryPicker" in window)}
+        >
+          <FolderPlus className="w-4 h-4 mr-2" />
+          Add Folder
+        </Button>
+      )}
+    </div>
   );
 }
