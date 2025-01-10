@@ -6,6 +6,7 @@ import OpenPlayingQueueButton from "./open-playing-queue-button";
 import OpenPlayerControlsButton from "./open-player-controls-button";
 import ProgressIndicator from "../common/progress-indicator";
 import CurrentSongInfo from "./current-song-info";
+import NextSongInfo from "./next-song-info";
 import { useState } from "react";
 import { PlayButton } from "./play-button";
 
@@ -63,17 +64,20 @@ export const PlayerLayout = ({
         )}
       >
         <ProgressIndicator value={currentTime} max={duration} />
-        <div className="container flex items-center justify-between gap-4 py-4">
-          <div className="flex items-center gap-4">
+        <div className="container flex gap-4 py-4">
+          <div className="flex items-center gap-4 w-full">
             <OpenPlayingQueueButton
               number={queue.length}
               onClick={() => setQueueVisible(!isQueueVisible)}
             />
-            <CurrentSongInfo
-              track={currentTrack}
-              duration={duration}
-              currentTime={currentTime}
-            />
+            <div className="flex flex-row flex-wrap gap-1 justify-between w-full">
+              <CurrentSongInfo
+                track={currentTrack}
+                duration={duration}
+                currentTime={currentTime}
+              />
+              {queue.length > 0 && <NextSongInfo track={queue[0]} />}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <PlayButton
