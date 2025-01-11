@@ -63,6 +63,7 @@ export function SettingsDialog({
   const removeFolder = usePlayerStore((state) => state.removeFolder);
   const [showFolderList, setShowFolderList] = useState(false);
   const [hasRemovedSongs, setHasRemovedSongs] = useState(false);
+  const [hasAudioPermission, setHasAudioPermission] = useState(false);
 
   const checkForRemovedSongs = useCallback(async () => {
     const removedSongs = await getRemovedSongs();
@@ -72,6 +73,39 @@ export function SettingsDialog({
   useEffect(() => {
     checkForRemovedSongs();
   }, [checkForRemovedSongs]);
+
+  useEffect(() => {
+    const checkAudioPermission = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioOutputDevices = devices.filter(
+          (device) => device.kind === "audiooutput"
+        );
+        // If we can see device labels, we have permission
+        const hasAccess = audioOutputDevices.some(
+          (device) => device.label !== ""
+        );
+        setHasAudioPermission(hasAccess);
+
+        // Listen for device changes
+        navigator.mediaDevices.addEventListener("devicechange", async () => {
+          const updatedDevices =
+            await navigator.mediaDevices.enumerateDevices();
+          const updatedOutputDevices = updatedDevices.filter(
+            (device) => device.kind === "audiooutput"
+          );
+          const hasUpdatedAccess = updatedOutputDevices.some(
+            (device) => device.label !== ""
+          );
+          setHasAudioPermission(hasUpdatedAccess);
+        });
+      } catch (error) {
+        setHasAudioPermission(false);
+      }
+    };
+
+    checkAudioPermission();
+  }, []);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -162,7 +196,41 @@ export function SettingsDialog({
 
             <div className="flex flex-col gap-2">
               <h3 className="text-sm font-medium">Playback Settings</h3>
-              <AudioDeviceSelector />
+              {!hasAudioPermission ? (
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      // First request audio permission
+                      const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                      });
+                      // Stop the stream immediately as we don't need it
+                      stream.getTracks().forEach((track) => track.stop());
+
+                      // Now enumerate devices
+                      const devices =
+                        await navigator.mediaDevices.enumerateDevices();
+
+                      const audioOutputDevices = devices.filter(
+                        (device) => device.kind === "audiooutput"
+                      );
+
+                      // This will now work because we have permission
+                      const hasAccess = audioOutputDevices.some(
+                        (device) => device.label !== ""
+                      );
+                      setHasAudioPermission(hasAccess);
+                    } catch (error) {
+                      console.error("Error accessing audio devices:", error);
+                    }
+                  }}
+                >
+                  Activate Audio Output
+                </Button>
+              ) : (
+                <AudioDeviceSelector />
+              )}
             </div>
           </TabsContent>
 
