@@ -350,7 +350,7 @@ export function SettingsDialog({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <SettingsContent
           hasRemovedSongs={hasRemovedSongs}
           setHasRemovedSongs={setHasRemovedSongs}
