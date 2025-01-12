@@ -22,6 +22,7 @@ export interface PlayerState {
   showPreListenButtons: boolean;
   recentPlayHours: number;
   monthlyPlayDays: number;
+  hasShownPreListenWarning: boolean;
 }
 
 export interface PlayerActions {
@@ -52,16 +53,14 @@ export interface PlayerActions {
   setPrelistenDeviceId: (deviceId: string) => void;
   setPrelistenTrack: (track: MusicMetadata | null) => void;
   setIsPrelistening: (isPrelistening: boolean) => void;
-  removeRemovedSongs: () => Promise<void>;
-  addSelectedFolder: (
-    folderName: string,
-    handle: FileSystemDirectoryHandle
-  ) => void;
-  removeFolder: (folderName: string) => void;
-  clearSelectedFolders: () => void;
   setShowPreListenButtons: (show: boolean) => void;
   setRecentPlayHours: (hours: number) => void;
   setMonthlyPlayDays: (days: number) => void;
+  setHasShownPreListenWarning: (shown: boolean) => void;
+  addSelectedFolder: (folderName: string, handle: FileSystemDirectoryHandle) => void;
+  removeFolder: (folderName: string) => void;
+  removeRemovedSongs: () => void;
+  clearSelectedFolders: () => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

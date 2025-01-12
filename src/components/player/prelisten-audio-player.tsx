@@ -91,6 +91,10 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
     }, [setIsPrelistening]);
 
     useEffect(() => {
+      if (!prelistenTrack || prelistenTrack.removed) {
+        setIsPrelistening(false);
+        return;
+      }
       initAudio();
     }, [prelistenTrack?.id]);
 

@@ -1,17 +1,7 @@
 "use client";
 
-import {
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import {
-  ChevronDown,
-  ChevronUp,
-  Folder,
-  X,
-  Music,
-  Music2,
-} from "lucide-react";
+import { DialogHeader, DialogTitle } from "../ui/dialog";
+import { ChevronDown, ChevronUp, Folder, X, Music, Music2 } from "lucide-react";
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
@@ -29,8 +19,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { Button } from "../ui/button";
 
-export function SettingsContent() {
+interface SettingsContentProps {
+  hasRemovedSongs: boolean;
+  setHasRemovedSongs: (hasRemovedSongs: boolean) => void;
+}
+
+export function SettingsContent({
+  hasRemovedSongs,
+  setHasRemovedSongs,
+}: SettingsContentProps) {
   const {
     showPreListenButtons,
     setShowPreListenButtons,
@@ -47,16 +46,23 @@ export function SettingsContent() {
   );
   const removeFolder = usePlayerStore((state) => state.removeFolder);
   const [showFolderList, setShowFolderList] = useState(false);
-  const [hasRemovedSongs, setHasRemovedSongs] = useState(false);
+  const refreshTrigger = usePlayerStore((state) => state.refreshTrigger);
 
   const checkForRemovedSongs = useCallback(async () => {
+    console.log("SettingsContent: Checking for removed songs...");
     const removedSongs = await getRemovedSongs();
+    console.log("SettingsContent: Found removed songs:", removedSongs.length > 0 ? removedSongs : "none");
     setHasRemovedSongs(removedSongs.length > 0);
-  }, []);
+  }, [setHasRemovedSongs]);
 
   useEffect(() => {
+    console.log("SettingsContent: Effect triggered, checking for removed songs");
     checkForRemovedSongs();
-  }, [checkForRemovedSongs]);
+  }, [checkForRemovedSongs, refreshTrigger]);
+
+  useEffect(() => {
+    console.log("SettingsContent: hasRemovedSongs changed to:", hasRemovedSongs);
+  }, [hasRemovedSongs]);
 
   const handlePreListenChange = async (checked: boolean) => {
     if (checked) {
@@ -185,7 +191,7 @@ export function SettingsContent() {
                 variant="destructive"
                 size="sm"
                 disabled={!hasRemovedSongs}
-                onConfirm={() => {
+                onClick={() => {
                   usePlayerStore.getState().removeRemovedSongs();
                   checkForRemovedSongs();
                 }}

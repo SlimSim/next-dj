@@ -49,13 +49,12 @@ export function Playlist({
         !track.album?.toLowerCase().includes(filters.album.toLowerCase())
       )
         return false;
-      if (
-        filters.genre &&
-        !track.genre?.some((g) =>
-          g.toLowerCase().includes(filters.genre.toLowerCase())
-        )
-      )
-        return false;
+      if (filters.genre) {
+        const genreFilter = filters.genre.toLowerCase();
+        if (!track.genre?.some((g) => g.toLowerCase().includes(genreFilter))) {
+          return false;
+        }
+      }
       return true;
     })
     .sort((a, b) => {

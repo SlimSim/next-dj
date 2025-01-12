@@ -68,7 +68,7 @@ export async function addAudioFile(
     title:
       fileMetadata.title ||
       metadata.title ||
-      (file instanceof File ? file.name : file.name),
+      (file instanceof File ? file.name : "Unknown Title"),
     artist: fileMetadata.artist || metadata.artist || "Unknown Artist",
     album: fileMetadata.album || metadata.album || "Unknown Album",
     duration: fileMetadata.duration || metadata.duration || 0,
@@ -80,6 +80,7 @@ export async function addAudioFile(
     year: fileMetadata.year || metadata.year,
     genre: fileMetadata.genre || metadata.genre,
     playCount: 0,
+    playHistory: [],  // Initialize empty play history
     path: metadata.path,
     coverArt: metadata.coverArt,
     isReference,
@@ -98,18 +99,33 @@ export async function addAudioFile(
 }
 
 export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
+  console.log("Getting audio file for id:", id);
   const db = await initMusicDB();
   const audioFile = await db.get("audioFiles", id);
+  console.log("Found audio file:", audioFile);
 
   if (audioFile?.isReference && audioFile.fileHandle) {
     try {
+      console.log("Attempting to access referenced file");
       const file = await audioFile.fileHandle.getFile();
+      console.log("Successfully accessed file:", file.name);
       return {
         ...audioFile,
         file: new Blob([await file.arrayBuffer()], { type: file.type }),
       };
     } catch (error) {
       console.error("Error accessing referenced file:", error);
+      // When file is not found, mark it as removed in metadata
+      const metadata = await db.get("metadata", id);
+      if (metadata && !metadata.removed) {
+        console.log("Marking file as removed in metadata");
+        metadata.removed = true;
+        const tx = db.transaction("metadata", "readwrite");
+        await tx.store.put(metadata);
+        // Trigger a refresh in the player store
+        const { usePlayerStore } = await import("@/lib/store");
+        usePlayerStore.getState().triggerRefresh();
+      }
       return undefined;
     }
   }

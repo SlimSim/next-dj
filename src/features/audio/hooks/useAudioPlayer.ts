@@ -49,10 +49,15 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
     setIsLoading(true);
 
     try {
-      if (!track?.id) return;
+      if (!track?.id || track.removed) {
+        console.log("Track is null, undefined, or removed:", track?.title);
+        return;
+      }
 
+      console.log("Initializing audio for track:", track.title);
       const audioFile = await getAudioFile(track.id);
       if (!audioFile?.file) {
+        console.log("No audio file found for track:", track.title);
         toast.error(`No audio file found for ${track.title}`);
         if (trackProp === "currentTrack") {
           playNextTrack();
@@ -71,6 +76,7 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
       const url = URL.createObjectURL(audioFile.file);
       audioRef.current.src = url;
+      console.log("Set audio source for track:", track.title);
 
       await new Promise<void>((resolve, reject) => {
         if (!audioRef.current) {

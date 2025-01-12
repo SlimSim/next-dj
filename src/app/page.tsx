@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Playlist } from "@/components/player/playlist";
 import { AudioPlayer } from "@/components/player/audio-player";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
@@ -18,6 +18,8 @@ import {
   SortOrder,
   FilterCriteria,
 } from "@/components/player/playlist-controls";
+import { getRemovedSongs } from "@/db/audio-operations";
+import { usePlayerStore } from "@/lib/store";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,6 +28,20 @@ export default function Home() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [filters, setFilters] = useState<FilterCriteria>({});
   const prelistenRef = useRef<PrelistenAudioRef>(null);
+  const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
+
+  // Check for removed songs on initial load
+  useEffect(() => {
+    const checkRemovedSongs = async () => {
+      console.log("Initial check for removed songs");
+      const removedSongs = await getRemovedSongs();
+      if (removedSongs.length > 0) {
+        console.log("Found removed songs on initial load:", removedSongs);
+        triggerRefresh();
+      }
+    };
+    checkRemovedSongs();
+  }, [triggerRefresh]);
 
   const handleSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);

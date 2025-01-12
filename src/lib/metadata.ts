@@ -37,7 +37,7 @@ export async function readAudioMetadata(file: File): Promise<AudioMetadata> {
       duration: duration || 0,
       rating: rating === undefined ? undefined : rating[0]?.rating,
       comment: allComments,
-      track: track?.no,
+      track: track?.no || undefined,
       bpm: bpm,
       year: year,
       genre: genre,
