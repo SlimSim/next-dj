@@ -112,20 +112,33 @@ export function FileUpload({ onlyFolderUpload = false }: FileUploadProps) {
     <div className="flex gap-2 items-center">
       {(!onlyFolderUpload || !("showDirectoryPicker" in window)) && (
         <>
-          <label htmlFor="file-upload">
-            <Button variant="outline" disabled={isLoading}>
-              <FilePlus className="w-4 h-4 mr-2" />
-              Add Files
-            </Button>
-          </label>
           <input
             id="file-upload"
             type="file"
             multiple
             accept="audio/*"
             className="hidden"
-            onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleFileSelect(e.target.files);
+                // Reset the input value so the same file can be selected again
+                e.target.value = "";
+              }
+            }}
           />
+          <label htmlFor="file-upload">
+            <Button
+              className="cursor-pointer"
+              variant="outline"
+              disabled={isLoading}
+              asChild
+            >
+              <span>
+                <FilePlus className="w-4 h-4 mr-2" />
+                Add Files
+              </span>
+            </Button>
+          </label>
         </>
       )}
       {(!onlyFolderUpload || "showDirectoryPicker" in window) && (
