@@ -36,17 +36,15 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
     track
   );
 
-  // Only reinitialize audio when the track source changes
+  // Only reinitialize audio when the track ID changes
   useEffect(() => {
-    // Only check ID and path, ignore the URL part
     const shouldReinitialize = track?.id !== trackSourceRef.current;
 
     if (shouldReinitialize) {
-      console.log("Reinitializing audio due to track change");
       trackSourceRef.current = track?.id || null;
       initAudio();
     }
-  }, [track?.id]); // Only depend on the ID
+  }, [track?.id]);
 
   // Handle metadata updates (volume, etc.) without reinitializing
   useEffect(() => {
@@ -82,14 +80,11 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
     try {
       if (!track?.id || track.removed) {
-        console.log("Track is null, undefined, or removed:", track?.title);
         return;
       }
 
-      console.log("Initializing audio for track:", track.title);
       const audioFile = await getAudioFile(track.id);
       if (!audioFile?.file) {
-        console.log("No audio file found for track:", track.title);
         toast.error(`No audio file found for ${track.title}`);
         if (trackProp === "currentTrack") {
           playNextTrack();
@@ -108,7 +103,6 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
       const url = URL.createObjectURL(audioFile.file);
       audioRef.current.src = url;
-      console.log("Set audio source for track:", track.title);
 
       await new Promise<void>((resolve, reject) => {
         if (!audioRef.current) {

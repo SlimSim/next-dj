@@ -262,33 +262,28 @@ export const usePlayerStore = create<PlayerStore>()(
 
         updateTrackMetadata: (
           trackId: string,
-          updates: Partial<MusicMetadata> & { __volumeOnly?: boolean }
+          updates: Partial<MusicMetadata> & { __volumeOnly?: boolean; __preserveRef?: boolean }
         ) =>
           set((state) => {
-            console.log("Updating metadata:", { trackId, updates });
-
             // Create a new metadata array with updates
             const metadata = state.metadata.map((track) =>
               track.id === trackId ? { ...track, ...updates } : track
             );
 
-            // Check if this is a volume-only update
             const isVolumeUpdate = updates.__volumeOnly === true;
-            console.log("Is volume-only update:", isVolumeUpdate);
-
-            // Remove internal flag before applying updates
+            const shouldPreserveRef = updates.__preserveRef === true;
             const cleanUpdates = { ...updates };
             delete cleanUpdates.__volumeOnly;
+            delete cleanUpdates.__preserveRef;
 
             // Update currentTrack
             let currentTrack = state.currentTrack;
             if (state.currentTrack?.id === trackId) {
-              if (isVolumeUpdate) {
-                // Modify volume in place without creating a new reference
+              if (isVolumeUpdate || shouldPreserveRef) {
+                // Modify in place without creating new reference
                 currentTrack = state.currentTrack;
-                currentTrack.volume = cleanUpdates.volume;
+                Object.assign(currentTrack, cleanUpdates);
               } else {
-                // Create new reference for other updates
                 currentTrack = {
                   ...state.currentTrack,
                   ...cleanUpdates,
@@ -298,15 +293,14 @@ export const usePlayerStore = create<PlayerStore>()(
               }
             }
 
-            // Update prelistenTrack similarly
+            // Update prelistenTrack
             let prelistenTrack = state.prelistenTrack;
             if (state.prelistenTrack?.id === trackId) {
-              if (isVolumeUpdate) {
-                // Modify volume in place without creating a new reference
+              if (isVolumeUpdate || shouldPreserveRef) {
+                // Modify in place without creating new reference
                 prelistenTrack = state.prelistenTrack;
-                prelistenTrack.volume = cleanUpdates.volume;
+                Object.assign(prelistenTrack, cleanUpdates);
               } else {
-                // Create new reference for other updates
                 prelistenTrack = {
                   ...state.prelistenTrack,
                   ...cleanUpdates,

@@ -49,8 +49,11 @@ export function EditTrackDialog({
         volume: track.volume,
       });
 
-      // Update store metadata immediately
-      updateTrackMetadata(track.id, track);
+      // Update store metadata with preserve ref flag to prevent restart
+      updateTrackMetadata(track.id, {
+        ...track,
+        __preserveRef: true,
+      });
 
       // Trigger UI refresh
       triggerRefresh();
@@ -64,12 +67,10 @@ export function EditTrackDialog({
     const updatedTrack = { ...track, ...updates };
     onTrackChange(updatedTrack);
 
-    // Ensure volume updates are marked as volume-only
-    const isVolumeUpdate =
-      Object.keys(updates).length === 1 && "volume" in updates;
+    // Mark all metadata updates from dialog as non-restarting
     updateTrackMetadata(track.id, {
       ...updates,
-      __volumeOnly: isVolumeUpdate, // Special flag for the store
+      __preserveRef: true, // Special flag to prevent track restart
     });
   };
 
