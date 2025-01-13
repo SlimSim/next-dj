@@ -16,7 +16,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { getUniqueValues } from "@/db/audio-operations";
 import { cn } from "@/lib/utils/common";
 import { usePlayerStore } from "@/lib/store";
-// import { usePlayerStore } from "@/lib/store/player-store";
+import { FilterSelect } from "./filter-select";
 
 export type SortField =
   | "title"
@@ -108,7 +108,9 @@ export function PlaylistControls({
         >
           <SelectTrigger className="w-36">
             <SelectValue>
-              {getSortLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
+              <span className="line-clamp-2">
+                {getSortLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
+              </span>
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -157,77 +159,41 @@ export function PlaylistControls({
         </Select>
       </div>
 
-      <div className="w-36">
-        <Select
-          value={filters.artist === undefined ? "all" : filters.artist}
-          onValueChange={(value) =>
-            onFilterChange({
-              ...filters,
-              artist: value === "all" ? undefined : value,
-            })
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Artist" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Artists</SelectItem>
-            {uniqueValues.artists.map((artist) => (
-              <SelectItem key={artist} value={artist}>
-                {artist}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        value={filters.artist}
+        onValueChange={(value) =>
+          onFilterChange({
+            ...filters,
+            artist: value,
+          })
+        }
+        placeholder="Artist"
+        items={uniqueValues.artists}
+      />
 
-      <div className="w-36">
-        <Select
-          value={filters.album === undefined ? "all" : filters.album}
-          onValueChange={(value) =>
-            onFilterChange({
-              ...filters,
-              album: value === "all" ? undefined : value,
-            })
-          }
-        >
-          <SelectTrigger className="w-36 xxx">
-            <SelectValue placeholder="Album" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Albums</SelectItem>
-            {uniqueValues.albums.map((album) => (
-              <SelectItem key={album} value={album}>
-                {album}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        value={filters.album}
+        onValueChange={(value) =>
+          onFilterChange({
+            ...filters,
+            album: value,
+          })
+        }
+        placeholder="Album"
+        items={uniqueValues.albums}
+      />
 
-      <div className="w-36">
-        <Select
-          value={filters.genre === undefined ? "all" : filters.genre}
-          onValueChange={(value) =>
-            onFilterChange({
-              ...filters,
-              genre: value === "all" ? undefined : value,
-            })
-          }
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Genre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Genres</SelectItem>
-            {uniqueValues.genres.map((genre) => (
-              <SelectItem key={genre} value={genre}>
-                {genre}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        value={filters.genre}
+        onValueChange={(value) =>
+          onFilterChange({
+            ...filters,
+            genre: value,
+          })
+        }
+        placeholder="Genre"
+        items={uniqueValues.genres}
+      />
     </div>
   );
 }
