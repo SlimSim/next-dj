@@ -89,62 +89,64 @@ export function PlaylistControls({
   };
 
   return (
-    <div className="flex gap-2 items-center px-3 py-2 border-b overflow-x-auto">
-      <Select
-        value={sortField}
-        onValueChange={(value: SortField) => onSortChange(value, sortOrder)}
-      >
-        <SelectTrigger className="w-[160px]">
-          <SelectValue>
-            {getSortLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel className="px-2 py-1.5">Sort Direction</SelectLabel>
-            <div className="flex gap-2 p-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "flex-1",
-                  sortOrder === "asc" && "bg-accent text-accent-foreground"
-                )}
-                onClick={() => onSortChange(sortField, "asc")}
-              >
-                <ArrowUp className="h-4 w-4 mr-1" />
-                Ascending
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "flex-1",
-                  sortOrder === "desc" && "bg-accent text-accent-foreground"
-                )}
-                onClick={() => onSortChange(sortField, "desc")}
-              >
-                <ArrowDown className="h-4 w-4 mr-1" />
-                Descending
-              </Button>
-            </div>
-          </SelectGroup>
-          <SelectSeparator />
-          <SelectGroup>
-            <SelectLabel className="px-2 py-1.5">Sort By</SelectLabel>
-            <SelectItem value="title">Title</SelectItem>
-            <SelectItem value="artist">Artist</SelectItem>
-            <SelectItem value="album">Album</SelectItem>
-            <SelectItem value="duration">Duration</SelectItem>
-            <SelectItem value="playCount">Play Count</SelectItem>
-            <SelectItem value="bpm">BPM</SelectItem>
-            <SelectItem value="track">Track #</SelectItem>
-            <SelectItem value="year">Year</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap gap-2 items-center px-3 py-2 border-b">
+      <div className="w-[160px]">
+        <Select
+          value={sortField}
+          onValueChange={(value: SortField) => onSortChange(value, sortOrder)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue>
+              {getSortLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel className="px-2 py-1.5">Sort Direction</SelectLabel>
+              <div className="flex gap-2 p-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "flex-1",
+                    sortOrder === "asc" && "bg-accent text-accent-foreground"
+                  )}
+                  onClick={() => onSortChange(sortField, "asc")}
+                >
+                  <ArrowUp className="h-4 w-4 mr-1" />
+                  Ascending
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "flex-1",
+                    sortOrder === "desc" && "bg-accent text-accent-foreground"
+                  )}
+                  onClick={() => onSortChange(sortField, "desc")}
+                >
+                  <ArrowDown className="h-4 w-4 mr-1" />
+                  Descending
+                </Button>
+              </div>
+            </SelectGroup>
+            <SelectSeparator />
+            <SelectGroup>
+              <SelectLabel className="px-2 py-1.5">Sort By</SelectLabel>
+              <SelectItem value="title">Title</SelectItem>
+              <SelectItem value="artist">Artist</SelectItem>
+              <SelectItem value="album">Album</SelectItem>
+              <SelectItem value="duration">Duration</SelectItem>
+              <SelectItem value="playCount">Play Count</SelectItem>
+              <SelectItem value="bpm">BPM</SelectItem>
+              <SelectItem value="track">Track #</SelectItem>
+              <SelectItem value="year">Year</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <div className="flex items-center gap-2 ml-2">
+      <div className="w-[160px]">
         <Select
           value={filters.artist || "all"}
           onValueChange={(value) =>
@@ -154,7 +156,7 @@ export function PlaylistControls({
             })
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Artist" />
           </SelectTrigger>
           <SelectContent>
@@ -166,7 +168,9 @@ export function PlaylistControls({
             ))}
           </SelectContent>
         </Select>
+      </div>
 
+      <div className="w-[160px]">
         <Select
           value={filters.album || "all"}
           onValueChange={(value) =>
@@ -176,7 +180,7 @@ export function PlaylistControls({
             })
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Album" />
           </SelectTrigger>
           <SelectContent>
@@ -188,7 +192,9 @@ export function PlaylistControls({
             ))}
           </SelectContent>
         </Select>
+      </div>
 
+      <div className="w-[160px]">
         <Select
           value={filters.genre || "all"}
           onValueChange={(value) =>
@@ -198,7 +204,7 @@ export function PlaylistControls({
             })
           }
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Genre" />
           </SelectTrigger>
           <SelectContent>
