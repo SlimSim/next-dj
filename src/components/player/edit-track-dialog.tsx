@@ -30,7 +30,7 @@ export function EditTrackDialog({
   onTrackChange,
   onSave,
 }: EditTrackDialogProps) {
-  const { triggerRefresh } = usePlayerStore();
+  const { triggerRefresh, updateTrackMetadata } = usePlayerStore();
 
   if (!track) return null;
 
@@ -46,7 +46,11 @@ export function EditTrackDialog({
         bpm: track.bpm,
         rating: track.rating,
         comment: track.comment,
+        volume: track.volume,
       });
+
+      // Update store metadata immediately
+      updateTrackMetadata(track.id, track);
 
       // Trigger UI refresh
       triggerRefresh();
@@ -54,6 +58,19 @@ export function EditTrackDialog({
     } catch (error) {
       console.error("Error updating metadata:", error);
     }
+  };
+
+  const handleTrackChange = (updates: Partial<MusicMetadata>) => {
+    const updatedTrack = { ...track, ...updates };
+    onTrackChange(updatedTrack);
+
+    // Ensure volume updates are marked as volume-only
+    const isVolumeUpdate =
+      Object.keys(updates).length === 1 && "volume" in updates;
+    updateTrackMetadata(track.id, {
+      ...updates,
+      __volumeOnly: isVolumeUpdate, // Special flag for the store
+    });
   };
 
   return (
@@ -81,7 +98,7 @@ export function EditTrackDialog({
                     id="title"
                     value={track.title}
                     onChange={(e) =>
-                      onTrackChange({ ...track, title: e.target.value })
+                      handleTrackChange({ title: e.target.value })
                     }
                   />
                 </div>
@@ -93,7 +110,7 @@ export function EditTrackDialog({
                     id="artist"
                     value={track.artist}
                     onChange={(e) =>
-                      onTrackChange({ ...track, artist: e.target.value })
+                      handleTrackChange({ artist: e.target.value })
                     }
                   />
                 </div>
@@ -105,7 +122,7 @@ export function EditTrackDialog({
                     id="album"
                     value={track.album}
                     onChange={(e) =>
-                      onTrackChange({ ...track, album: e.target.value })
+                      handleTrackChange({ album: e.target.value })
                     }
                   />
                 </div>
@@ -119,8 +136,7 @@ export function EditTrackDialog({
                       type="number"
                       value={track.track || ""}
                       onChange={(e) =>
-                        onTrackChange({
-                          ...track,
+                        handleTrackChange({
                           track: parseInt(e.target.value) || undefined,
                         })
                       }
@@ -135,8 +151,7 @@ export function EditTrackDialog({
                       type="number"
                       value={track.year || ""}
                       onChange={(e) =>
-                        onTrackChange({
-                          ...track,
+                        handleTrackChange({
                           year: parseInt(e.target.value) || undefined,
                         })
                       }
@@ -155,8 +170,7 @@ export function EditTrackDialog({
                     id="genre"
                     value={track.genre?.join(", ") || ""}
                     onChange={(e) =>
-                      onTrackChange({
-                        ...track,
+                      handleTrackChange({
                         genre: e.target.value
                           .split(",")
                           .map((g) => g.trim())
@@ -175,12 +189,31 @@ export function EditTrackDialog({
                     type="number"
                     value={track.bpm || ""}
                     onChange={(e) =>
-                      onTrackChange({
-                        ...track,
+                      handleTrackChange({
                         bpm: parseInt(e.target.value) || undefined,
                       })
                     }
                   />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">
+                    Volume Adjustment
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <Slider
+                      value={[track.volume || 1]}
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      onValueChange={(value) =>
+                        handleTrackChange({ volume: value[0] })
+                      }
+                      className="flex-1"
+                    />
+                    <span className="text-sm text-muted-foreground w-12">
+                      {(track.volume || 1).toFixed(1)}x
+                    </span>
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Rating (0-5)</label>
@@ -190,7 +223,7 @@ export function EditTrackDialog({
                     max={1}
                     step={0.2}
                     onValueChange={(value) =>
-                      onTrackChange({ ...track, rating: value[0] })
+                      handleTrackChange({ rating: value[0] })
                     }
                   />
                 </div>
@@ -202,7 +235,7 @@ export function EditTrackDialog({
                     id="comment"
                     value={track.comment || ""}
                     onChange={(e) =>
-                      onTrackChange({ ...track, comment: e.target.value })
+                      handleTrackChange({ comment: e.target.value })
                     }
                   />
                 </div>

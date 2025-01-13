@@ -1,23 +1,44 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { usePlayerStore } from "@/lib/store";
+import { MusicMetadata } from "@/lib/types/types";
+
+// Helper function to clamp volume between 0 and 1
+const clampVolume = (value: number) => Math.max(0, Math.min(1, value));
 
 export const useAudioControls = (
   audioRef: React.RefObject<HTMLAudioElement>,
-  isLoading: boolean
+  isLoading: boolean,
+  track?: MusicMetadata | null
 ) => {
   const [isMuted, setIsMuted] = useState(false);
-  const { setVolume, isPlaying, setIsPlaying, setCurrentTime, currentTrack } =
-    usePlayerStore();
+  const {
+    setVolume,
+    isPlaying,
+    setIsPlaying,
+    setCurrentTime,
+    volume,
+    currentTrack,
+  } = usePlayerStore();
 
   const handleVolumeChange = useCallback(
     (value: number) => {
       setVolume(value);
       if (audioRef.current) {
-        audioRef.current.volume = value;
+        // Apply both global volume and track-specific volume
+        const trackVolume = track?.volume || 1;
+        audioRef.current.volume = clampVolume(value * trackVolume);
       }
     },
-    [setVolume]
+    [setVolume, track]
   );
+
+  // Update volume when track changes
+  useEffect(() => {
+    if (audioRef.current && !isMuted) {
+      const trackVolume = track?.volume || 1;
+      audioRef.current.volume = clampVolume(volume * trackVolume);
+    }
+  }, [track, volume, isMuted]);
 
   const toggleMute = useCallback(() => {
     if (audioRef.current) {

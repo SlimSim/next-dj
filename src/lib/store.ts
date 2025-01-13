@@ -24,15 +24,15 @@ const initialState: PlayerState = {
   isQueueVisible: false,
   refreshTrigger: 0,
   audioDevices: [],
-  selectedDeviceId: "default",
-  prelistenDeviceId: "default",
+  selectedDeviceId: "",
+  prelistenDeviceId: "",
   prelistenTrack: null,
   isPrelistening: false,
   selectedFolderNames: [],
   prelistenDuration: 0,
   showPreListenButtons: true,
-  recentPlayHours: 18,
-  monthlyPlayDays: 42,
+  recentPlayHours: 0,
+  monthlyPlayDays: 0,
   hasShownPreListenWarning: false,
   searchQuery: "",
   sortField: "title",
@@ -42,6 +42,7 @@ const initialState: PlayerState = {
   songLists: [],
   showLists: false,
   selectedListId: null,
+  metadata: [], // Store all track metadata
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -258,10 +259,73 @@ export const usePlayerStore = create<PlayerStore>()(
           clearHandles();
           set({ selectedFolderNames: [] });
         },
+
+        updateTrackMetadata: (
+          trackId: string,
+          updates: Partial<MusicMetadata> & { __volumeOnly?: boolean }
+        ) =>
+          set((state) => {
+            console.log("Updating metadata:", { trackId, updates });
+
+            // Create a new metadata array with updates
+            const metadata = state.metadata.map((track) =>
+              track.id === trackId ? { ...track, ...updates } : track
+            );
+
+            // Check if this is a volume-only update
+            const isVolumeUpdate = updates.__volumeOnly === true;
+            console.log("Is volume-only update:", isVolumeUpdate);
+
+            // Remove internal flag before applying updates
+            const cleanUpdates = { ...updates };
+            delete cleanUpdates.__volumeOnly;
+
+            // Update currentTrack
+            let currentTrack = state.currentTrack;
+            if (state.currentTrack?.id === trackId) {
+              if (isVolumeUpdate) {
+                // Modify volume in place without creating a new reference
+                currentTrack = state.currentTrack;
+                currentTrack.volume = cleanUpdates.volume;
+              } else {
+                // Create new reference for other updates
+                currentTrack = {
+                  ...state.currentTrack,
+                  ...cleanUpdates,
+                  path: state.currentTrack.path,
+                  id: state.currentTrack.id,
+                };
+              }
+            }
+
+            // Update prelistenTrack similarly
+            let prelistenTrack = state.prelistenTrack;
+            if (state.prelistenTrack?.id === trackId) {
+              if (isVolumeUpdate) {
+                // Modify volume in place without creating a new reference
+                prelistenTrack = state.prelistenTrack;
+                prelistenTrack.volume = cleanUpdates.volume;
+              } else {
+                // Create new reference for other updates
+                prelistenTrack = {
+                  ...state.prelistenTrack,
+                  ...cleanUpdates,
+                  path: state.prelistenTrack.path,
+                  id: state.prelistenTrack.id,
+                };
+              }
+            }
+
+            return {
+              metadata,
+              currentTrack,
+              prelistenTrack,
+            };
+          }),
       };
     },
     {
-      name: "player-store",
+      name: "player-storage",
       partialize: (state) => ({
         currentTrack: state.currentTrack,
         queue: state.queue,
@@ -281,7 +345,7 @@ export const usePlayerStore = create<PlayerStore>()(
         songLists: state.songLists,
         showLists: state.showLists,
         selectedListId: state.selectedListId,
-        // Don't persist hasShownPreListenWarning so it resets on page load
+        metadata: state.metadata,
       }),
     }
   )

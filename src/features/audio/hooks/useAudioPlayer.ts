@@ -1,8 +1,12 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { toast } from "sonner";
 import { getAudioFile } from "@/db/audio-operations";
-import { PlayerState } from "@/lib/types/player";
+import { useAudioDevice } from "./useAudioDevice";
+import { useAudioControls } from "./useAudioControls";
+
+// Helper function to clamp volume between 0 and 1
+const clampVolume = (value: number) => Math.max(0, Math.min(1, value));
 
 type TrackPropKey = keyof Pick<PlayerState, "currentTrack" | "prelistenTrack">;
 
@@ -13,6 +17,7 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   const mountedRef = useRef(true);
   const [isLoading, setIsLoading] = useState(false);
   const track = usePlayerStore((state) => state[trackProp]);
+  const trackSourceRef = useRef<string | null>(null);
 
   const {
     isPlaying,
@@ -23,6 +28,33 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
     playNextTrack,
     setPrelistenDuration,
   } = usePlayerStore();
+
+  // Initialize audio controls with the current track
+  const { handleVolumeChange, toggleMute } = useAudioControls(
+    audioRef,
+    isLoading,
+    track
+  );
+
+  // Only reinitialize audio when the track source changes
+  useEffect(() => {
+    // Only check ID and path, ignore the URL part
+    const shouldReinitialize = track?.id !== trackSourceRef.current;
+
+    if (shouldReinitialize) {
+      console.log("Reinitializing audio due to track change");
+      trackSourceRef.current = track?.id || null;
+      initAudio();
+    }
+  }, [track?.id]); // Only depend on the ID
+
+  // Handle metadata updates (volume, etc.) without reinitializing
+  useEffect(() => {
+    if (audioRef.current && track) {
+      const trackVolume = track.volume || 0.75;
+      audioRef.current.volume = clampVolume(volume * trackVolume);
+    }
+  }, [track?.volume, volume]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
