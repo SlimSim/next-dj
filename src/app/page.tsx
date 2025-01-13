@@ -22,13 +22,14 @@ import { getRemovedSongs } from "@/db/audio-operations";
 import { usePlayerStore } from "@/lib/store";
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortField, setSortField] = useState<SortField>("title");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [filters, setFilters] = useState<FilterCriteria>({});
   const prelistenRef = useRef<PrelistenAudioRef>(null);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
+  const searchQuery = usePlayerStore((state) => state.searchQuery);
+  const setSearchQuery = usePlayerStore((state) => state.setSearchQuery);
 
   // Check for removed songs on initial load
   useEffect(() => {

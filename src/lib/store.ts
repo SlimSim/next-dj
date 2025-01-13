@@ -34,6 +34,7 @@ const initialState: PlayerState = {
   recentPlayHours: 18,
   monthlyPlayDays: 42,
   hasShownPreListenWarning: false,
+  searchQuery: "",
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -109,6 +110,7 @@ export const usePlayerStore = create<PlayerStore>()(
         setMonthlyPlayDays: (days: number) => set({ monthlyPlayDays: days }),
         setHasShownPreListenWarning: (shown: boolean) =>
           set({ hasShownPreListenWarning: shown }),
+        setSearchQuery: (query) => set({ searchQuery: query }),
 
         addSelectedFolder: async (
           folderName: string,
@@ -203,6 +205,7 @@ export const usePlayerStore = create<PlayerStore>()(
         showPreListenButtons: state.showPreListenButtons,
         recentPlayHours: state.recentPlayHours,
         monthlyPlayDays: state.monthlyPlayDays,
+        searchQuery: state.searchQuery,
         // Don't persist hasShownPreListenWarning so it resets on page load
       }),
     }

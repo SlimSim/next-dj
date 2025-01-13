@@ -22,6 +22,8 @@ export interface PlayerState {
   showPreListenButtons: boolean;
   recentPlayHours: number;
   monthlyPlayDays: number;
+  hasShownPreListenWarning: boolean;
+  searchQuery: string;
 }
 
 export interface PlayerActions {
@@ -62,6 +64,8 @@ export interface PlayerActions {
   setShowPreListenButtons: (show: boolean) => void;
   setRecentPlayHours: (hours: number) => void;
   setMonthlyPlayDays: (days: number) => void;
+  setHasShownPreListenWarning: (shown: boolean) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;
