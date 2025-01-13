@@ -135,8 +135,37 @@ export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
 
 export async function getRemovedSongs(): Promise<MusicMetadata[]> {
   const db = await initMusicDB();
-  const tx = db.transaction("metadata", "readonly");
-  const store = tx.objectStore("metadata");
-  const allEntries = await store.getAll();
-  return allEntries.filter((entry) => entry.removed);
+  const metadata = await db.getAll("metadata");
+  return metadata.filter((entry) => entry.removed);
+}
+
+export async function getUniqueValues(): Promise<{
+  artists: string[];
+  albums: string[];
+  genres: string[];
+}> {
+  const db = await initMusicDB();
+  const metadata = await db.getAll("metadata");
+  
+  const artists = new Set<string>();
+  const albums = new Set<string>();
+  const genres = new Set<string>();
+
+  metadata.forEach((item) => {
+    if (!item.removed) {
+      if (item.artist) artists.add(item.artist);
+      if (item.album) albums.add(item.album);
+      if (item.genre) {
+        item.genre.forEach(genre => {
+          if (genre) genres.add(genre);
+        });
+      }
+    }
+  });
+
+  return {
+    artists: Array.from(artists).sort(),
+    albums: Array.from(albums).sort(),
+    genres: Array.from(genres).sort(),
+  };
 }

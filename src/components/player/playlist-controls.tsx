@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import {
   Select,
@@ -9,8 +10,8 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Input } from "../ui/input";
 import { FilterIcon, ArrowUpDown } from "lucide-react";
+import { getUniqueValues } from "@/db/audio-operations";
 
 export type SortField =
   | "title"
@@ -25,7 +26,7 @@ export type SortOrder = "asc" | "desc";
 export type FilterCriteria = {
   artist?: string;
   album?: string;
-  genre?: string;
+  genre?: string;  // Even though genre is string[] in metadata, we filter by a single genre
 };
 
 interface PlaylistControlsProps {
@@ -43,6 +44,24 @@ export function PlaylistControls({
   sortOrder,
   filters,
 }: PlaylistControlsProps) {
+  const [uniqueValues, setUniqueValues] = useState<{
+    artists: string[];
+    albums: string[];
+    genres: string[];
+  }>({
+    artists: [],
+    albums: [],
+    genres: [],
+  });
+
+  useEffect(() => {
+    const loadUniqueValues = async () => {
+      const values = await getUniqueValues();
+      setUniqueValues(values);
+    };
+    loadUniqueValues();
+  }, []);
+
   return (
     <div className="flex gap-2 items-center px-3 py-2 border-b">
       <div className="flex items-center gap-2">
@@ -83,6 +102,9 @@ export function PlaylistControls({
           <Button variant="outline" size="sm" className="gap-2">
             <FilterIcon className="h-4 w-4" />
             Filters
+            {Object.values(filters).some((v) => v) && (
+              <span className="ml-1 rounded-full bg-primary w-2 h-2" />
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80">
@@ -98,40 +120,70 @@ export function PlaylistControls({
                 <label htmlFor="artist" className="text-right">
                   Artist
                 </label>
-                <Input
-                  id="artist"
-                  value={filters.artist || ""}
-                  className="col-span-3"
-                  onChange={(e) =>
-                    onFilterChange({ ...filters, artist: e.target.value })
+                <Select
+                  value={filters.artist || "all"}
+                  onValueChange={(value) =>
+                    onFilterChange({ ...filters, artist: value === "all" ? undefined : value })
                   }
-                />
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select artist" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Artists</SelectItem>
+                    {uniqueValues.artists.map((artist) => (
+                      <SelectItem key={artist} value={artist}>
+                        {artist}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <label htmlFor="album" className="text-right">
                   Album
                 </label>
-                <Input
-                  id="album"
-                  value={filters.album || ""}
-                  className="col-span-3"
-                  onChange={(e) =>
-                    onFilterChange({ ...filters, album: e.target.value })
+                <Select
+                  value={filters.album || "all"}
+                  onValueChange={(value) =>
+                    onFilterChange({ ...filters, album: value === "all" ? undefined : value })
                   }
-                />
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select album" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Albums</SelectItem>
+                    {uniqueValues.albums.map((album) => (
+                      <SelectItem key={album} value={album}>
+                        {album}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <label htmlFor="genre" className="text-right">
                   Genre
                 </label>
-                <Input
-                  id="genre"
-                  value={filters.genre || ""}
-                  className="col-span-3"
-                  onChange={(e) =>
-                    onFilterChange({ ...filters, genre: e.target.value })
+                <Select
+                  value={filters.genre || "all"}
+                  onValueChange={(value) =>
+                    onFilterChange({ ...filters, genre: value === "all" ? undefined : value })
                   }
-                />
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select genre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Genres</SelectItem>
+                    {uniqueValues.genres.map((genre) => (
+                      <SelectItem key={genre} value={genre}>
+                        {genre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
