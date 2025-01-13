@@ -15,6 +15,8 @@ import { Button } from "../ui/button";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { getUniqueValues } from "@/db/audio-operations";
 import { cn } from "@/lib/utils/common";
+import { usePlayerStore } from "@/lib/store";
+// import { usePlayerStore } from "@/lib/store/player-store";
 
 export type SortField =
   | "title"
@@ -88,14 +90,23 @@ export function PlaylistControls({
     }
   };
 
+  const showFilters = usePlayerStore((state) => state.showFilters);
+
   return (
-    <div className="flex flex-wrap gap-2 items-center px-3 py-2 border-b">
-      <div className="w-[160px]">
+    <div
+      className={cn(
+        "transition-all",
+        showFilters
+          ? "flex flex-wrap gap-2 items-center px-3 py-2 border-b"
+          : "h-0 overflow-hidden"
+      )}
+    >
+      <div className="w-36">
         <Select
           value={sortField}
           onValueChange={(value: SortField) => onSortChange(value, sortOrder)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-36">
             <SelectValue>
               {getSortLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
             </SelectValue>
@@ -146,9 +157,9 @@ export function PlaylistControls({
         </Select>
       </div>
 
-      <div className="w-[160px]">
+      <div className="w-36">
         <Select
-          value={filters.artist || "all"}
+          value={filters.artist === undefined ? "all" : filters.artist}
           onValueChange={(value) =>
             onFilterChange({
               ...filters,
@@ -170,9 +181,9 @@ export function PlaylistControls({
         </Select>
       </div>
 
-      <div className="w-[160px]">
+      <div className="w-36">
         <Select
-          value={filters.album || "all"}
+          value={filters.album === undefined ? "all" : filters.album}
           onValueChange={(value) =>
             onFilterChange({
               ...filters,
@@ -180,7 +191,7 @@ export function PlaylistControls({
             })
           }
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-36 xxx">
             <SelectValue placeholder="Album" />
           </SelectTrigger>
           <SelectContent>
@@ -194,9 +205,9 @@ export function PlaylistControls({
         </Select>
       </div>
 
-      <div className="w-[160px]">
+      <div className="w-36">
         <Select
-          value={filters.genre || "all"}
+          value={filters.genre === undefined ? "all" : filters.genre}
           onValueChange={(value) =>
             onFilterChange({
               ...filters,
@@ -204,7 +215,7 @@ export function PlaylistControls({
             })
           }
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-36">
             <SelectValue placeholder="Genre" />
           </SelectTrigger>
           <SelectContent>

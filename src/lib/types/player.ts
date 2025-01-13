@@ -28,6 +28,7 @@ export interface PlayerState {
   sortField: SortField;
   sortOrder: SortOrder;
   filters: FilterCriteria;
+  showFilters: boolean;
 }
 
 export interface PlayerActions {
@@ -73,6 +74,7 @@ export interface PlayerActions {
   setSortField: (field: SortField) => void;
   setSortOrder: (order: SortOrder) => void;
   setFilters: (filters: FilterCriteria) => void;
+  toggleFilters: () => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

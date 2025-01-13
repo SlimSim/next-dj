@@ -20,6 +20,8 @@ import {
 } from "@/components/player/playlist-controls";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { usePlayerStore } from "@/lib/store";
+import { FilterIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -33,6 +35,8 @@ export default function Home() {
   const setSortOrder = usePlayerStore((state) => state.setSortOrder);
   const filters = usePlayerStore((state) => state.filters);
   const setFilters = usePlayerStore((state) => state.setFilters);
+  const toggleFilters = usePlayerStore((state) => state.toggleFilters);
+  const showFilters = usePlayerStore((state) => state.showFilters);
 
   // Check for removed songs on initial load
   useEffect(() => {
@@ -52,10 +56,12 @@ export default function Home() {
     setSortOrder(order);
   };
 
+  const hasActiveFilters = Object.values(filters).some((value) => value !== undefined && value !== "all");
+
   return (
     <>
       <NavigationGuard />
-      <main className="flex h-dvh flex-col bg-white dark:bg-neutral-950">
+      <main className="flex min-h-screen flex-col bg-white dark:bg-neutral-950">
         <header className="flex-none flex flex-col border-b z-20 bg-white/95 dark:bg-neutral-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-neutral-950/60">
           <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 flex justify-between items-center">
             <div
@@ -93,6 +99,20 @@ export default function Home() {
                 isSearchFocused ? "hidden sm:flex" : "flex"
               )}
             >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleFilters}
+                className={cn(
+                  "transition-colors relative",
+                  showFilters && "bg-accent"
+                )}
+              >
+                <FilterIcon className="h-6 w-6" />
+                {hasActiveFilters && (
+                  <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+                )}
+              </Button>
               <SettingsDialog />
             </div>
           </div>

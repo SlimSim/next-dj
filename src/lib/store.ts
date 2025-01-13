@@ -11,6 +11,36 @@ import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
 import { getRemovedSongs, deleteAudioFile } from "@/db/audio-operations";
 
+interface PlayerState {
+  currentTrack: MusicMetadata | null;
+  queue: MusicMetadata[];
+  history: MusicMetadata[];
+  isPlaying: boolean;
+  volume: number;
+  shuffle: boolean;
+  repeat: string;
+  duration: number;
+  currentTime: number;
+  isQueueVisible: boolean;
+  refreshTrigger: number;
+  audioDevices: MediaDeviceInfo[];
+  selectedDeviceId: string;
+  prelistenDeviceId: string;
+  prelistenTrack: MusicMetadata | null;
+  isPrelistening: boolean;
+  selectedFolderNames: string[];
+  prelistenDuration: number;
+  showPreListenButtons: boolean;
+  recentPlayHours: number;
+  monthlyPlayDays: number;
+  hasShownPreListenWarning: boolean;
+  searchQuery: string;
+  sortField: string;
+  sortOrder: string;
+  filters: object;
+  showFilters: boolean;
+}
+
 const initialState: PlayerState = {
   currentTrack: null,
   queue: [],
@@ -38,6 +68,7 @@ const initialState: PlayerState = {
   sortField: "title",
   sortOrder: "asc",
   filters: {},
+  showFilters: true,
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -117,6 +148,7 @@ export const usePlayerStore = create<PlayerStore>()(
         setSortField: (field) => set({ sortField: field }),
         setSortOrder: (order) => set({ sortOrder: order }),
         setFilters: (filters) => set({ filters: filters }),
+        toggleFilters: () => set((state) => ({ showFilters: !state.showFilters })),
 
         addSelectedFolder: async (
           folderName: string,
@@ -215,6 +247,7 @@ export const usePlayerStore = create<PlayerStore>()(
         sortField: state.sortField,
         sortOrder: state.sortOrder,
         filters: state.filters,
+        showFilters: state.showFilters,
         // Don't persist hasShownPreListenWarning so it resets on page load
       }),
     }
