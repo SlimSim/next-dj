@@ -9,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { FilterIcon, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { getUniqueValues } from "@/db/audio-operations";
 
 export type SortField =
@@ -63,7 +62,7 @@ export function PlaylistControls({
   }, []);
 
   return (
-    <div className="flex gap-2 items-center px-3 py-2 border-b">
+    <div className="flex gap-2 items-center px-3 py-2 border-b overflow-x-auto">
       <div className="flex items-center gap-2">
         <Select
           value={sortField}
@@ -97,98 +96,64 @@ export function PlaylistControls({
         </Button>
       </div>
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <FilterIcon className="h-4 w-4" />
-            Filters
-            {Object.values(filters).some((v) => v) && (
-              <span className="ml-1 rounded-full bg-primary w-2 h-2" />
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80">
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium leading-none">Filter Tracks</h4>
-              <p className="text-sm text-muted-foreground">
-                Filter your playlist by artist, album, or genre
-              </p>
-            </div>
-            <div className="grid gap-2">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="artist" className="text-right">
-                  Artist
-                </label>
-                <Select
-                  value={filters.artist || "all"}
-                  onValueChange={(value) =>
-                    onFilterChange({ ...filters, artist: value === "all" ? undefined : value })
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select artist" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Artists</SelectItem>
-                    {uniqueValues.artists.map((artist) => (
-                      <SelectItem key={artist} value={artist}>
-                        {artist}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="album" className="text-right">
-                  Album
-                </label>
-                <Select
-                  value={filters.album || "all"}
-                  onValueChange={(value) =>
-                    onFilterChange({ ...filters, album: value === "all" ? undefined : value })
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select album" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Albums</SelectItem>
-                    {uniqueValues.albums.map((album) => (
-                      <SelectItem key={album} value={album}>
-                        {album}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="genre" className="text-right">
-                  Genre
-                </label>
-                <Select
-                  value={filters.genre || "all"}
-                  onValueChange={(value) =>
-                    onFilterChange({ ...filters, genre: value === "all" ? undefined : value })
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select genre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Genres</SelectItem>
-                    {uniqueValues.genres.map((genre) => (
-                      <SelectItem key={genre} value={genre}>
-                        {genre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+      <div className="flex items-center gap-2 ml-2">
+        <Select
+          value={filters.artist || "all"}
+          onValueChange={(value) =>
+            onFilterChange({ ...filters, artist: value === "all" ? undefined : value })
+          }
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Artist" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Artists</SelectItem>
+            {uniqueValues.artists.map((artist) => (
+              <SelectItem key={artist} value={artist}>
+                {artist}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.album || "all"}
+          onValueChange={(value) =>
+            onFilterChange({ ...filters, album: value === "all" ? undefined : value })
+          }
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Album" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Albums</SelectItem>
+            {uniqueValues.albums.map((album) => (
+              <SelectItem key={album} value={album}>
+                {album}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.genre || "all"}
+          onValueChange={(value) =>
+            onFilterChange({ ...filters, genre: value === "all" ? undefined : value })
+          }
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Genre" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Genres</SelectItem>
+            {uniqueValues.genres.map((genre) => (
+              <SelectItem key={genre} value={genre}>
+                {genre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }
