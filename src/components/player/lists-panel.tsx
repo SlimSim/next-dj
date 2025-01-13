@@ -20,10 +20,12 @@ export function ListsPanel() {
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const showLists = usePlayerStore((state) => state.showLists);
   const songLists = usePlayerStore((state) => state.songLists);
+  const selectedListId = usePlayerStore((state) => state.selectedListId);
   const toggleLists = usePlayerStore((state) => state.toggleLists);
   const addSongList = usePlayerStore((state) => state.addSongList);
   const removeSongList = usePlayerStore((state) => state.removeSongList);
   const renameSongList = usePlayerStore((state) => state.renameSongList);
+  const setSelectedListId = usePlayerStore((state) => state.setSelectedListId);
 
   const handleCreateList = () => {
     if (newListName.trim()) {
@@ -63,10 +65,29 @@ export function ListsPanel() {
         </div>
 
         <div className="space-y-2">
+          <div
+            className={cn(
+              "flex items-center justify-between p-2 rounded-md cursor-pointer",
+              !selectedListId ? "bg-accent" : "hover:bg-accent/50"
+            )}
+            onClick={() => setSelectedListId(null)}
+          >
+            <span className="flex-1">All Songs</span>
+            <span className="text-sm text-muted-foreground">
+              {/* You could add total song count here if needed */}
+            </span>
+          </div>
+
           {songLists.map((list) => (
             <div
               key={list.id}
-              className="flex items-center justify-between p-2 rounded-md hover:bg-accent"
+              className={cn(
+                "flex items-center justify-between p-2 rounded-md cursor-pointer",
+                selectedListId === list.id ? "bg-accent" : "hover:bg-accent/50"
+              )}
+              onClick={() =>
+                setSelectedListId(selectedListId === list.id ? null : list.id)
+              }
             >
               {editingListId === list.id ? (
                 <Input

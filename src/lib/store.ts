@@ -3,7 +3,10 @@ import { persist } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { PlayerStore, PlayerState, SongList } from "./types/player";
 import { MusicMetadata } from "./types/types";
-import { createQueueActions, createPlaybackActions } from "../features/audio/utils/playerActions";
+import {
+  createQueueActions,
+  createPlaybackActions,
+} from "../features/audio/utils/playerActions";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
 import { getRemovedSongs, deleteAudioFile } from "@/db/audio-operations";
@@ -38,6 +41,7 @@ const initialState: PlayerState = {
   showFilters: true,
   songLists: [],
   showLists: false,
+  selectedListId: null,
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -108,7 +112,8 @@ export const usePlayerStore = create<PlayerStore>()(
         setPrelistenTrack: (track: MusicMetadata | null) =>
           set({ prelistenTrack: track }),
         setIsPrelistening: (isPrelistening: boolean) => set({ isPrelistening }),
-        setShowPreListenButtons: (show: boolean) => set({ showPreListenButtons: show }),
+        setShowPreListenButtons: (show: boolean) =>
+          set({ showPreListenButtons: show }),
         setRecentPlayHours: (hours: number) => set({ recentPlayHours: hours }),
         setMonthlyPlayDays: (days: number) => set({ monthlyPlayDays: days }),
         setHasShownPreListenWarning: (shown: boolean) =>
@@ -117,7 +122,8 @@ export const usePlayerStore = create<PlayerStore>()(
         setSortField: (field) => set({ sortField: field }),
         setSortOrder: (order) => set({ sortOrder: order }),
         setFilters: (filters) => set({ filters: filters }),
-        toggleFilters: () => set((state) => ({ showFilters: !state.showFilters })),
+        toggleFilters: () =>
+          set((state) => ({ showFilters: !state.showFilters })),
         toggleLists: () => set((state) => ({ showLists: !state.showLists })),
         addSongList: (name) =>
           set((state) => ({
@@ -172,6 +178,7 @@ export const usePlayerStore = create<PlayerStore>()(
                 : list
             ),
           })),
+        setSelectedListId: (id) => set({ selectedListId: id }),
 
         addSelectedFolder: async (
           folderName: string,
@@ -273,6 +280,7 @@ export const usePlayerStore = create<PlayerStore>()(
         showFilters: state.showFilters,
         songLists: state.songLists,
         showLists: state.showLists,
+        selectedListId: state.selectedListId,
         // Don't persist hasShownPreListenWarning so it resets on page load
       }),
     }

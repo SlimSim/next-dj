@@ -1,4 +1,4 @@
-import { useEffect, useState, RefObject } from "react";
+import { useEffect, useState, RefObject, useMemo } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { useSettings } from "../settings/settings-context";
 import { MusicMetadata } from "@/lib/types/types";
@@ -29,6 +29,8 @@ export function Playlist({
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [prelistenCurrentTime, setPrelistenCurrentTime] = useState(0);
+  const selectedListId = usePlayerStore((state) => state.selectedListId);
+  const songLists = usePlayerStore((state) => state.songLists);
 
   const { currentTrack, prelistenTrack, isPrelistening, queue, history } =
     usePlayerStore();
@@ -37,56 +39,63 @@ export function Playlist({
   const { filteredTracks, loadTracks } = useTrackList(searchQuery);
 
   // Apply sorting and filtering
-  const sortedAndFilteredTracks = filteredTracks
-    .filter((track) => {
-      if (
-        filters.artist &&
-        !track.artist?.toLowerCase().includes(filters.artist.toLowerCase())
-      )
-        return false;
-      if (
-        filters.album &&
-        !track.album?.toLowerCase().includes(filters.album.toLowerCase())
-      )
-        return false;
-      if (filters.genre) {
-        const genreFilter = filters.genre.toLowerCase();
-        if (!track.genre?.some((g) => g.toLowerCase().includes(genreFilter))) {
-          return false;
-        }
+  const tracks = useMemo(() => {
+    let processedTracks = [...filteredTracks];
+
+    // Filter by selected list if one is selected
+    if (selectedListId) {
+      const selectedList = songLists.find((list) => list.id === selectedListId);
+      if (selectedList) {
+        processedTracks = processedTracks.filter((track) =>
+          track.path ? selectedList.songs.includes(track.path) : false
+        );
       }
-      return true;
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case "title":
-          comparison = (a.title || "").localeCompare(b.title || "");
-          break;
-        case "artist":
-          comparison = (a.artist || "").localeCompare(b.artist || "");
-          break;
-        case "album":
-          comparison = (a.album || "").localeCompare(b.album || "");
-          break;
-        case "duration":
-          comparison = (a.duration || 0) - (b.duration || 0);
-          break;
-        case "playCount":
-          comparison = (a.playCount || 0) - (b.playCount || 0);
-          break;
-        case "bpm":
-          comparison = (a.bpm || 0) - (b.bpm || 0);
-          break;
-        case "track":
-          comparison = ((a.track || 0) as number) - ((b.track || 0) as number);
-          break;
-        case "year":
-          comparison = ((a.year || 0) as number) - ((b.year || 0) as number);
-          break;
+    }
+
+    // Apply other filters
+    if (filters.artist) {
+      processedTracks = processedTracks.filter(
+        (track) => track.artist === filters.artist
+      );
+    }
+    if (filters.album) {
+      processedTracks = processedTracks.filter(
+        (track) => track.album === filters.album
+      );
+    }
+    if (filters.genre && typeof filters.genre === "string") {
+      processedTracks = processedTracks.filter((track) =>
+        track.genre ? track.genre.includes(filters.genre as string) : false
+      );
+    }
+
+    // Apply sorting
+    processedTracks.sort((a, b) => {
+      const aValue = a[sortField as keyof MusicMetadata];
+      const bValue = b[sortField as keyof MusicMetadata];
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortOrder === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
-      return sortOrder === "asc" ? comparison : -comparison;
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      return 0;
     });
+
+    return processedTracks;
+  }, [
+    filteredTracks,
+    filters,
+    sortField,
+    sortOrder,
+    selectedListId,
+    songLists,
+  ]);
 
   const {
     handlePlay,
@@ -125,7 +134,7 @@ export function Playlist({
   return (
     <div className="h-full flex-1 flex flex-col container mx-auto p-0">
       <div className="w-full h-full">
-        {sortedAndFilteredTracks.length === 0 ? (
+        {tracks.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground">
             <p>No tracks found</p>
             <p>
@@ -135,7 +144,7 @@ export function Playlist({
             <FileUpload onlyFolderUpload />
           </div>
         ) : (
-          sortedAndFilteredTracks.map((track) => (
+          tracks.map((track) => (
             <TrackItem
               key={track.id}
               track={track}

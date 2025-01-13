@@ -1,5 +1,9 @@
 import { MusicMetadata } from "./types";
-import { SortField, SortOrder, FilterCriteria } from "@/components/player/playlist-controls";
+import {
+  SortField,
+  SortOrder,
+  FilterCriteria,
+} from "@/components/player/playlist-controls";
 
 export interface SongList {
   id: string;
@@ -39,6 +43,7 @@ export interface PlayerState {
   showFilters: boolean;
   songLists: SongList[];
   showLists: boolean;
+  selectedListId: string | null;
 }
 
 export interface PlayerActions {
@@ -91,6 +96,7 @@ export interface PlayerActions {
   removeSongFromList: (listId: string, songPath: string) => void;
   renameSongList: (id: string, name: string) => void;
   toggleLists: () => void;
+  setSelectedListId: (id: string | null) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;
