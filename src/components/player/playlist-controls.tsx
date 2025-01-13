@@ -95,7 +95,7 @@ export function PlaylistControls({
   return (
     <div
       className={cn(
-        "transition-all",
+        "transition-all justify-center",
         showFilters
           ? "flex flex-wrap gap-2 items-center px-3 py-2 border-b"
           : "h-0 overflow-hidden"
