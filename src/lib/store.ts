@@ -1,45 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
-import { PlayerStore, PlayerState } from "./types/player";
-import {
-  createQueueActions,
-  createPlaybackActions,
-} from "../features/audio/utils/playerActions";
+import { PlayerStore, PlayerState, SongList } from "./types/player";
 import { MusicMetadata } from "./types/types";
+import { createQueueActions, createPlaybackActions } from "../features/audio/utils/playerActions";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
 import { getRemovedSongs, deleteAudioFile } from "@/db/audio-operations";
-
-interface PlayerState {
-  currentTrack: MusicMetadata | null;
-  queue: MusicMetadata[];
-  history: MusicMetadata[];
-  isPlaying: boolean;
-  volume: number;
-  shuffle: boolean;
-  repeat: string;
-  duration: number;
-  currentTime: number;
-  isQueueVisible: boolean;
-  refreshTrigger: number;
-  audioDevices: MediaDeviceInfo[];
-  selectedDeviceId: string;
-  prelistenDeviceId: string;
-  prelistenTrack: MusicMetadata | null;
-  isPrelistening: boolean;
-  selectedFolderNames: string[];
-  prelistenDuration: number;
-  showPreListenButtons: boolean;
-  recentPlayHours: number;
-  monthlyPlayDays: number;
-  hasShownPreListenWarning: boolean;
-  searchQuery: string;
-  sortField: string;
-  sortOrder: string;
-  filters: object;
-  showFilters: boolean;
-}
 
 const initialState: PlayerState = {
   currentTrack: null,
@@ -69,6 +36,8 @@ const initialState: PlayerState = {
   sortOrder: "asc",
   filters: {},
   showFilters: true,
+  songLists: [],
+  showLists: false,
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -149,6 +118,60 @@ export const usePlayerStore = create<PlayerStore>()(
         setSortOrder: (order) => set({ sortOrder: order }),
         setFilters: (filters) => set({ filters: filters }),
         toggleFilters: () => set((state) => ({ showFilters: !state.showFilters })),
+        toggleLists: () => set((state) => ({ showLists: !state.showLists })),
+        addSongList: (name) =>
+          set((state) => ({
+            songLists: [
+              ...state.songLists,
+              {
+                id: crypto.randomUUID(),
+                name,
+                songs: [],
+                created: Date.now(),
+                modified: Date.now(),
+              },
+            ],
+          })),
+        removeSongList: (id) =>
+          set((state) => ({
+            songLists: state.songLists.filter((list) => list.id !== id),
+          })),
+        addSongToList: (listId, songPath) =>
+          set((state) => ({
+            songLists: state.songLists.map((list) =>
+              list.id === listId
+                ? {
+                    ...list,
+                    songs: [...new Set([...list.songs, songPath])],
+                    modified: Date.now(),
+                  }
+                : list
+            ),
+          })),
+        removeSongFromList: (listId, songPath) =>
+          set((state) => ({
+            songLists: state.songLists.map((list) =>
+              list.id === listId
+                ? {
+                    ...list,
+                    songs: list.songs.filter((path) => path !== songPath),
+                    modified: Date.now(),
+                  }
+                : list
+            ),
+          })),
+        renameSongList: (id, name) =>
+          set((state) => ({
+            songLists: state.songLists.map((list) =>
+              list.id === id
+                ? {
+                    ...list,
+                    name,
+                    modified: Date.now(),
+                  }
+                : list
+            ),
+          })),
 
         addSelectedFolder: async (
           folderName: string,
@@ -248,6 +271,8 @@ export const usePlayerStore = create<PlayerStore>()(
         sortOrder: state.sortOrder,
         filters: state.filters,
         showFilters: state.showFilters,
+        songLists: state.songLists,
+        showLists: state.showLists,
         // Don't persist hasShownPreListenWarning so it resets on page load
       }),
     }

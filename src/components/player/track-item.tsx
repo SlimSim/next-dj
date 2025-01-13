@@ -3,6 +3,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { MusicMetadata } from "@/lib/types/types";
@@ -14,6 +17,7 @@ import {
   Pencil,
   Trash,
   MessageSquare,
+  ListMusic,
 } from "lucide-react";
 import { formatTime } from "@/lib/utils/formatting";
 import { NumberBadge } from "../ui/number-badge";
@@ -81,6 +85,8 @@ export function TrackItem({
     (state) => state.setHasShownPreListenWarning
   );
   const setIsQueueVisible = usePlayerStore((state) => state.setQueueVisible);
+  const songLists = usePlayerStore((state) => state.songLists);
+  const addSongToList = usePlayerStore((state) => state.addSongToList);
 
   const handlePreListenClick = (track: MusicMetadata) => {
     // If we're already prelistening to this track, just pause it
@@ -426,6 +432,26 @@ export function TrackItem({
             >
               Play Last
             </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <ListMusic className="h-4 w-4 mr-2" />
+                Add to List
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {songLists.length === 0 ? (
+                  <DropdownMenuItem disabled>No lists created</DropdownMenuItem>
+                ) : (
+                  songLists.map((list) => (
+                    <DropdownMenuItem
+                      key={list.id}
+                      onClick={() => track.path && addSongToList(list.id, track.path)}
+                    >
+                      {list.name}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuItem onClick={() => onEditTrack(track)}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit metadata
