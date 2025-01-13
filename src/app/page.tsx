@@ -61,7 +61,7 @@ export default function Home() {
   return (
     <>
       <NavigationGuard />
-      <main className="flex min-h-screen flex-col bg-white dark:bg-neutral-950">
+      <main className="flex h-dvh flex-col bg-white dark:bg-neutral-950">
         <header className="flex-none flex flex-col border-b z-20 bg-white/95 dark:bg-neutral-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-neutral-950/60">
           <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 flex justify-between items-center">
             <div
