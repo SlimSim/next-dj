@@ -1,4 +1,5 @@
 import { MusicMetadata } from "./types";
+import { SortField, SortOrder, FilterCriteria } from "@/components/player/playlist-controls";
 
 export interface PlayerState {
   currentTrack: MusicMetadata | null;
@@ -24,6 +25,9 @@ export interface PlayerState {
   monthlyPlayDays: number;
   hasShownPreListenWarning: boolean;
   searchQuery: string;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  filters: FilterCriteria;
 }
 
 export interface PlayerActions {
@@ -66,6 +70,9 @@ export interface PlayerActions {
   setMonthlyPlayDays: (days: number) => void;
   setHasShownPreListenWarning: (shown: boolean) => void;
   setSearchQuery: (query: string) => void;
+  setSortField: (field: SortField) => void;
+  setSortOrder: (order: SortOrder) => void;
+  setFilters: (filters: FilterCriteria) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

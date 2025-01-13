@@ -23,13 +23,16 @@ import { usePlayerStore } from "@/lib/store";
 
 export default function Home() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [sortField, setSortField] = useState<SortField>("title");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [filters, setFilters] = useState<FilterCriteria>({});
   const prelistenRef = useRef<PrelistenAudioRef>(null);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
   const searchQuery = usePlayerStore((state) => state.searchQuery);
   const setSearchQuery = usePlayerStore((state) => state.setSearchQuery);
+  const sortField = usePlayerStore((state) => state.sortField);
+  const setSortField = usePlayerStore((state) => state.setSortField);
+  const sortOrder = usePlayerStore((state) => state.sortOrder);
+  const setSortOrder = usePlayerStore((state) => state.setSortOrder);
+  const filters = usePlayerStore((state) => state.filters);
+  const setFilters = usePlayerStore((state) => state.setFilters);
 
   // Check for removed songs on initial load
   useEffect(() => {
