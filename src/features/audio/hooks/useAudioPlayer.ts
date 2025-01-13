@@ -54,6 +54,38 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
     }
   }, [track?.volume, volume]);
 
+  // Set initial time and handle end time offset
+  useEffect(() => {
+    if (!audioRef.current || !track) return;
+
+    // Set initial time when track loads
+    if (track.startTime && track.startTime > 0) {
+      audioRef.current.currentTime = track.startTime;
+    }
+
+    // Handle end time offset
+    const handleTimeUpdate = () => {
+      if (!audioRef.current || !track.endTimeOffset) return;
+
+      const timeRemaining =
+        audioRef.current.duration - audioRef.current.currentTime;
+      if (timeRemaining <= track.endTimeOffset) {
+        // Time to move to next track
+        if (trackProp === "currentTrack") {
+          playNextTrack();
+        } else {
+          // For prelisten, just pause
+          audioRef.current.pause();
+        }
+      }
+    };
+
+    audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
+    return () => {
+      audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [track?.id]);
+
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
       if (trackProp === "currentTrack") {
