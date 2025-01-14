@@ -55,7 +55,8 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
       }
       if (repeat === "all" && currentTrack) {
         const trackWithQueueId = { ...currentTrack, queueId: uuidv4() };
-        set({ currentTrack: trackWithQueueId, isPlaying: true });
+        // Don't auto-play on repeat, let the audio player handle it
+        set({ currentTrack: trackWithQueueId, isPlaying: false });
       } else {
         set({ currentTrack: null, isPlaying: false });
       }
@@ -79,7 +80,8 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
       }));
     }
 
-    set({ currentTrack: nextTrack, queue: newQueue, isPlaying: true });
+    // Don't auto-play, let the audio player handle it
+    set({ currentTrack: nextTrack, queue: newQueue, isPlaying: false });
   },
 
   playPreviousTrack: () => {

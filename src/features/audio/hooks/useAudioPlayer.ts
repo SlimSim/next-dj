@@ -54,6 +54,24 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
     }
   }, [track?.volume, volume]);
 
+  // Handle track loaded
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const handleCanPlay = () => {
+      // Start playing once the track is loaded
+      if (trackProp === "currentTrack") {
+        audioRef.current?.play();
+        setIsPlaying(true);
+      }
+    };
+
+    audioRef.current.addEventListener("canplay", handleCanPlay);
+    return () => {
+      audioRef.current?.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [trackProp, setIsPlaying]);
+
   // Set initial time and handle end time offset
   useEffect(() => {
     if (!audioRef.current || !track) return;
@@ -65,10 +83,9 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
     // Handle end time offset
     const handleTimeUpdate = () => {
-      if (!audioRef.current || !track.endTimeOffset) return;
+      if (!audioRef.current || !track?.endTimeOffset) return; // Make sure we check the current track
 
-      const timeRemaining =
-        audioRef.current.duration - audioRef.current.currentTime;
+      const timeRemaining = audioRef.current.duration - audioRef.current.currentTime;
       if (timeRemaining <= track.endTimeOffset) {
         // Time to move to next track
         if (trackProp === "currentTrack") {
@@ -85,6 +102,26 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
       audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
     };
   }, [track?.id]);
+
+  // Add a new effect to handle track ended event
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const handleEnded = () => {
+      if (trackProp === "currentTrack") {
+        // When track ends naturally, play next track
+        playNextTrack();
+      } else {
+        // For prelisten, just pause
+        audioRef.current?.pause();
+      }
+    };
+
+    audioRef.current.addEventListener("ended", handleEnded);
+    return () => {
+      audioRef.current?.removeEventListener("ended", handleEnded);
+    };
+  }, [trackProp, playNextTrack]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
