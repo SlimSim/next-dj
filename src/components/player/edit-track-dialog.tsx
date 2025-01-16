@@ -50,6 +50,7 @@ export function EditTrackDialog({
         startTime: track.startTime,
         endTimeOffset: track.endTimeOffset,
         fadeDuration: track.fadeDuration,
+        fadeOutDuration: track.fadeOutDuration,
       });
 
       // Always preserve reference when saving to prevent restart
@@ -239,26 +240,6 @@ export function EditTrackDialog({
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="fadeDuration" className="text-right">
-                    Fade Duration
-                  </Label>
-                  <div className="col-span-3 flex items-center gap-2">
-                    <Input
-                      id="fadeDuration"
-                      type="number"
-                      min={0}
-                      step={0.1}
-                      value={track.fadeDuration ?? 0}
-                      onChange={(e) =>
-                        handleTrackChange({
-                          fadeDuration: parseFloat(e.currentTarget.value),
-                        })
-                      }
-                    />
-                    <span className="text-sm text-gray-500">seconds</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="endTimeOffset" className="text-right">
                     End Offset
                   </Label>
@@ -279,6 +260,46 @@ export function EditTrackDialog({
                     <span className="text-sm text-gray-500">
                       seconds from end
                     </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="fadeOutDuration" className="text-right">
+                    Fade Out Duration
+                  </Label>
+                  <div className="col-span-3 flex items-center gap-2">
+                    <Input
+                      id="fadeOutDuration"
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={track.fadeOutDuration ?? 0}
+                      onChange={(e) =>
+                        handleTrackChange({
+                          fadeOutDuration: parseFloat(e.currentTarget.value),
+                        })
+                      }
+                    />
+                    <span className="text-sm text-gray-500">seconds</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="fadeDuration" className="text-right">
+                    Fade Duration
+                  </Label>
+                  <div className="col-span-3 flex items-center gap-2">
+                    <Input
+                      id="fadeDuration"
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={track.fadeDuration ?? 0}
+                      onChange={(e) =>
+                        handleTrackChange({
+                          fadeDuration: parseFloat(e.currentTarget.value),
+                        })
+                      }
+                    />
+                    <span className="text-sm text-gray-500">seconds</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">

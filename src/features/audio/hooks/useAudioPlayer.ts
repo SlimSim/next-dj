@@ -19,6 +19,7 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   const [isLoading, setIsLoading] = useState(false);
   const track = usePlayerStore((state) => state[trackProp]);
   const trackSourceRef = useRef<string | null>(null);
+  const isFadingOutRef = useRef(false);
 
   const {
     isPlaying,
@@ -50,25 +51,89 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   // Handle metadata updates (volume, etc.) without reinitializing
   useEffect(() => {
     if (audioRef.current && track) {
-      const trackVolume = track.volume || 0.75;
-      audioRef.current.volume = clampVolume(volume * trackVolume);
+      // Only update volume if we're not in a fade-out state
+      if (!isFadingOutRef.current) {
+        const trackVolume = track.volume || 0.75;
+        audioRef.current.volume = clampVolume(volume * trackVolume);
+      }
     }
   }, [track?.volume, volume]);
 
-  // Implement fade-in functionality
+  // Handle track transition and ensure volume stays at 0 until next track is ready
+  const handleTrackTransition = useCallback(() => {
+    if (!audioRef.current) return;
+
+    // Ensure volume stays at 0 during transition
+    audioRef.current.volume = 0;
+
+    if (trackProp === "currentTrack") {
+      playNextTrack();
+    } else {
+      audioRef.current.pause();
+    }
+  }, [trackProp, playNextTrack]);
+
+  // Handle end time offset and fade out
   useEffect(() => {
     if (!audioRef.current || !track) return;
 
-    const fadeDuration = track.fadeDuration || 0;
+    const handleTimeUpdate = () => {
+      if (!audioRef.current || !track) return;
+
+      const currentTime = audioRef.current.currentTime;
+      const duration = audioRef.current.duration;
+      const timeRemaining = duration - currentTime;
+      const fadeOutDuration = track.fadeOutDuration || 0;
+      const endTimeOffset = track.endTimeOffset || 0;
+      const shouldEndAt = duration - endTimeOffset;
+      const fadeOutStartTime = shouldEndAt - fadeOutDuration;
+
+      // Start fade out if we're past the fade out start time but before the end offset
+      if (fadeOutDuration > 0 && currentTime >= fadeOutStartTime && currentTime < shouldEndAt) {
+        isFadingOutRef.current = true;
+        const timeIntoFade = currentTime - fadeOutStartTime;
+        const fadeOutProgress = 1 - (timeIntoFade / fadeOutDuration);
+        const targetVolume = (track.volume || 0.75) * fadeOutProgress;
+        
+        audioRef.current.volume = Math.max(0, Math.min(targetVolume, 1));
+      }
+
+      // Once we reach the end point, initiate track transition
+      if (currentTime >= shouldEndAt) {
+        isFadingOutRef.current = true;
+        handleTrackTransition();
+      }
+    };
+
+    audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
+    return () => {
+      audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [track?.id, track?.fadeOutDuration, track?.endTimeOffset, handleTrackTransition]);
+
+  // Handle volume initialization and fade-in
+  useEffect(() => {
+    if (!audioRef.current || !track) return;
+
+    // Reset fade-out state when track changes
+    isFadingOutRef.current = false;
+
+    let fadeDuration = track.fadeDuration || 0;
     const initialVolume = track.volume || 0.75;
-    audioRef.current.volume = fadeDuration > 0 ? 0 : initialVolume;
+
+    // Treat no fade-in as a very short fade-in
+    if (fadeDuration === 0) {
+      fadeDuration = 0.001; // Set to a very short duration
+    }
+
+    audioRef.current.volume = 0; // Start at 0 for fade-in
 
     console.log('Fade-in effect initiated');
     console.log('Fade Duration:', fadeDuration);
     console.log('Initial Volume:', initialVolume);
 
     if (fadeDuration > 0) {
-      let startTime = Date.now() / 1000; // Use actual time instead of audio currentTime
+      let startTime = Date.now() / 1000;
       
       const fadeIn = () => {
         if (!audioRef.current) return;
@@ -93,40 +158,13 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
       const handlePlay = () => {
         console.log('Play event triggered');
-        startTime = Date.now() / 1000; // Reset start time when play actually begins
+        startTime = Date.now() / 1000;
         fadeIn();
       };
 
       audioRef.current.addEventListener('play', handlePlay, { once: true });
     }
   }, [track?.id, track?.fadeDuration]);
-
-  // Set initial time and handle end time offset
-  useEffect(() => {
-    if (!audioRef.current || !track) return;
-
-    // Handle end time offset
-    const handleTimeUpdate = () => {
-      if (!audioRef.current || !track.endTimeOffset) return;
-
-      const timeRemaining =
-        audioRef.current.duration - audioRef.current.currentTime;
-      if (timeRemaining <= track.endTimeOffset) {
-        // Time to move to next track
-        if (trackProp === "currentTrack") {
-          playNextTrack();
-        } else {
-          // For prelisten, just pause
-          audioRef.current.pause();
-        }
-      }
-    };
-
-    audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
-    return () => {
-      audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
-    };
-  }, [track?.id]);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {

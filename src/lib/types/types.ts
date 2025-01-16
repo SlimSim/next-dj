@@ -23,6 +23,7 @@ export interface MusicMetadata {
   startTime?: number; // Time in seconds to start playback from
   endTimeOffset?: number; // Time in seconds to end before the track's end
   fadeDuration?: number;
+  fadeOutDuration?: number;
 }
 
 export interface AudioFile {
