@@ -45,23 +45,27 @@ export const createQueueActions = (set: any, get: () => PlayerState) => ({
 export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
   playNextTrack: () => {
     const { queue: currentQueue, currentTrack, shuffle, repeat } = get();
+
+    // Handle empty queue case
     if (!currentQueue.length) {
-      if (currentTrack) {
-        set((state: PlayerState) => ({
-          history: [...state.history, currentTrack],
-          currentTrack: null,
-          isPlaying: false,
-        }));
-      }
       if (repeat === "all" && currentTrack) {
         const trackWithQueueId = { ...currentTrack, queueId: uuidv4() };
-        set({ currentTrack: trackWithQueueId, isPlaying: true });
+        set({
+          currentTrack: trackWithQueueId,
+          isPlaying: true,
+          history: currentTrack ? [...get().history, currentTrack] : get().history,
+        });
       } else {
-        set({ currentTrack: null, isPlaying: false });
+        set({
+          currentTrack: null,
+          isPlaying: false,
+          history: currentTrack ? [...get().history, currentTrack] : get().history,
+        });
       }
       return;
     }
 
+    // Get next track based on shuffle setting
     let nextTrack;
     let newQueue;
     if (shuffle) {
@@ -73,13 +77,13 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
       [nextTrack, ...newQueue] = [...currentQueue];
     }
 
-    if (currentTrack) {
-      set((state: PlayerState) => ({
-        history: [...state.history, currentTrack],
-      }));
-    }
-
-    set({ currentTrack: nextTrack, queue: newQueue, isPlaying: true });
+    // Update all state in a single operation
+    set({
+      currentTrack: nextTrack,
+      queue: newQueue,
+      isPlaying: true,
+      history: currentTrack ? [...get().history, currentTrack] : get().history,
+    });
   },
 
   playPreviousTrack: () => {

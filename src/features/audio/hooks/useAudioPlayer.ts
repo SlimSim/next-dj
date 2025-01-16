@@ -11,6 +11,10 @@ const clampVolume = (value: number) => Math.max(0, Math.min(1, value));
 
 type TrackPropKey = keyof Pick<PlayerState, "currentTrack" | "prelistenTrack">;
 
+// Global audio context and source node
+let globalAudioContext: AudioContext | null = null;
+let globalSourceNode: MediaElementAudioSourceNode | null = null;
+
 export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const currentFileRef = useRef<Blob | null>(null);
@@ -107,7 +111,9 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
     audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
     return () => {
-      audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+      if (audioRef.current) {
+        audioRef.current.removeEventListener("timeupdate", handleTimeUpdate);
+      }
     };
   }, [track?.id, track?.fadeOutDuration, track?.endTimeOffset, handleTrackTransition]);
 
@@ -132,38 +138,52 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
     console.log('Fade Duration:', fadeDuration);
     console.log('Initial Volume:', initialVolume);
 
-    if (fadeDuration > 0) {
-      let startTime = Date.now() / 1000;
-      
-      const fadeIn = () => {
-        if (!audioRef.current) return;
+    let fadeInterval: number | null = null;
+    const startTime = Date.now();
 
-        const currentTime = Date.now() / 1000;
-        const elapsed = currentTime - startTime;
+    const handlePlay = () => {
+      console.log('Play event triggered');
+      
+      // Clear any existing interval
+      if (fadeInterval) {
+        clearInterval(fadeInterval);
+      }
+
+      // Use setInterval instead of requestAnimationFrame
+      fadeInterval = window.setInterval(() => {
+        if (!audioRef.current) {
+          if (fadeInterval) clearInterval(fadeInterval);
+          return;
+        }
+
+        const elapsed = (Date.now() - startTime) / 1000;
         const fadeProgress = Math.min(Math.max(elapsed / fadeDuration, 0), 1);
 
-        console.log('Current Time:', currentTime);
-        console.log('Start Time:', startTime);
         console.log('Elapsed:', elapsed);
         console.log('Fade Progress:', fadeProgress);
         console.log('Current Volume:', audioRef.current.volume);
 
         if (fadeProgress < 1) {
           audioRef.current.volume = Math.min(Math.max(initialVolume * fadeProgress, 0), 1);
-          requestAnimationFrame(fadeIn);
         } else {
           audioRef.current.volume = initialVolume;
+          if (fadeInterval) {
+            clearInterval(fadeInterval);
+          }
         }
-      };
+      }, 50); // Update every 50ms
+    };
 
-      const handlePlay = () => {
-        console.log('Play event triggered');
-        startTime = Date.now() / 1000;
-        fadeIn();
-      };
+    audioRef.current.addEventListener('play', handlePlay, { once: true });
 
-      audioRef.current.addEventListener('play', handlePlay, { once: true });
-    }
+    return () => {
+      if (fadeInterval) {
+        clearInterval(fadeInterval);
+      }
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('play', handlePlay);
+      }
+    };
   }, [track?.id, track?.fadeDuration]);
 
   const handleTimeUpdate = useCallback(() => {
@@ -267,6 +287,50 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
       }
     }
   };
+
+  // Ensure audio context stays active in background
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    if (!globalAudioContext) {
+      globalAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (!globalSourceNode) {
+      globalSourceNode = globalAudioContext.createMediaElementSource(audioRef.current);
+      globalSourceNode.connect(globalAudioContext.destination);
+    }
+
+    const resumeAudioContext = () => {
+      if (globalAudioContext?.state === 'suspended') {
+        globalAudioContext.resume();
+      }
+    };
+
+    document.addEventListener('visibilitychange', resumeAudioContext);
+
+    return () => {
+      document.removeEventListener('visibilitychange', resumeAudioContext);
+    };
+  }, []);
+
+  // Fix track state management during transitions
+  useEffect(() => {
+    if (!audioRef.current || !track) return;
+
+    const handleTrackEnd = () => {
+      if (trackProp === "currentTrack") {
+        playNextTrack();
+      }
+    };
+
+    audioRef.current.addEventListener('ended', handleTrackEnd);
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('ended', handleTrackEnd);
+      }
+    };
+  }, [track?.id, trackProp, playNextTrack]);
 
   return {
     audioRef,
