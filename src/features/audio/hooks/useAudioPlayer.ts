@@ -58,11 +58,6 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   useEffect(() => {
     if (!audioRef.current || !track) return;
 
-    // Set initial time when track loads
-    if (track.startTime && track.startTime > 0) {
-      audioRef.current.currentTime = track.startTime;
-    }
-
     // Handle end time offset
     const handleTimeUpdate = () => {
       if (!audioRef.current || !track.endTimeOffset) return;
@@ -149,6 +144,9 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
               setDuration(audioRef.current?.duration || 0);
             } else {
               setPrelistenDuration(audioRef.current?.duration || 0);
+            }
+            if (track.startTime && track.startTime > 0) {
+              audioRef.current.currentTime = track.startTime;
             }
           }
           resolve();
