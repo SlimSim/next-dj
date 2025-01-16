@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getAudioFile } from "@/db/audio-operations";
 import { useAudioDevice } from "./useAudioDevice";
 import { useAudioControls } from "./useAudioControls";
+import { PlayerState } from "@/lib/types/player";
 
 // Helper function to clamp volume between 0 and 1
 const clampVolume = (value: number) => Math.max(0, Math.min(1, value));
@@ -53,6 +54,52 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
       audioRef.current.volume = clampVolume(volume * trackVolume);
     }
   }, [track?.volume, volume]);
+
+  // Implement fade-in functionality
+  useEffect(() => {
+    if (!audioRef.current || !track) return;
+
+    const fadeDuration = track.fadeDuration || 0;
+    const initialVolume = track.volume || 0.75;
+    audioRef.current.volume = fadeDuration > 0 ? 0 : initialVolume;
+
+    console.log('Fade-in effect initiated');
+    console.log('Fade Duration:', fadeDuration);
+    console.log('Initial Volume:', initialVolume);
+
+    if (fadeDuration > 0) {
+      let startTime = Date.now() / 1000; // Use actual time instead of audio currentTime
+      
+      const fadeIn = () => {
+        if (!audioRef.current) return;
+
+        const currentTime = Date.now() / 1000;
+        const elapsed = currentTime - startTime;
+        const fadeProgress = Math.min(Math.max(elapsed / fadeDuration, 0), 1);
+
+        console.log('Current Time:', currentTime);
+        console.log('Start Time:', startTime);
+        console.log('Elapsed:', elapsed);
+        console.log('Fade Progress:', fadeProgress);
+        console.log('Current Volume:', audioRef.current.volume);
+
+        if (fadeProgress < 1) {
+          audioRef.current.volume = Math.min(Math.max(initialVolume * fadeProgress, 0), 1);
+          requestAnimationFrame(fadeIn);
+        } else {
+          audioRef.current.volume = initialVolume;
+        }
+      };
+
+      const handlePlay = () => {
+        console.log('Play event triggered');
+        startTime = Date.now() / 1000; // Reset start time when play actually begins
+        fadeIn();
+      };
+
+      audioRef.current.addEventListener('play', handlePlay, { once: true });
+    }
+  }, [track?.id, track?.fadeDuration]);
 
   // Set initial time and handle end time offset
   useEffect(() => {

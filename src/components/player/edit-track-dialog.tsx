@@ -49,6 +49,7 @@ export function EditTrackDialog({
         volume: track.volume,
         startTime: track.startTime,
         endTimeOffset: track.endTimeOffset,
+        fadeDuration: track.fadeDuration,
       });
 
       // Always preserve reference when saving to prevent restart
@@ -231,6 +232,26 @@ export function EditTrackDialog({
                       onChange={(e) =>
                         handleTrackChange({
                           startTime: parseFloat(e.currentTarget.value),
+                        })
+                      }
+                    />
+                    <span className="text-sm text-gray-500">seconds</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="fadeDuration" className="text-right">
+                    Fade Duration
+                  </Label>
+                  <div className="col-span-3 flex items-center gap-2">
+                    <Input
+                      id="fadeDuration"
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={track.fadeDuration ?? 0}
+                      onChange={(e) =>
+                        handleTrackChange({
+                          fadeDuration: parseFloat(e.currentTarget.value),
                         })
                       }
                     />
