@@ -44,6 +44,7 @@ export interface PlayerState {
   songLists: SongList[];
   showLists: boolean;
   selectedListId: string | null;
+  metadata: MusicMetadata[]; 
 }
 
 export interface PlayerActions {
@@ -54,6 +55,8 @@ export interface PlayerActions {
   clearQueue: () => void;
   setQueue: (queue: MusicMetadata[]) => void;
   moveInQueue: (fromIndex: number, toIndex: number) => void;
+  playNextTrack: () => void;
+  playPreviousTrack: () => void;
   addToHistory: (track: MusicMetadata) => void;
   removeFromHistory: (id: string) => void;
   clearHistory: () => void;
@@ -61,12 +64,10 @@ export interface PlayerActions {
   setIsPlaying: (isPlaying: boolean) => void;
   setVolume: (volume: number) => void;
   setShuffle: (shuffle: boolean) => void;
-  setRepeat: (repeat: "none" | "one" | "all") => void;
+  setRepeat: (repeat: PlayerState["repeat"]) => void;
   setDuration: (duration: number) => void;
   setCurrentTime: (currentTime: number) => void;
   setQueueVisible: (isQueueVisible: boolean) => void;
-  playNextTrack: () => void;
-  playPreviousTrack: () => void;
   triggerRefresh: () => void;
   clearAll: () => void;
   setAudioDevices: (devices: MediaDeviceInfo[]) => void;
@@ -74,13 +75,6 @@ export interface PlayerActions {
   setPrelistenDeviceId: (deviceId: string) => void;
   setPrelistenTrack: (track: MusicMetadata | null) => void;
   setIsPrelistening: (isPrelistening: boolean) => void;
-  removeRemovedSongs: () => Promise<void>;
-  addSelectedFolder: (
-    folderName: string,
-    handle: FileSystemDirectoryHandle
-  ) => void;
-  removeFolder: (folderName: string) => void;
-  clearSelectedFolders: () => void;
   setShowPreListenButtons: (show: boolean) => void;
   setRecentPlayHours: (hours: number) => void;
   setMonthlyPlayDays: (days: number) => void;
@@ -90,13 +84,21 @@ export interface PlayerActions {
   setSortOrder: (order: SortOrder) => void;
   setFilters: (filters: FilterCriteria) => void;
   toggleFilters: () => void;
+  toggleLists: () => void;
   addSongList: (name: string) => void;
   removeSongList: (id: string) => void;
   addSongToList: (listId: string, songPath: string) => void;
   removeSongFromList: (listId: string, songPath: string) => void;
   renameSongList: (id: string, name: string) => void;
-  toggleLists: () => void;
   setSelectedListId: (id: string | null) => void;
+  addSelectedFolder: (folderName: string, handle: FileSystemDirectoryHandle) => void;
+  removeFolder: (folderName: string) => void;
+  removeRemovedSongs: () => void;
+  clearSelectedFolders: () => void;
+  updateTrackMetadata: (
+    trackId: string,
+    updates: Partial<MusicMetadata> & { __volumeOnly?: boolean; __preserveRef?: boolean }
+  ) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

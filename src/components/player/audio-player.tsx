@@ -11,7 +11,6 @@ export const AudioPlayer = () => {
     isLoading,
     handleTimeUpdate,
     handleLoadedMetadata,
-    initAudio,
     mountedRef,
   } = useAudioPlayer();
 
@@ -34,18 +33,10 @@ export const AudioPlayer = () => {
   const lastTrackRef = useRef<string | null>(null);
 
   useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      if (audioRef.current?.src) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-    };
+    if (audioRef.current?.src) {
+      URL.revokeObjectURL(audioRef.current.src);
+    }
   }, []);
-
-  useEffect(() => {
-    initAudio();
-  }, [currentTrack]);
 
   useEffect(() => {
     if (!audioRef.current || isLoading) return;

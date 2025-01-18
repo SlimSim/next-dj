@@ -28,7 +28,6 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
       isLoading,
       handleTimeUpdate,
       handleLoadedMetadata,
-      initAudio,
       mountedRef,
     } = useAudioPlayer("prelistenTrack");
 
@@ -95,13 +94,12 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
         setIsPrelistening(false);
         return;
       }
-      initAudio();
     }, [prelistenTrack?.id]);
 
     useEffect(() => {
       if (!audioRef.current || isLoading) return;
 
-      if (isPrelistening) {
+      if (isPrelistening && prelistenTrack) {
         audioRef.current.play().catch((error) => {
           console.error("Error playing prelisten audio:", error);
           setIsPrelistening(false);
@@ -109,8 +107,16 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
       } else {
         audioRef.current.pause();
       }
-    }, [isPrelistening, isLoading, setIsPrelistening]);
+    }, [isPrelistening, isLoading, prelistenTrack]);
 
-    return <audio ref={audioRef} id="prelisten-audio" preload="auto" />;
+    return (
+      <audio
+        ref={audioRef}
+        id="prelisten-audio"
+        preload="auto"
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+      />
+    );
   }
 );
