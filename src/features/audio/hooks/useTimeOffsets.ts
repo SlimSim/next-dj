@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { PlayerState } from "@/lib/types/player";
 
@@ -8,7 +8,6 @@ export const useTimeOffsets = (
   trackProp: keyof Pick<PlayerState, "currentTrack" | "prelistenTrack"> = "currentTrack"
 ) => {
   const { playNextTrack, setCurrentTime } = usePlayerStore();
-  const lastLogTimeRef = useRef(0);
 
   const handleTimeUpdate = useCallback(() => {
     if (!audioRef.current || !track) return;
@@ -22,32 +21,13 @@ export const useTimeOffsets = (
       setCurrentTime(currentTime);
     }
 
-    // Only log every 10 seconds
-    const now = Date.now();
-    if (now - lastLogTimeRef.current >= 10000) {
-      console.log('TimeOffsets: Time Check:', {
-        currentTime: Math.round(currentTime),
-        duration: Math.round(duration),
-        timeRemaining: Math.round(timeRemaining),
-        endOffset: track.endTimeOffset,
-        trackId: track.id,
-        trackTitle: track.title
-      });
-      lastLogTimeRef.current = now;
-    }
-
     // If track has an end offset and we've reached it, play next track
     if (
       track.endTimeOffset !== undefined &&
       track.endTimeOffset > 0 &&
       timeRemaining <= track.endTimeOffset
     ) {
-      console.log('TimeOffsets: Reached end offset:', {
-        currentTime: Math.round(currentTime),
-        duration: Math.round(duration),
-        endOffset: track.endTimeOffset,
-        trackTitle: track.title
-      });
+      console.log('TimeOffsets: Reached end offset for track:', track.title);
       if (trackProp === "currentTrack") {
         playNextTrack();
       }
@@ -57,18 +37,12 @@ export const useTimeOffsets = (
   useEffect(() => {
     if (!track) return;
 
-    console.log('TimeOffsets: Setting up listeners for track:', {
-      trackTitle: track.title,
-      trackId: track.id,
-      endOffset: track.endTimeOffset,
-      startTime: track.startTime,
-      duration: audioRef.current?.duration
-    });
+    console.log('TimeOffsets: Starting playback of track:', track.title);
 
     audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
 
     return () => {
-      console.log('TimeOffsets: Cleaning up listeners for track:', track.title);
+      console.log('TimeOffsets: Ending playback of track:', track.title);
       audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
     };
   }, [track, handleTimeUpdate]);
