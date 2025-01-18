@@ -35,15 +35,17 @@ export const useTimeOffsets = (
   }, [track, playNextTrack, trackProp, setCurrentTime]);
 
   useEffect(() => {
-    if (!track) return;
+    if (!track || !audioRef.current) return;
 
     console.log('TimeOffsets: Starting playback of track:', track.title);
 
     audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
 
     return () => {
-      console.log('TimeOffsets: Ending playback of track:', track.title);
-      audioRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+      if (audioRef.current) {
+        console.log('TimeOffsets: Ending playback of track:', track.title);
+        audioRef.current.removeEventListener("timeupdate", handleTimeUpdate);
+      }
     };
   }, [track, handleTimeUpdate]);
 
