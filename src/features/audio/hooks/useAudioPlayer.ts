@@ -29,6 +29,13 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
   // Initialize audio when track changes
   useEffect(() => {
+    console.log('AudioPlayer: Track changed:', {
+      newTrackTitle: track?.title,
+      newTrackId: track?.id,
+      oldTrackId: trackSourceRef.current,
+      endOffset: track?.endTimeOffset
+    });
+
     if (track?.id !== trackSourceRef.current) {
       trackSourceRef.current = track?.id || null;
       initAudio(track);
@@ -48,6 +55,7 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
 
   useEffect(() => {
     return () => {
+      console.log('AudioPlayer: Cleaning up player');
       mountedRef.current = false;
       if (audioRef.current?.src) {
         URL.revokeObjectURL(audioRef.current.src);

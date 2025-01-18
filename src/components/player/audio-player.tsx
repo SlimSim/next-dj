@@ -88,13 +88,6 @@ export const AudioPlayer = () => {
         preload="auto"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => {
-          if (repeat === "one") {
-            audioRef.current?.play();
-          } else {
-            playNextTrack();
-          }
-        }}
       />
     </PlayerLayout>
   );
