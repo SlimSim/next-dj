@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { getAudioFile } from "@/db/audio-operations";
 import { PlayerState } from "@/lib/types/player";
 import { usePlayerStore } from "@/lib/store";
+import { createAudioUrl, revokeAudioUrl, setAudioSource } from "../utils/audioUtils";
 
 export const useAudioInitialization = (
   audioRef: React.RefObject<HTMLAudioElement>,
@@ -24,7 +25,7 @@ export const useAudioInitialization = (
       mountedRef.current = false;
       // Cleanup URL on unmount
       if (currentUrlRef.current) {
-        URL.revokeObjectURL(currentUrlRef.current);
+        revokeAudioUrl(currentUrlRef.current);
         currentUrlRef.current = null;
       }
     };
@@ -54,7 +55,7 @@ export const useAudioInitialization = (
       }
     }
     if (currentUrlRef.current) {
-      URL.revokeObjectURL(currentUrlRef.current);
+      revokeAudioUrl(currentUrlRef.current);
       currentUrlRef.current = null;
     }
   }, []);
@@ -90,9 +91,8 @@ export const useAudioInitialization = (
       currentFileRef.current = audioFile.file;
       if (!audioRef.current) throw new Error("Audio element not initialized");
 
-      const url = URL.createObjectURL(audioFile.file);
-      currentUrlRef.current = url;
-      audioRef.current.src = url;
+      const cleanup = setAudioSource(audioRef.current, audioFile.file);
+      currentUrlRef.current = audioRef.current.src;
 
       await new Promise<void>((resolve, reject) => {
         if (!audioRef.current) {

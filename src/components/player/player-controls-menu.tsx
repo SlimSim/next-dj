@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/common'
-import { formatTime } from '@/lib/utils/formatting'
+import { formatTime } from '@/features/audio/utils/audioUtils';
 import { ConfirmButton } from '../ui/confirm-button'
 import ConfirmToggleButton from '../ui/confirm-toggle-button'
 

@@ -1,5 +1,5 @@
 import { MusicMetadata } from "@/lib/types/types";
-import { formatTime } from "@/lib/utils/formatting";
+import { formatTime } from "@/features/audio/utils/audioUtils";
 import { cn } from "@/lib/utils/common";
 import React from "react";
 

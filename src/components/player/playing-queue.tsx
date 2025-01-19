@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { Button } from "../ui/button";
-import { formatTime } from "@/lib/utils/formatting";
+import { formatTime } from "@/features/audio/utils/audioUtils";
 import {
   DndContext,
   DragEndEvent,
