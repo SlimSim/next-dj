@@ -12,14 +12,21 @@ export const useAudioInitialization = (
   const mountedRef = useRef(true);
   const [isLoading, setIsLoading] = useState(false);
   const currentFileRef = useRef<Blob | null>(null);
+  const currentUrlRef = useRef<string | null>(null);
   
   const { setDuration, setPrelistenDuration, playNextTrack } = usePlayerStore();
+  const isPlaying = usePlayerStore((state) => state.isPlaying);
 
   // Initialize mountedRef
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      // Cleanup URL on unmount
+      if (currentUrlRef.current) {
+        URL.revokeObjectURL(currentUrlRef.current);
+        currentUrlRef.current = null;
+      }
     };
   }, []);
 
@@ -27,11 +34,30 @@ export const useAudioInitialization = (
     if (audioRef.current) {
       if (trackProp === "currentTrack") {
         setDuration(audioRef.current.duration);
+        // Resume playback if it was playing before
+        if (isPlaying) {
+          audioRef.current.play().catch(console.error);
+        }
       } else {
         setPrelistenDuration(audioRef.current.duration);
       }
     }
-  }, [setDuration, setPrelistenDuration, trackProp]);
+  }, [setDuration, setPrelistenDuration, trackProp, isPlaying]);
+
+  const cleanupCurrentTrack = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      if (audioRef.current.src) {
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+      }
+    }
+    if (currentUrlRef.current) {
+      URL.revokeObjectURL(currentUrlRef.current);
+      currentUrlRef.current = null;
+    }
+  }, []);
 
   const initAudio = async (track: PlayerState["currentTrack"]) => {
     if (!track?.id) return;
@@ -41,6 +67,9 @@ export const useAudioInitialization = (
     setIsLoading(true);
 
     try {
+      // Clean up previous track first
+      cleanupCurrentTrack();
+
       if (track.removed) {
         console.log('AudioInit: Track is removed:', track.title);
         return;
@@ -61,11 +90,8 @@ export const useAudioInitialization = (
       currentFileRef.current = audioFile.file;
       if (!audioRef.current) throw new Error("Audio element not initialized");
 
-      if (audioRef.current.src) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-
       const url = URL.createObjectURL(audioFile.file);
+      currentUrlRef.current = url;
       audioRef.current.src = url;
 
       await new Promise<void>((resolve, reject) => {
@@ -88,6 +114,10 @@ export const useAudioInitialization = (
           setIsLoading(false);
           if (trackProp === "currentTrack") {
             setDuration(audioRef.current.duration || 0);
+            // Resume playback if it was playing before
+            if (isPlaying) {
+              audioRef.current.play().catch(console.error);
+            }
           } else {
             setPrelistenDuration(audioRef.current.duration || 0);
           }
@@ -101,6 +131,7 @@ export const useAudioInitialization = (
           // Set up the ended handler based on end offset
           audioRef.current.onended = () => {
             console.log('AudioInit: Track ended naturally:', track.title);
+            cleanupCurrentTrack();
             if (trackProp === "currentTrack") {
               playNextTrack();
             }

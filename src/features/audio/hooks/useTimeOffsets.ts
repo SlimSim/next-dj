@@ -29,6 +29,11 @@ export const useTimeOffsets = (
     ) {
       console.log('TimeOffsets: Reached end offset for track:', track.title);
       if (trackProp === "currentTrack") {
+        // Stop current track before playing next
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
         playNextTrack();
       }
     }
