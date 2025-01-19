@@ -4,6 +4,14 @@ import { getAudioFile } from "@/db/audio-operations";
 import { PlayerState } from "@/lib/types/player";
 import { usePlayerStore } from "@/lib/store";
 import { createAudioUrl, revokeAudioUrl, setAudioSource } from "../utils/audioUtils";
+import {
+  AudioError,
+  AudioErrorCode,
+  createErrorHandler,
+  withErrorHandler
+} from "../utils/errorUtils";
+
+const handleError = createErrorHandler('AudioInitialization');
 
 export const useAudioInitialization = (
   audioRef: React.RefObject<HTMLAudioElement>,
@@ -37,7 +45,9 @@ export const useAudioInitialization = (
         setDuration(audioRef.current.duration);
         // Resume playback if it was playing before
         if (isPlaying) {
-          audioRef.current.play().catch(console.error);
+          audioRef.current.play().catch(() => 
+            handleError(new AudioError('Failed to resume playback', AudioErrorCode.PLAYBACK_FAILED))
+          );
         }
       } else {
         setPrelistenDuration(audioRef.current.duration);
@@ -72,40 +82,45 @@ export const useAudioInitialization = (
       cleanupCurrentTrack();
 
       if (track.removed) {
-        console.log('AudioInit: Track is removed:', track.title);
-        return;
+        throw new AudioError(`Track ${track.title} has been removed`, AudioErrorCode.TRACK_NOT_FOUND);
       }
 
-      const audioFile = await getAudioFile(track.id);
+      const audioFile = await withErrorHandler(
+        () => getAudioFile(track.id),
+        'getAudioFile'
+      );
+
       if (!audioFile?.file) {
-        console.error('AudioInit: No audio file found for track:', track.title);
-        toast.error(`No audio file found for ${track.title}`);
-        if (trackProp === "currentTrack") {
-          playNextTrack();
-        }
-        return;
+        throw new AudioError(
+          `No audio file found for ${track.title}`,
+          AudioErrorCode.FILE_NOT_FOUND
+        );
       }
 
       if (!mountedRef.current) return;
 
       currentFileRef.current = audioFile.file;
-      if (!audioRef.current) throw new Error("Audio element not initialized");
+      if (!audioRef.current) {
+        throw new AudioError(
+          'Audio element not initialized',
+          AudioErrorCode.PLAYBACK_FAILED
+        );
+      }
 
       const cleanup = setAudioSource(audioRef.current, audioFile.file);
       currentUrlRef.current = audioRef.current.src;
 
       await new Promise<void>((resolve, reject) => {
         if (!audioRef.current) {
-          reject(new Error("Audio element not found"));
+          reject(new AudioError('Audio element not found', AudioErrorCode.PLAYBACK_FAILED));
           return;
         }
 
-        const handleError = (e: ErrorEvent) => {
-          console.error('AudioInit: Error loading track:', {
-            track: track.title,
-            error: e.message
-          });
-          reject(new Error(`Failed to load audio: ${e.message}`));
+        const handleAudioError = (e: ErrorEvent) => {
+          reject(new AudioError(
+            `Failed to load audio: ${e.message}`,
+            AudioErrorCode.INVALID_AUDIO
+          ));
         };
 
         const handleCanPlay = () => {
@@ -116,7 +131,9 @@ export const useAudioInitialization = (
             setDuration(audioRef.current.duration || 0);
             // Resume playback if it was playing before
             if (isPlaying) {
-              audioRef.current.play().catch(console.error);
+              audioRef.current.play().catch(() => 
+                handleError(new AudioError('Failed to start playback', AudioErrorCode.PLAYBACK_FAILED))
+              );
             }
           } else {
             setPrelistenDuration(audioRef.current.duration || 0);
@@ -130,27 +147,22 @@ export const useAudioInitialization = (
 
           // Set up the ended handler based on end offset
           audioRef.current.onended = () => {
-            console.log('AudioInit: Track ended naturally:', track.title);
             cleanupCurrentTrack();
             if (trackProp === "currentTrack") {
               playNextTrack();
             }
           };
 
-          audioRef.current.removeEventListener('error', handleError);
+          audioRef.current.removeEventListener('error', handleAudioError);
           resolve();
         };
 
-        audioRef.current.addEventListener('error', handleError);
+        audioRef.current.addEventListener('error', handleAudioError);
         audioRef.current.addEventListener("canplay", handleCanPlay, { once: true });
       });
 
     } catch (error) {
-      console.error("AudioInit: Error initializing track:", {
-        track: track?.title,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      toast.error("Error loading audio file");
+      handleError(error);
       if (trackProp === "currentTrack") {
         playNextTrack();
       }
