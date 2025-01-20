@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -15,17 +15,9 @@ import { usePlayerStore } from "@/lib/store";
 import { SongList } from "@/lib/types/player";
 import { cn } from "@/lib/utils/common";
 
-export function ListsPanel() {
+const NewListInput = () => {
   const [newListName, setNewListName] = useState("");
-  const [editingListId, setEditingListId] = useState<string | null>(null);
-  const showLists = usePlayerStore((state) => state.showLists);
-  const songLists = usePlayerStore((state) => state.songLists);
-  const selectedListId = usePlayerStore((state) => state.selectedListId);
-  const toggleLists = usePlayerStore((state) => state.toggleLists);
   const addSongList = usePlayerStore((state) => state.addSongList);
-  const removeSongList = usePlayerStore((state) => state.removeSongList);
-  const renameSongList = usePlayerStore((state) => state.renameSongList);
-  const setSelectedListId = usePlayerStore((state) => state.setSelectedListId);
 
   const handleCreateList = () => {
     if (newListName.trim()) {
@@ -33,6 +25,31 @@ export function ListsPanel() {
       setNewListName("");
     }
   };
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        value={newListName}
+        onChange={(e) => setNewListName(e.target.value)}
+        placeholder="New list name..."
+        onKeyDown={(e) => e.key === "Enter" && handleCreateList()}
+      />
+      <Button size="icon" onClick={handleCreateList}>
+        <Plus className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
+export function ListsPanel() {
+  const [editingListId, setEditingListId] = useState<string | null>(null);
+  const showLists = usePlayerStore((state) => state.showLists);
+  const songLists = usePlayerStore((state) => state.songLists);
+  const selectedListId = usePlayerStore((state) => state.selectedListId);
+  const toggleLists = usePlayerStore((state) => state.toggleLists);
+  const removeSongList = usePlayerStore((state) => state.removeSongList);
+  const renameSongList = usePlayerStore((state) => state.renameSongList);
+  const setSelectedListId = usePlayerStore((state) => state.setSelectedListId);
 
   const handleRenameList = (list: SongList, newName: string) => {
     if (newName.trim() && newName !== list.name) {
@@ -52,18 +69,7 @@ export function ListsPanel() {
       )}
 
       <div className={cn("space-y-4", !inSheet && "mt-4")}>
-        <div className="flex gap-2">
-          <Input
-            value={newListName}
-            onChange={(e) => setNewListName(e.target.value)}
-            placeholder="New list name..."
-            onKeyDown={(e) => e.key === "Enter" && handleCreateList()}
-          />
-          <Button size="icon" onClick={handleCreateList}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-
+        <NewListInput />
         <div className="space-y-2">
           <div
             className={cn(
