@@ -18,6 +18,7 @@ export async function updateMetadata(
     startTime?: number;
     endTimeOffset?: number;
     fadeDuration?: number;
+    endTimeFadeDuration?: number;
   }
 ): Promise<void> {
   const db = await initMusicDB();

@@ -51,6 +51,7 @@ export function EditTrackDialog({
         startTime: track.startTime,
         endTimeOffset: track.endTimeOffset,
         fadeDuration: track.fadeDuration,
+        endTimeFadeDuration: track.endTimeFadeDuration,
       });
 
       // Always preserve reference when saving to prevent restart
@@ -282,6 +283,30 @@ export function EditTrackDialog({
                     />
                     <span className="text-sm text-gray-500">
                       seconds from end
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="endTimeFadeDuration" className="text-right">
+                    End Fade duration
+                  </Label>
+                  <div className="col-span-3 flex items-center gap-2">
+                    <InputWithDefault
+                      id="endTimeFadeDuration"
+                      type="number"
+                      min={0}
+                      max={track.duration}
+                      step={0.1}
+                      value={track.endTimeFadeDuration || ""}
+                      defaultValue={0}
+                      onValueChange={(val) =>
+                        handleTrackChange({
+                          endTimeFadeDuration: Number(val),
+                        })
+                      }
+                    />
+                    <span className="text-sm text-gray-500">
+                      seconds
                     </span>
                   </div>
                 </div>

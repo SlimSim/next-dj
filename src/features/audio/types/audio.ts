@@ -44,6 +44,7 @@ export interface AudioPlaybackOptions {
   startTime?: number;
   endTimeOffset?: number;
   fadeDuration?: number;
+  endTimeFadeDuration?: number;
   volume?: number;
 }
 
