@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { InputWithDefault } from "@/components/ui/input-with-default";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -222,16 +223,17 @@ export function EditTrackDialog({
                     Start Time
                   </Label>
                   <div className="col-span-3 flex items-center gap-2">
-                    <Input
+                    <InputWithDefault
                       id="startTime"
                       type="number"
                       min={0}
                       max={track.duration}
                       step={1}
-                      value={track.startTime ?? 0}
-                      onChange={(e) =>
+                      value={track.startTime || ""}
+                      defaultValue={0}
+                      onValueChange={(val) =>
                         handleTrackChange({
-                          startTime: parseFloat(e.currentTarget.value),
+                          startTime: Number(val),
                         })
                       }
                     />
@@ -243,15 +245,16 @@ export function EditTrackDialog({
                     Fade Duration
                   </Label>
                   <div className="col-span-3 flex items-center gap-2">
-                    <Input
+                    <InputWithDefault
                       id="fadeDuration"
                       type="number"
                       min={0}
                       step={0.1}
-                      value={track.fadeDuration ?? 0}
-                      onChange={(e) =>
+                      value={track.fadeDuration || ""}
+                      defaultValue={0}
+                      onValueChange={(val) =>
                         handleTrackChange({
-                          fadeDuration: parseFloat(e.currentTarget.value),
+                          fadeDuration: Number(val),
                         })
                       }
                     />
@@ -263,16 +266,17 @@ export function EditTrackDialog({
                     End Offset
                   </Label>
                   <div className="col-span-3 flex items-center gap-2">
-                    <Input
+                    <InputWithDefault
                       id="endTimeOffset"
                       type="number"
                       min={0}
                       max={track.duration}
                       step={1}
-                      value={track.endTimeOffset ?? 0}
-                      onChange={(e) =>
+                      value={track.endTimeOffset || ""}
+                      defaultValue={0}
+                      onValueChange={(val) =>
                         handleTrackChange({
-                          endTimeOffset: parseFloat(e.currentTarget.value),
+                          endTimeOffset: Number(val),
                         })
                       }
                     />
