@@ -11,3 +11,6 @@ It has a playing queue, which consists of the history,the currently playing song
 
 It features a playlist with a wide range of genres and an option to shuffle the playlist. 
 It also has a queue and a history of played songs.
+
+
+The player ueses the FileSystem API to read the music files from the users file system. And as a back up it uses regular file upload and indexedDB to save the files.

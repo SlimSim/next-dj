@@ -248,7 +248,7 @@ export function SettingsContent({
                     id="recentPlayHours"
                     type="number"
                     min="0"
-                    value={recentPlayHours}
+                    value={recentPlayHours || 18}
                     onChange={(e) => {
                       let val = Number(e.target.value);
                       setRecentPlayHours(typeof val === "number" ? val : 18);
@@ -281,7 +281,7 @@ export function SettingsContent({
                     id="monthlyPlayDays"
                     type="number"
                     min="0"
-                    value={monthlyPlayDays}
+                    value={monthlyPlayDays || 42}
                     onChange={(e) => {
                       let val = Number(e.target.value);
                       setMonthlyPlayDays(typeof val === "number" ? val : 42);

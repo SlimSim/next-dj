@@ -15,8 +15,8 @@ export interface StatsActions {
 export type StatsSlice = StatsState & StatsActions;
 
 const initialStatsState: StatsState = {
-  recentPlayHours: 0,
-  monthlyPlayDays: 0,
+  recentPlayHours: 18,
+  monthlyPlayDays: 42,
   hasShownPreListenWarning: false,
 };
 

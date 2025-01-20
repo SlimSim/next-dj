@@ -18,6 +18,7 @@ export type PlayerStore = PlaybackSlice &
 export const usePlayerStore = create<PlayerStore>()(
   persist(
     (...args) => ({
+
       ...createPlaybackSlice(...args),
       ...createQueueSlice(...args),
       ...createDeviceSlice(...args),
@@ -34,8 +35,8 @@ export const usePlayerStore = create<PlayerStore>()(
         prelistenDeviceId: state.prelistenDeviceId,
         showPreListenButtons: state.showPreListenButtons,
         selectedFolderNames: state.selectedFolderNames,
-        recentPlayHours: state.recentPlayHours,
-        monthlyPlayDays: state.monthlyPlayDays,
+        recentPlayHours: state.recentPlayHours || 18,
+        monthlyPlayDays: state.monthlyPlayDays || 42,
         hasShownPreListenWarning: state.hasShownPreListenWarning,
         songLists: state.songLists,
         metadata: state.metadata,
