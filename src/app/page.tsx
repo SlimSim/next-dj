@@ -9,7 +9,7 @@ import {
   PrelistenAudioRef,
 } from "@/components/player/prelisten-audio-player";
 import { NavigationGuard } from "@/components/common/navigation-guard";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import { FolderScanner } from "@/components/common/folder-scanner";
 import { cn } from "@/lib/utils/common";
 import {
@@ -86,7 +86,7 @@ export default function Home() {
                     isSearchFocused ? "flex-1" : "flex-1 mx-4"
                   )}
                 >
-                  <Input
+                  <SearchInput
                     type="search"
                     placeholder="Search tracks..."
                     value={searchQuery}
