@@ -198,12 +198,20 @@ export function PlayingQueue() {
   // Configure DnD sensors
   const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
 
+  /**
+   * Handle the end of a drag operation.
+   * 
+   * This function updates the queue and history based on the drag operation.
+   * 
+   * @param event The drag end event.
+   */
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       try {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
+        // Get all tracks, including history, current track, and queue
         const allTracks = [...history, currentTrack, ...queue].filter(
           (track): track is NonNullable<typeof track> => Boolean(track)
         );
@@ -219,94 +227,68 @@ export function PlayingQueue() {
           );
         }
 
+        // Get the indices of the current track, dragged track, and target track
         const currentTrackIndex = currentTrack
           ? allTracks.findIndex((track) => track.queueId === currentTrack.queueId)
           : -1;
+        const draggedIndex = allTracks.findIndex(
+          (track) => track.queueId === active.id
+        );
         const targetIndex = allTracks.findIndex(
           (track) => track.queueId === over.id
         );
 
-        // Handle moving the current track
+        // Special handling for moving the currently playing track
         if (currentTrack && active.id === currentTrack.queueId) {
           if (targetIndex < currentTrackIndex) {
-            // Calculate how many tracks should move to queue based on the new position
-            const tracksToMoveCount = Math.max(
-              0,
-              currentTrackIndex - targetIndex
-            );
-
-            // Get the tracks that should move to queue
-            const tracksToQueue = history.slice(-tracksToMoveCount);
-            const remainingHistory = history.slice(0, -tracksToMoveCount);
-
-            // Update history and queue
+            // Move tracks from history to queue
+            const tracksToQueue = history.slice(-Math.max(0, currentTrackIndex - targetIndex));
+            const remainingHistory = history.slice(0, -Math.max(0, currentTrackIndex - targetIndex));
             setHistory(remainingHistory);
             setQueue([...tracksToQueue, ...queue]);
           } else {
-            // Calculate how many tracks should move to history based on the new position
-            const tracksToMoveCount = Math.max(
-              0,
-              targetIndex - currentTrackIndex
-            );
-
-            // Get the tracks that should move to history
-            const tracksToHistory = queue.slice(0, tracksToMoveCount);
-            const remainingQueue = queue.slice(tracksToMoveCount);
-
-            // Update history and queue
+            // Move tracks from queue to history
+            const tracksToHistory = queue.slice(0, Math.max(0, targetIndex - currentTrackIndex));
+            const remainingQueue = queue.slice(Math.max(0, targetIndex - currentTrackIndex));
             setHistory([...history, ...tracksToHistory]);
             setQueue(remainingQueue);
           }
           return;
         }
 
-        // Determine if the target position is in history (before current track)
-        const isTargetInHistory =
-          currentTrackIndex !== -1 && targetIndex <= currentTrackIndex;
-
-        // Remove track from its original list
+        // Create new queue and history arrays
         let newQueue = [...queue];
         let newHistory = [...history];
 
-        // Remove from original list
-        if (history.some((track) => track.queueId === active.id)) {
-          newHistory = newHistory.filter((track) => track.queueId !== active.id);
-        } else if (queue.some((track) => track.queueId === active.id)) {
-          newQueue = newQueue.filter((track) => track.queueId !== active.id);
-        }
-
-        // Add to target list based on position relative to current track
-        if (isTargetInHistory) {
-          // If target is in history section (before current track)
-          const historyTargetIndex = history.findIndex(
-            (track) => track.queueId === over.id
-          );
-          if (historyTargetIndex === -1) {
-            // If dropping at the end of history
-            newHistory.push(draggedTrack);
-          } else {
-            newHistory.splice(historyTargetIndex, 0, draggedTrack);
-          }
+        // Remove the dragged track from its original list
+        const isFromHistory = draggedIndex < currentTrackIndex;
+        if (isFromHistory) {
+          newHistory = newHistory.filter(t => t.queueId !== active.id);
         } else {
-          // If target is in queue section (after current track)
-          const queueTargetIndex = queue.findIndex(
-            (track) => track.queueId === over.id
-          );
-          if (queueTargetIndex === -1) {
-            // If dropping at the start of queue
-            newQueue.unshift(draggedTrack);
-          } else {
-            newQueue.splice(queueTargetIndex, 0, draggedTrack);
-          }
+          newQueue = newQueue.filter(t => t.queueId !== active.id);
         }
 
-        setQueue(newQueue);
+        // Calculate the insertion position based on the drag direction
+        const isMovingUp = draggedIndex > targetIndex;
+        const adjustedTargetIndex = isMovingUp ? targetIndex : targetIndex + 1;
+        const isTargetInHistory = adjustedTargetIndex <= currentTrackIndex;
+
+        // Insert the dragged track at its new position
+        if (isTargetInHistory) {
+          newHistory.splice(adjustedTargetIndex, 0, draggedTrack);
+        } else {
+          const queueTargetIndex = adjustedTargetIndex - (currentTrackIndex + 1);
+          newQueue.splice(queueTargetIndex, 0, draggedTrack);
+        }
+
+        // Update the queue and history
         setHistory(newHistory);
+        setQueue(newQueue);
       } catch (error) {
-        handleError(error);
+        console.error('Error during drag and drop:', error);
       }
     },
-    [queue, history, currentTrack, setQueue, setHistory]
+    [currentTrack, history, queue, setHistory, setQueue]
   );
 
   // Calculate the number of next songs
