@@ -19,12 +19,29 @@ export async function updateMetadata(
     endTimeOffset?: number;
     fadeDuration?: number;
     endTimeFadeDuration?: number;
+    [key: string]: any; // Allow custom metadata fields
   }
 ): Promise<void> {
   const db = await initMusicDB();
   const existing = await db.get("metadata", id);
   if (existing) {
-    const updated = { ...existing, ...metadata };
+    // Merge existing and new metadata, preserving custom fields
+    const updated = { ...existing };
+    
+    // Update all provided fields, including custom fields
+    Object.entries(metadata).forEach(([key, value]) => {
+      // For custom fields, ensure empty strings are saved as empty strings
+      // rather than being skipped
+      if (key.startsWith('custom_') && value === '') {
+        updated[key] = '';
+      }
+      // For other fields, only update if value is defined
+      else if (value !== undefined) {
+        updated[key] = value;
+      }
+    });
+    
+    console.log('Saving metadata with custom fields:', updated); // Debug log
     await db.put("metadata", updated);
   }
 }

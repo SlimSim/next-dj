@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { PlusIcon } from "@radix-ui/react-icons";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateMetadata } from "@/db/metadata-operations";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
+import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 interface EditTrackDialogProps {
   isOpen: boolean;
@@ -31,13 +34,43 @@ export function EditTrackDialog({
   onTrackChange,
   onSave,
 }: EditTrackDialogProps) {
-  const { triggerRefresh, updateTrackMetadata } = usePlayerStore();
+  const { triggerRefresh, updateTrackMetadata, customMetadata, addCustomMetadataField } = usePlayerStore();
+  const [newFieldName, setNewFieldName] = useState("");
+
+  // Initialize custom fields when track or customMetadata changes
+  useEffect(() => {
+    if (!track) return;
+
+    const updates: Record<string, string> = {};
+    let needsUpdate = false;
+
+    customMetadata.fields.forEach((field) => {
+      const customKey = `custom_${field.id}`;
+      if ((track as any)[customKey] === undefined) {
+        updates[customKey] = "";
+        needsUpdate = true;
+      }
+    });
+
+    if (needsUpdate) {
+      const updatedTrack = { ...track, ...updates };
+      onTrackChange(updatedTrack);
+      
+      // Save empty values to database
+      updateMetadata(track.id, updates).catch(console.error);
+    }
+  }, [track, customMetadata.fields, onTrackChange, updateMetadata]);
 
   if (!track) return null;
 
   const handleSave = async () => {
     try {
-      await updateMetadata(track.id, {
+      // Get all custom metadata keys
+      const customKeys = customMetadata.fields.map(field => `custom_${field.id}`);
+      
+      // Create metadata object including custom fields
+      const metadata: Record<string, any> = {
+        ...track, // Include all existing track data
         title: track.title,
         artist: track.artist,
         album: track.album,
@@ -52,11 +85,21 @@ export function EditTrackDialog({
         endTimeOffset: track.endTimeOffset,
         fadeDuration: track.fadeDuration,
         endTimeFadeDuration: track.endTimeFadeDuration,
+      };
+
+      // Add custom metadata to the object
+      customKeys.forEach(key => {
+        const value = (track as any)[key];
+        if (value !== undefined) {
+          metadata[key] = value;
+        }
       });
 
-      // Always preserve reference when saving to prevent restart
+      await updateMetadata(track.id, metadata);
+
+      // Update track metadata in store
       updateTrackMetadata(track.id, {
-        ...track,
+        ...metadata,
         __preserveRef: true,
       });
 
@@ -67,15 +110,39 @@ export function EditTrackDialog({
     }
   };
 
-  const handleTrackChange = (updates: Partial<MusicMetadata>) => {
+  const handleTrackChange = (updates: Partial<Record<string, any>>) => {
     const updatedTrack = { ...track, ...updates };
     onTrackChange(updatedTrack);
 
-    // Mark all metadata updates from dialog as non-restarting
+    // Update store immediately with the changes
     updateTrackMetadata(track.id, {
       ...updates,
-      __preserveRef: true, // Special flag to prevent track restart
+      __preserveRef: true,
     });
+  };
+
+  const handleAddCustomField = () => {
+    if (!newFieldName.trim()) return;
+    
+    const newField = {
+      id: uuidv4(),
+      name: newFieldName.trim(),
+      type: 'text' as const,
+    };
+    
+    addCustomMetadataField(newField);
+    setNewFieldName("");
+    
+    // Initialize the custom field in the track with an empty string
+    const customKey = `custom_${newField.id}`;
+    handleTrackChange({
+      [customKey]: "",
+    });
+    
+    // Save the empty value immediately to ensure it exists in the database
+    updateMetadata(track.id, {
+      [customKey]: "",
+    }).catch(console.error);
   };
 
   return (
@@ -170,17 +237,58 @@ export function EditTrackDialog({
                   <Input
                     id="genre"
                     value={track.genre?.join(", ") || ""}
-                    className="col-span-3"
                     onChange={(e) =>
                       handleTrackChange({
-                        genre: e.currentTarget.value
-                          .split(",")
-                          .map((g) => g.trim())
-                          .filter(Boolean),
+                        genre: e.target.value.split(",").map((g) => g.trim()),
                       })
                     }
-                    placeholder="Jazz, Rock, Pop, Swing etc."
+                    className="col-span-3"
                   />
+                </div>
+
+                {/* Custom Metadata Fields */}
+                {customMetadata.fields.map((field) => {
+                  const customKey = `custom_${field.id}`;
+                  const value = (track as any)[customKey];
+                  
+                  return (
+                    <div key={field.id} className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor={customKey} className="text-right">
+                        {field.name}
+                      </Label>
+                      <Input
+                        id={customKey}
+                        value={value ?? ""}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          handleTrackChange({
+                            [customKey]: newValue,
+                          });
+                        }}
+                        className="col-span-3"
+                      />
+                    </div>
+                  );
+                })}
+
+                {/* Add New Custom Field */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Add Field</Label>
+                  <div className="col-span-3 flex gap-2">
+                    <Input
+                      placeholder="New field name"
+                      value={newFieldName}
+                      onChange={(e) => setNewFieldName(e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleAddCustomField}
+                      type="button"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>

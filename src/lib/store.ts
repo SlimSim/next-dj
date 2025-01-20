@@ -3,13 +3,14 @@ import { persist } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { PlayerStore, PlayerState, SongList } from "./types/player";
 import { MusicMetadata } from "./types/types";
+import { CustomMetadataState, CustomMetadataField } from './types/customMetadata';
 import {
   createQueueActions,
   createPlaybackActions,
 } from "../features/audio/utils/playerActions";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
-import { getRemovedSongs, deleteAudioFile } from "@/db/audio-operations";
+import { getRemovedSongs, deleteAudioFile, getAllMetadata } from "@/db/audio-operations";
 
 const initialState: PlayerState = {
   currentTrack: null,
@@ -43,6 +44,9 @@ const initialState: PlayerState = {
   showLists: false,
   selectedListId: null,
   metadata: [], // Store all track metadata
+  customMetadata: {
+    fields: [],
+  },
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -50,6 +54,11 @@ export const usePlayerStore = create<PlayerStore>()(
     (set, get) => {
       const queueActions = createQueueActions(set, get);
       const playbackActions = createPlaybackActions(set, get);
+
+      // Load metadata from IndexedDB when store is created
+      getAllMetadata().then(metadata => {
+        set({ metadata });
+      }).catch(console.error);
 
       return {
         ...initialState,
@@ -263,59 +272,62 @@ export const usePlayerStore = create<PlayerStore>()(
         updateTrackMetadata: (
           trackId: string,
           updates: Partial<MusicMetadata> & { __volumeOnly?: boolean; __preserveRef?: boolean }
-        ) =>
+        ) => {
           set((state) => {
-            // Create a new metadata array with updates
-            const metadata = state.metadata.map((track) =>
-              track.id === trackId ? { ...track, ...updates } : track
-            );
+            const trackIndex = state.metadata.findIndex((t) => t.id === trackId);
+            if (trackIndex === -1) return state;
 
-            const isVolumeUpdate = updates.__volumeOnly === true;
-            const shouldPreserveRef = updates.__preserveRef === true;
-            const cleanUpdates = { ...updates };
-            delete cleanUpdates.__volumeOnly;
-            delete cleanUpdates.__preserveRef;
-
-            // Update currentTrack
-            let currentTrack = state.currentTrack;
-            if (state.currentTrack?.id === trackId) {
-              if (isVolumeUpdate || shouldPreserveRef) {
-                // Modify in place without creating new reference
-                currentTrack = state.currentTrack;
-                Object.assign(currentTrack, cleanUpdates);
-              } else {
-                currentTrack = {
-                  ...state.currentTrack,
-                  ...cleanUpdates,
-                  path: state.currentTrack.path,
-                  id: state.currentTrack.id,
-                };
-              }
+            const updatedMetadata = [...state.metadata];
+            if (updates.__volumeOnly) {
+              // Only update volume
+              updatedMetadata[trackIndex] = {
+                ...updatedMetadata[trackIndex],
+                volume: updates.volume,
+              };
+            } else if (updates.__preserveRef) {
+              // Preserve the reference but update fields
+              Object.assign(updatedMetadata[trackIndex], updates);
+            } else {
+              // Create new reference with all updates
+              updatedMetadata[trackIndex] = {
+                ...updatedMetadata[trackIndex],
+                ...updates,
+              };
             }
 
-            // Update prelistenTrack
-            let prelistenTrack = state.prelistenTrack;
-            if (state.prelistenTrack?.id === trackId) {
-              if (isVolumeUpdate || shouldPreserveRef) {
-                // Modify in place without creating new reference
-                prelistenTrack = state.prelistenTrack;
-                Object.assign(prelistenTrack, cleanUpdates);
-              } else {
-                prelistenTrack = {
-                  ...state.prelistenTrack,
-                  ...cleanUpdates,
-                  path: state.prelistenTrack.path,
-                  id: state.prelistenTrack.id,
-                };
-              }
-            }
+            // Update current track if it's the same
+            const currentTrack =
+              state.currentTrack?.id === trackId
+                ? { ...state.currentTrack, ...updates }
+                : state.currentTrack;
+
+            // Update prelisten track if it's the same
+            const prelistenTrack =
+              state.prelistenTrack?.id === trackId
+                ? { ...state.prelistenTrack, ...updates }
+                : state.prelistenTrack;
 
             return {
-              metadata,
+              metadata: updatedMetadata,
               currentTrack,
               prelistenTrack,
             };
-          }),
+          });
+        },
+        addCustomMetadataField: (field: CustomMetadataField) =>
+          set((state) => ({
+            customMetadata: {
+              ...state.customMetadata,
+              fields: [...state.customMetadata.fields, field],
+            },
+          })),
+        removeCustomMetadataField: (fieldId: string) =>
+          set((state) => ({
+            customMetadata: {
+              ...state.customMetadata,
+              fields: state.customMetadata.fields.filter((f) => f.id !== fieldId),
+            },
+          })),
       };
     },
     {
@@ -340,6 +352,7 @@ export const usePlayerStore = create<PlayerStore>()(
         showLists: state.showLists,
         selectedListId: state.selectedListId,
         metadata: state.metadata,
+        customMetadata: state.customMetadata,
       }),
     }
   )

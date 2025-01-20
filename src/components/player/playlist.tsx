@@ -35,7 +35,7 @@ export function Playlist({
   const selectedListId = usePlayerStore((state) => state.selectedListId);
   const songLists = usePlayerStore((state) => state.songLists);
 
-  const { currentTrack, prelistenTrack, isPrelistening, queue, history } =
+  const { currentTrack, prelistenTrack, isPrelistening, queue, history, customMetadata } =
     usePlayerStore();
 
   const { showPreListenButtons } = useSettings();
@@ -71,6 +71,16 @@ export function Playlist({
         track.genre ? track.genre.includes(filters.genre as string) : false
       );
     }
+
+    // Apply custom metadata filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key.startsWith('custom_') && value) {
+        filteredTracks = filteredTracks.filter((track) => {
+          const customValue = (track as any)[key];
+          return customValue && customValue.trim() === value;
+        });
+      }
+    });
 
     // Apply sorting
     filteredTracks.sort((a, b) => {

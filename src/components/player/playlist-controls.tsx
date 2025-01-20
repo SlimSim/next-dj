@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -43,29 +43,56 @@ interface PlaylistControlsProps {
 }
 
 export function PlaylistControls({
-  onSortChange,
   onFilterChange,
-  sortField,
-  sortOrder,
   filters,
+  sortField,
+  onSortChange,
+  sortOrder,
 }: PlaylistControlsProps) {
-  const [uniqueValues, setUniqueValues] = useState<{
-    artists: string[];
-    albums: string[];
-    genres: string[];
-  }>({
-    artists: [],
-    albums: [],
-    genres: [],
-  });
+  const tracks = usePlayerStore((state) => state.metadata);
+  const customMetadata = usePlayerStore((state) => state.customMetadata);
 
-  useEffect(() => {
-    const loadUniqueValues = async () => {
-      const values = await getUniqueValues();
-      setUniqueValues(values);
-    };
-    loadUniqueValues();
-  }, []);
+  // Get unique values for filters
+  const uniqueValues = useMemo(() => {
+    console.log('Tracks:', tracks); // Debug log
+    
+    const values = {
+      artist: new Set<string>(),
+      album: new Set<string>(),
+      genre: new Set<string>(),
+    } as Record<string, Set<string>>;
+
+    // Initialize sets for custom metadata fields
+    customMetadata.fields.forEach((field) => {
+      values[`custom_${field.id}`] = new Set<string>();
+    });
+
+    console.log('Custom metadata fields:', customMetadata.fields); // Debug log
+
+    // Collect all values including custom metadata
+    tracks.forEach((track) => {
+      if (track.artist) values.artist.add(track.artist);
+      if (track.album) values.album.add(track.album);
+      if (track.genre) track.genre.forEach((g) => values.genre.add(g));
+
+      // Collect custom metadata values
+      customMetadata.fields.forEach((field) => {
+        const customKey = `custom_${field.id}`;
+        const value = (track as any)[customKey];
+        console.log(`Track ${track.title} - ${field.name}:`, value); // Debug log
+        
+        // Include empty strings and undefined values as "(Empty)"
+        if (value === undefined || value === '') {
+          values[customKey].add('(Empty)');
+        } else if (typeof value === 'string') {
+          values[customKey].add(value.trim());
+        }
+      });
+    });
+
+    console.log('Final unique values:', values); // Debug log
+    return values;
+  }, [tracks, customMetadata.fields]);
 
   const getSortLabel = (field: string) => {
     switch (field) {
@@ -168,7 +195,7 @@ export function PlaylistControls({
           })
         }
         placeholder="Artist"
-        items={uniqueValues.artists}
+        items={Array.from(uniqueValues.artist)}
       />
 
       <FilterSelect
@@ -180,7 +207,7 @@ export function PlaylistControls({
           })
         }
         placeholder="Album"
-        items={uniqueValues.albums}
+        items={Array.from(uniqueValues.album)}
       />
 
       <FilterSelect
@@ -192,8 +219,30 @@ export function PlaylistControls({
           })
         }
         placeholder="Genre"
-        items={uniqueValues.genres}
+        items={Array.from(uniqueValues.genre)}
       />
+
+      {/* Custom Metadata Filters */}
+      {customMetadata.fields.map((field) => {
+        const customKey = `custom_${field.id}`;
+        const options = Array.from(uniqueValues[customKey] || new Set());
+        console.log(`Options for ${field.name}:`, options); // Debug log
+        
+        return (
+          <FilterSelect
+            key={field.id}
+            value={filters[customKey]}
+            onValueChange={(value) =>
+              onFilterChange({
+                ...filters,
+                [customKey]: value === '(Empty)' ? '' : value,
+              })
+            }
+            placeholder={`Filter by ${field.name}`}
+            items={options}
+          />
+        );
+      })}
     </div>
   );
 }
