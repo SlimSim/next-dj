@@ -26,6 +26,7 @@ import { usePlayerStore } from "@/lib/store";
 import { ConfirmButton } from "../ui/confirm-button";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { Input } from "../ui/input";
+import { InputWithDefault } from "../ui/input-with-default";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   Tooltip,
@@ -244,14 +245,15 @@ export function SettingsContent({
                   </Tooltip>
                 </TooltipProvider>
                 <div className="flex items-center gap-2">
-                  <Input
+                  <InputWithDefault
                     id="recentPlayHours"
                     type="number"
                     min="0"
-                    value={recentPlayHours || 18}
-                    onChange={(e) => {
-                      let val = Number(e.target.value);
-                      setRecentPlayHours(typeof val === "number" ? val : 18);
+                    value={recentPlayHours || ""}
+                    defaultValue={18}
+                    onValueChange={(val) => {
+                      const numVal = val === "" ? 0 : Number(val);
+                      setRecentPlayHours(numVal);
                     }}
                     className="w-24"
                   />
@@ -277,14 +279,15 @@ export function SettingsContent({
                   </Tooltip>
                 </TooltipProvider>
                 <div className="flex items-center gap-2">
-                  <Input
+                  <InputWithDefault
                     id="monthlyPlayDays"
                     type="number"
                     min="0"
-                    value={monthlyPlayDays || 42}
-                    onChange={(e) => {
-                      let val = Number(e.target.value);
-                      setMonthlyPlayDays(typeof val === "number" ? val : 42);
+                    value={monthlyPlayDays || ""}
+                    defaultValue={42}
+                    onValueChange={(val) => {
+                      const numVal = val === "" ? 0 : Number(val);
+                      setMonthlyPlayDays(numVal);
                     }}
                     className="w-24"
                   />
