@@ -48,7 +48,7 @@ interface TrackItemProps {
   prelistenCurrentTime: number;
   showPreListenButtons: boolean;
   isInQueue?: boolean;
-  onPrelistenTimelineClick: (e: React.MouseEvent, track: MusicMetadata) => void;
+  onPrelistenTimelineClick: (e: React.MouseEvent<Element>, track: MusicMetadata) => void;
   onPrelistenToggle: (track: MusicMetadata) => void;
   onAddToQueue: (track: MusicMetadata) => void;
   onEditTrack: (track: MusicMetadata) => void;

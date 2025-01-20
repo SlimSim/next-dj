@@ -1,10 +1,11 @@
 import { RefObject } from "react";
-import { toast } from "sonner";
 import { MusicMetadata } from "@/lib/types/types";
 import { usePlayerStore } from "@/lib/store";
-import { deleteAudioFile } from "@/db/audio-operations";
-import { updateMetadata } from "@/db/metadata-operations";
+import { deleteAudioFile, updateAudioMetadata } from "@/db/audio-operations";
 import { PrelistenAudioRef } from "./prelisten-audio-player";
+import { AudioError, AudioErrorCode, createErrorHandler } from "@/features/audio/utils/errorUtils";
+
+const handleError = createErrorHandler('PlaylistActions');
 
 export function usePlaylistActions(prelistenRef: RefObject<PrelistenAudioRef>) {
   const {
@@ -20,67 +21,88 @@ export function usePlaylistActions(prelistenRef: RefObject<PrelistenAudioRef>) {
   } = usePlayerStore();
 
   const handlePlay = (track: MusicMetadata) => {
-    if (currentTrack?.id === track.id) {
-      setIsPlaying(!isPlaying);
-    } else {
-      setCurrentTrack(track);
-      setIsPlaying(true);
+    try {
+      if (currentTrack?.id === track.id) {
+        setIsPlaying(!isPlaying);
+      } else {
+        setCurrentTrack(track);
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      handleError(error);
     }
   };
 
   const handleDelete = async (track: MusicMetadata) => {
     try {
       await deleteAudioFile(track.id);
-      toast.success("Track deleted");
-      return true;
     } catch (error) {
-      toast.error("Failed to delete track");
-      console.error(error);
-      return false;
+      handleError(new AudioError(
+        `Failed to delete track: ${track.title}`,
+        AudioErrorCode.FILE_ACCESS_DENIED
+      ));
     }
   };
 
-  const handleSaveTrack = async (track: MusicMetadata) => {
+  const handleAddToQueue = (track: MusicMetadata) => {
     try {
-      const { id, title, artist, album } = track;
-      await updateMetadata(id, { title, artist, album });
-      toast.success("Track metadata updated");
-      return true;
+      addToQueue(track);
     } catch (error) {
-      console.error("Error updating track:", error);
-      toast.error("Failed to update track metadata");
-      return false;
+      handleError(error);
     }
   };
 
   const handlePrelistenTimelineClick = (
-    e: React.MouseEvent,
+    e: React.MouseEvent<Element>,
     track: MusicMetadata
   ) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percentage = x / rect.width;
-    const newTime = (track.duration || 0) * percentage;
+    try {
+      if (!prelistenRef.current) return;
 
-    prelistenRef.current?.seek(newTime);
-    setPrelistenTrack(track);
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = x / rect.width;
+      const time = percentage * (track.duration || 0);
+
+      prelistenRef.current.seek(time);
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   const handlePrelistenToggle = (track: MusicMetadata) => {
-    if (prelistenTrack?.id === track.id) {
-      setIsPrelistening(!isPrelistening);
-    } else {
-      setPrelistenTrack(track);
-      setIsPrelistening(true);
+    try {
+      if (prelistenTrack?.id === track.id) {
+        setIsPrelistening(!isPrelistening);
+      } else {
+        setPrelistenTrack(track);
+        setIsPrelistening(true);
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  const handleSaveTrack = async (track: MusicMetadata): Promise<boolean> => {
+    try {
+      await updateAudioMetadata(track);
+      return true;
+    } catch (error) {
+      handleError(new AudioError(
+        `Failed to save track: ${track.title}`,
+        AudioErrorCode.FILE_ACCESS_DENIED
+      ));
+      return false;
     }
   };
 
   return {
     handlePlay,
     handleDelete,
-    handleSaveTrack,
+    handleAddToQueue,
     handlePrelistenTimelineClick,
     handlePrelistenToggle,
+    handleSaveTrack,
     addToQueue,
   };
 }

@@ -1,9 +1,8 @@
-"use client";
-
 import { useCallback, useEffect, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
-import { Button } from "../ui/button";
+import { MusicMetadata } from "@/lib/types/types";
 import { formatTime } from "@/features/audio/utils/audioUtils";
+import { AudioError, AudioErrorCode, createErrorHandler } from "@/features/audio/utils/errorUtils";
 import {
   DndContext,
   DragEndEvent,
@@ -28,8 +27,10 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { cn } from "@/lib/utils/common";
-import { MusicMetadata } from "@/lib/types/types";
+import { Button } from "../ui/button";
 import { ConfirmButton } from "../ui/confirm-button";
+
+const handleError = createErrorHandler('PlayingQueue');
 
 interface QueueItemProps {
   track: MusicMetadata;
@@ -57,15 +58,47 @@ function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
   const moveInQueue = usePlayerStore((state) => state.moveInQueue);
   const queue = usePlayerStore((state) => state.queue);
 
-  const moveToTop = () => {
-    const fromIndex = queue.findIndex((t) => t.queueId === track.queueId);
-    moveInQueue(fromIndex, 0);
-  };
+  const moveToTop = useCallback(() => {
+    try {
+      const fromIndex = queue.findIndex((t) => t.queueId === track.queueId);
+      if (fromIndex === -1) {
+        throw new AudioError(
+          'Track not found in queue',
+          AudioErrorCode.TRACK_NOT_FOUND
+        );
+      }
+      moveInQueue(fromIndex, 0);
+    } catch (error) {
+      handleError(error);
+    }
+  }, [queue, track.queueId, moveInQueue]);
 
-  const moveToBottom = () => {
-    const fromIndex = queue.findIndex((t) => t.queueId === track.queueId);
-    moveInQueue(fromIndex, queue.length - 1);
-  };
+  const moveToBottom = useCallback(() => {
+    try {
+      const fromIndex = queue.findIndex((t) => t.queueId === track.queueId);
+      if (fromIndex === -1) {
+        throw new AudioError(
+          'Track not found in queue',
+          AudioErrorCode.TRACK_NOT_FOUND
+        );
+      }
+      moveInQueue(fromIndex, queue.length - 1);
+    } catch (error) {
+      handleError(error);
+    }
+  }, [queue, track.queueId, moveInQueue]);
+
+  const handleRemove = useCallback(() => {
+    try {
+      if (isHistory) {
+        removeFromHistory(track.queueId);
+      } else {
+        removeFromQueue(track.queueId);
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  }, [isHistory, track.queueId, removeFromQueue, removeFromHistory]);
 
   return (
     <div
@@ -114,13 +147,7 @@ function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
           <DropdownMenuItem onClick={moveToBottom}>
             Move to Bottom
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() =>
-              isHistory
-                ? removeFromHistory(track.queueId)
-                : removeFromQueue(track.queueId)
-            }
-          >
+          <DropdownMenuItem onClick={handleRemove}>
             Remove from {isHistory ? "History" : "Queue"}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -172,102 +199,111 @@ export function PlayingQueue() {
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
+      try {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
 
-      const allTracks = [...history, currentTrack, ...queue].filter(
-        (track): track is NonNullable<typeof track> => Boolean(track)
-      );
-      const draggedTrack = allTracks.find(
-        (track) => track.queueId === active.id
-      );
-      const targetTrack = allTracks.find((track) => track.queueId === over.id);
+        const allTracks = [...history, currentTrack, ...queue].filter(
+          (track): track is NonNullable<typeof track> => Boolean(track)
+        );
+        const draggedTrack = allTracks.find(
+          (track) => track.queueId === active.id
+        );
+        const targetTrack = allTracks.find((track) => track.queueId === over.id);
 
-      if (!draggedTrack || !targetTrack) return;
-
-      const currentTrackIndex = currentTrack
-        ? allTracks.findIndex((track) => track.queueId === currentTrack.queueId)
-        : -1;
-      const targetIndex = allTracks.findIndex(
-        (track) => track.queueId === over.id
-      );
-
-      // Handle moving the current track
-      if (currentTrack && active.id === currentTrack.queueId) {
-        if (targetIndex < currentTrackIndex) {
-          // Calculate how many tracks should move to queue based on the new position
-          const tracksToMoveCount = Math.max(
-            0,
-            currentTrackIndex - targetIndex
+        if (!draggedTrack || !targetTrack) {
+          throw new AudioError(
+            'Invalid track for drag operation',
+            AudioErrorCode.TRACK_NOT_FOUND
           );
-
-          // Get the tracks that should move to queue
-          const tracksToQueue = history.slice(-tracksToMoveCount);
-          const remainingHistory = history.slice(0, -tracksToMoveCount);
-
-          // Update history and queue
-          setHistory(remainingHistory);
-          setQueue([...tracksToQueue, ...queue]);
-        } else {
-          // Calculate how many tracks should move to history based on the new position
-          const tracksToMoveCount = Math.max(
-            0,
-            targetIndex - currentTrackIndex
-          );
-
-          // Get the tracks that should move to history
-          const tracksToHistory = queue.slice(0, tracksToMoveCount);
-          const remainingQueue = queue.slice(tracksToMoveCount);
-
-          // Update history and queue
-          setHistory([...history, ...tracksToHistory]);
-          setQueue(remainingQueue);
         }
-        return;
-      }
 
-      // Determine if the target position is in history (before current track)
-      const isTargetInHistory =
-        currentTrackIndex !== -1 && targetIndex <= currentTrackIndex;
-
-      // Remove track from its original list
-      let newQueue = [...queue];
-      let newHistory = [...history];
-
-      // Remove from original list
-      if (history.some((track) => track.queueId === active.id)) {
-        newHistory = newHistory.filter((track) => track.queueId !== active.id);
-      } else if (queue.some((track) => track.queueId === active.id)) {
-        newQueue = newQueue.filter((track) => track.queueId !== active.id);
-      }
-
-      // Add to target list based on position relative to current track
-      if (isTargetInHistory) {
-        // If target is in history section (before current track)
-        const historyTargetIndex = history.findIndex(
+        const currentTrackIndex = currentTrack
+          ? allTracks.findIndex((track) => track.queueId === currentTrack.queueId)
+          : -1;
+        const targetIndex = allTracks.findIndex(
           (track) => track.queueId === over.id
         );
-        if (historyTargetIndex === -1) {
-          // If dropping at the end of history
-          newHistory.push(draggedTrack);
-        } else {
-          newHistory.splice(historyTargetIndex, 0, draggedTrack);
-        }
-      } else {
-        // If target is in queue section (after current track)
-        const queueTargetIndex = queue.findIndex(
-          (track) => track.queueId === over.id
-        );
-        if (queueTargetIndex === -1) {
-          // If dropping at the start of queue
-          newQueue.unshift(draggedTrack);
-        } else {
-          newQueue.splice(queueTargetIndex, 0, draggedTrack);
-        }
-      }
 
-      setQueue(newQueue);
-      setHistory(newHistory);
+        // Handle moving the current track
+        if (currentTrack && active.id === currentTrack.queueId) {
+          if (targetIndex < currentTrackIndex) {
+            // Calculate how many tracks should move to queue based on the new position
+            const tracksToMoveCount = Math.max(
+              0,
+              currentTrackIndex - targetIndex
+            );
+
+            // Get the tracks that should move to queue
+            const tracksToQueue = history.slice(-tracksToMoveCount);
+            const remainingHistory = history.slice(0, -tracksToMoveCount);
+
+            // Update history and queue
+            setHistory(remainingHistory);
+            setQueue([...tracksToQueue, ...queue]);
+          } else {
+            // Calculate how many tracks should move to history based on the new position
+            const tracksToMoveCount = Math.max(
+              0,
+              targetIndex - currentTrackIndex
+            );
+
+            // Get the tracks that should move to history
+            const tracksToHistory = queue.slice(0, tracksToMoveCount);
+            const remainingQueue = queue.slice(tracksToMoveCount);
+
+            // Update history and queue
+            setHistory([...history, ...tracksToHistory]);
+            setQueue(remainingQueue);
+          }
+          return;
+        }
+
+        // Determine if the target position is in history (before current track)
+        const isTargetInHistory =
+          currentTrackIndex !== -1 && targetIndex <= currentTrackIndex;
+
+        // Remove track from its original list
+        let newQueue = [...queue];
+        let newHistory = [...history];
+
+        // Remove from original list
+        if (history.some((track) => track.queueId === active.id)) {
+          newHistory = newHistory.filter((track) => track.queueId !== active.id);
+        } else if (queue.some((track) => track.queueId === active.id)) {
+          newQueue = newQueue.filter((track) => track.queueId !== active.id);
+        }
+
+        // Add to target list based on position relative to current track
+        if (isTargetInHistory) {
+          // If target is in history section (before current track)
+          const historyTargetIndex = history.findIndex(
+            (track) => track.queueId === over.id
+          );
+          if (historyTargetIndex === -1) {
+            // If dropping at the end of history
+            newHistory.push(draggedTrack);
+          } else {
+            newHistory.splice(historyTargetIndex, 0, draggedTrack);
+          }
+        } else {
+          // If target is in queue section (after current track)
+          const queueTargetIndex = queue.findIndex(
+            (track) => track.queueId === over.id
+          );
+          if (queueTargetIndex === -1) {
+            // If dropping at the start of queue
+            newQueue.unshift(draggedTrack);
+          } else {
+            newQueue.splice(queueTargetIndex, 0, draggedTrack);
+          }
+        }
+
+        setQueue(newQueue);
+        setHistory(newHistory);
+      } catch (error) {
+        handleError(error);
+      }
     },
     [queue, history, currentTrack, setQueue, setHistory]
   );

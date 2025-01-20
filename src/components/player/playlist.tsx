@@ -10,6 +10,9 @@ import { useTrackList } from "./use-track-list";
 import { FileUpload } from "../common/file-upload";
 import { GearIcon } from "@radix-ui/react-icons";
 import { SortField, SortOrder, FilterCriteria } from "./playlist-controls";
+import { createErrorHandler } from "@/features/audio/utils/errorUtils";
+
+const handleError = createErrorHandler('Playlist');
 
 interface PlaylistProps {
   searchQuery: string;
@@ -36,17 +39,17 @@ export function Playlist({
     usePlayerStore();
 
   const { showPreListenButtons } = useSettings();
-  const { filteredTracks, loadTracks } = useTrackList(searchQuery);
+  const { tracks, loadTracks } = useTrackList(searchQuery);
 
   // Apply sorting and filtering
-  const tracks = useMemo(() => {
-    let processedTracks = [...filteredTracks];
+  const processedTracks = useMemo(() => {
+    let filteredTracks = [...tracks];
 
     // Filter by selected list if one is selected
     if (selectedListId) {
       const selectedList = songLists.find((list) => list.id === selectedListId);
       if (selectedList) {
-        processedTracks = processedTracks.filter((track) =>
+        filteredTracks = filteredTracks.filter((track) =>
           track.path ? selectedList.songs.includes(track.path) : false
         );
       }
@@ -54,23 +57,23 @@ export function Playlist({
 
     // Apply other filters
     if (filters.artist) {
-      processedTracks = processedTracks.filter(
+      filteredTracks = filteredTracks.filter(
         (track) => track.artist === filters.artist
       );
     }
     if (filters.album) {
-      processedTracks = processedTracks.filter(
+      filteredTracks = filteredTracks.filter(
         (track) => track.album === filters.album
       );
     }
     if (filters.genre && typeof filters.genre === "string") {
-      processedTracks = processedTracks.filter((track) =>
+      filteredTracks = filteredTracks.filter((track) =>
         track.genre ? track.genre.includes(filters.genre as string) : false
       );
     }
 
     // Apply sorting
-    processedTracks.sort((a, b) => {
+    filteredTracks.sort((a, b) => {
       const aValue = a[sortField as keyof MusicMetadata];
       const bValue = b[sortField as keyof MusicMetadata];
 
@@ -87,9 +90,9 @@ export function Playlist({
       return 0;
     });
 
-    return processedTracks;
+    return filteredTracks;
   }, [
-    filteredTracks,
+    tracks,
     filters,
     sortField,
     sortOrder,
@@ -123,28 +126,32 @@ export function Playlist({
   };
 
   const handleSaveTrackAndRefresh = async (track: MusicMetadata) => {
-    const success = await handleSaveTrack(track);
-    if (success) {
-      setIsEditing(false);
-      setEditingTrack(null);
-      await loadTracks();
+    try {
+      const success = await handleSaveTrack(track);
+      if (success) {
+        setIsEditing(false);
+        setEditingTrack(null);
+        await loadTracks();
+      }
+    } catch (error) {
+      handleError(error);
     }
   };
 
   return (
     <div className="h-full flex-1 flex flex-col container mx-auto p-0">
       <div className="w-full h-full">
-        {tracks.length === 0 ? (
+        {processedTracks.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground">
             <p>No tracks found</p>
             <p>
-              Add tracks in the settings (<GearIcon className="inline-block" />)
-              or with this button:
+              Add tracks in the settings (<GearIcon className="inline-block" />{" "}
+              ) or with this button:
             </p>
             <FileUpload onlyFolderUpload />
           </div>
         ) : (
-          tracks.map((track) => (
+          processedTracks.map((track) => (
             <TrackItem
               key={track.id}
               track={track}

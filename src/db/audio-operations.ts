@@ -139,6 +139,12 @@ export async function getRemovedSongs(): Promise<MusicMetadata[]> {
   return metadata.filter((entry) => entry.removed);
 }
 
+export async function getAllMetadata(): Promise<MusicMetadata[]> {
+  const db = await initMusicDB();
+  const metadata = await db.getAll("metadata");
+  return metadata.filter(track => !track.removed);
+}
+
 export async function getUniqueValues(): Promise<{
   artists: string[];
   albums: string[];
@@ -168,4 +174,9 @@ export async function getUniqueValues(): Promise<{
     albums: Array.from(albums).sort(),
     genres: Array.from(genres).sort(),
   };
+}
+
+export async function updateAudioMetadata(metadata: MusicMetadata): Promise<void> {
+  const db = await initMusicDB();
+  await db.put("metadata", metadata);
 }

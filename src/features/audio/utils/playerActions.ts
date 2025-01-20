@@ -1,16 +1,20 @@
 import { v4 as uuidv4 } from "uuid";
-import { PlayerState } from "../../../lib/types/player";
-import { MusicMetadata } from "../../../lib/types/types";
+import { PlayerState } from "@/lib/types/player";
+import { MusicMetadata } from "@/lib/types/types";
+import { AudioError, AudioErrorCode } from "./errorUtils";
 
 export const createQueueActions = (set: any, get: () => PlayerState) => ({
   addToQueue: (track: MusicMetadata) =>
     set((state: PlayerState) => {
+      if (!track) {
+        throw new AudioError(
+          'Cannot add invalid track to queue',
+          AudioErrorCode.INVALID_AUDIO
+        );
+      }
+
       const trackWithId = { ...track, queueId: track.queueId || uuidv4() };
-      console.log('Queue: Adding track to queue:', {
-        track: trackWithId.title,
-        currentTrack: state.currentTrack?.title,
-        queueLength: state.queue.length
-      });
+      
       if (!state.currentTrack) {
         return { currentTrack: trackWithId };
       }
@@ -19,14 +23,23 @@ export const createQueueActions = (set: any, get: () => PlayerState) => ({
 
   removeFromQueue: (id: string) =>
     set((state: PlayerState) => {
-      console.log('Queue: Removing track from queue:', {
-        trackId: id,
-        currentTrackId: state.currentTrack?.queueId,
-        queueLength: state.queue.length
-      });
+      if (!id) {
+        throw new AudioError(
+          'Cannot remove track without ID from queue',
+          AudioErrorCode.INVALID_AUDIO
+        );
+      }
+
       const newQueue = state.queue.filter((track) => track.queueId !== id);
+      
       if (state.currentTrack?.queueId === id) {
         const nextTrack = newQueue[0] || null;
+        if (!nextTrack && state.isPlaying) {
+          throw new AudioError(
+            'Cannot remove currently playing track without replacement',
+            AudioErrorCode.PLAYBACK_FAILED
+          );
+        }
         return {
           queue: newQueue,
           currentTrack: nextTrack,
@@ -36,37 +49,47 @@ export const createQueueActions = (set: any, get: () => PlayerState) => ({
       return { queue: newQueue };
     }),
 
+  moveInQueue: (fromIndex: number, toIndex: number) =>
+    set((state: PlayerState) => {
+      if (fromIndex < 0 || toIndex < 0 || 
+          fromIndex >= state.queue.length || 
+          toIndex >= state.queue.length) {
+        throw new AudioError(
+          'Invalid queue position for move operation',
+          AudioErrorCode.INVALID_AUDIO
+        );
+      }
+
+      const newQueue = [...state.queue];
+      const [movedItem] = newQueue.splice(fromIndex, 1);
+      newQueue.splice(toIndex, 0, movedItem);
+      return { queue: newQueue };
+    }),
+
   clearQueue: () =>
     set((state: PlayerState) => {
-      console.log('Queue: Clearing queue', {
-        currentTrack: state.currentTrack?.title,
-        queueLength: state.queue.length
-      });
-      return {
-        queue: state.currentTrack ? [state.currentTrack] : [],
+      if (state.isPlaying) {
+        throw new AudioError(
+          'Cannot clear queue while track is playing',
+          AudioErrorCode.PLAYBACK_FAILED
+        );
+      }
+      return { 
+        queue: [],
+        currentTrack: null,
+        isPlaying: false
       };
     }),
 
   setQueue: (queue: MusicMetadata[]) => {
-    console.log('Queue: Setting new queue', {
-      newQueueLength: queue.length,
-      firstTrack: queue[0]?.title
-    });
+    if (!Array.isArray(queue)) {
+      throw new AudioError(
+        'Invalid queue format',
+        AudioErrorCode.INVALID_AUDIO
+      );
+    }
     set({ queue });
-  },
-
-  moveInQueue: (fromIndex: number, toIndex: number) =>
-    set((state: PlayerState) => {
-      console.log('Queue: Moving track in queue', {
-        fromIndex,
-        toIndex,
-        trackMoved: state.queue[fromIndex]?.title
-      });
-      const newQueue = [...state.queue];
-      const [removed] = newQueue.splice(fromIndex, 1);
-      newQueue.splice(toIndex, 0, removed);
-      return { queue: newQueue };
-    }),
+  }
 });
 
 export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
