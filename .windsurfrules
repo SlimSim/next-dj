@@ -1,0 +1,13 @@
+This is Next DJ, a PWA-music player optimized for DJ's!
+
+Note, this is a music player that uses an api to read files from the users file system. It uses file upload and saves the files in indexedDB as another option.
+
+It has 2 players, one pre-listen, and the other is the main output or main player. They can be set up to use different sound cards.
+When implementing features for one, do not change the other, unless specialy toald!
+If you want to update something for one, and it will affect the other, or if you think that the feature you are adding is necessary for the other, then please let me know first, so that I can decide if it should be added.
+
+It has song lists, which can be created, edited and deleted.
+It has a playing queue, which consists of the history,the currently playing song and queue. all these three "lists" are referred to as the "playing list" or the queue.
+
+It features a playlist with a wide range of genres and an option to shuffle the playlist. 
+It also has a queue and a history of played songs.
