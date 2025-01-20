@@ -9,7 +9,8 @@ export { AudioError, AudioErrorCode };
 export const handleAudioError = (
   error: unknown,
   context: string,
-  showToast = true
+  showToast = true,
+  suppressIfInitializing = false
 ): AudioError => {
   // Convert to AudioError if not already
   const audioError = error instanceof AudioError
@@ -19,16 +20,19 @@ export const handleAudioError = (
         AudioErrorCode.UNKNOWN
       );
 
-  // Log error with context
-  console.error(`Audio Error [${context}]:`, {
-    code: audioError.code,
-    message: audioError.message,
-    originalError: error
-  });
+  // Only log and show toast if not suppressing initialization errors
+  if (!suppressIfInitializing || (audioError.code !== AudioErrorCode.FILE_NOT_FOUND && audioError.code !== AudioErrorCode.TRACK_NOT_FOUND)) {
+    // Log error with context
+    console.error(`Audio Error [${context}]:`, {
+      code: audioError.code,
+      message: audioError.message,
+      originalError: error
+    });
 
-  // Show toast notification if requested
-  if (showToast) {
-    toast.error(errorMessages[audioError.code]);
+    // Show toast notification if requested
+    if (showToast) {
+      toast.error(errorMessages[audioError.code]);
+    }
   }
 
   return audioError;
@@ -38,23 +42,25 @@ export const handleAudioError = (
  * Creates an error handler function for specific contexts
  */
 export const createErrorHandler = (context: string) => {
-  return (error: unknown, showToast = true) => {
-    return handleAudioError(error, context, showToast);
+  return (error: unknown, showToast = true, suppressIfInitializing = false) => {
+    return handleAudioError(error, context, showToast, suppressIfInitializing);
   };
 };
 
 /**
  * Wraps an async function with error handling
  */
-export const withErrorHandler = <T>(
+export const withErrorHandler = async <T>(
   fn: () => Promise<T>,
   context: string,
-  showToast = true
+  showToast = true,
+  suppressIfInitializing = false
 ): Promise<T> => {
-  return fn().catch(error => {
-    handleAudioError(error, context, showToast);
-    throw error;
-  });
+  try {
+    return await fn();
+  } catch (error) {
+    throw handleAudioError(error, context, showToast, suppressIfInitializing);
+  }
 };
 
 /**

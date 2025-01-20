@@ -19,11 +19,11 @@ export function useTrackList(searchQuery: string) {
   const loadTracks = async () => {
     try {
       const metadata = await getAllMetadata();
+      
+      // Don't throw an error for empty library, just set empty tracks
       if (!metadata || metadata.length === 0) {
-        throw new AudioError(
-          'No tracks found in the library',
-          AudioErrorCode.FILE_NOT_FOUND
-        );
+        setTracks([]);
+        return;
       }
 
       setTracks(metadata);
@@ -33,7 +33,12 @@ export function useTrackList(searchQuery: string) {
         setIsPrelistening(false);
       }
     } catch (error) {
-      handleError(error);
+      // Only handle unexpected errors
+      if (error instanceof AudioError && error.code === AudioErrorCode.FILE_NOT_FOUND) {
+        setTracks([]);
+      } else {
+        handleError(error, true, true); // Show toast for unexpected errors
+      }
     }
   };
 

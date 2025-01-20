@@ -83,7 +83,9 @@ export const useAudioInitialization = (
 
       const audioFile = await withErrorHandler(
         () => getAudioFile(track.id),
-        'getAudioFile'
+        'getAudioFile',
+        true,
+        true
       );
 
       if (!audioFile?.file) {
