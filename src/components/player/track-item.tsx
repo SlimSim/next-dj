@@ -87,6 +87,7 @@ export function TrackItem({
   const setIsQueueVisible = usePlayerStore((state) => state.setQueueVisible);
   const songLists = usePlayerStore((state) => state.songLists);
   const addSongToList = usePlayerStore((state) => state.addSongToList);
+  const isPlaying = usePlayerStore((state) => state.isPlaying);
 
   const handlePreListenClick = (track: MusicMetadata) => {
     // If we're already prelistening to this track, just pause it
@@ -95,13 +96,15 @@ export function TrackItem({
       return;
     }
 
-    // If we haven't shown the warning this session and outputs are the same
-    if (!hasShownPreListenWarning && selectedDeviceId === prelistenDeviceId) {
+    // Show warning if main audio is playing, outputs are the same, and we haven't shown the warning yet
+    if (isPlaying && !hasShownPreListenWarning && selectedDeviceId === prelistenDeviceId) {
       setShowPreListenDialog(true);
       setHasShownPreListenWarning(true);
-    } else {
-      onPrelistenToggle(track);
+      return;
     }
+
+    // Otherwise just start prelistening
+    onPrelistenToggle(track);
   };
 
   const handleContinueAnyway = () => {
