@@ -4,13 +4,8 @@ import { getAudioFile } from "@/db/audio-operations";
 import { PlayerState } from "@/lib/types/player";
 import { usePlayerStore } from "@/lib/store";
 import { createAudioUrl, revokeAudioUrl, setAudioSource } from "../utils/audioUtils";
-import {
-  AudioError,
-  AudioErrorCode,
-  createErrorHandler,
-  withErrorHandler
-} from "../utils/errorUtils";
-
+import { AudioError, AudioErrorCode } from "../types";
+import { createErrorHandler, withErrorHandler } from "../utils/errorUtils";
 
 const handleError = createErrorHandler('AudioInitialization');
 
@@ -23,7 +18,7 @@ export const useAudioInitialization = (
   const [isLoading, setIsLoading] = useState(false);
   const currentFileRef = useRef<Blob | null>(null);
   const currentUrlRef = useRef<string | null>(null);
-  
+
   const { setDuration, setPrelistenDuration, playNextTrack } = usePlayerStore();
   const isPlaying = usePlayerStore((state) => state.isPlaying);
 

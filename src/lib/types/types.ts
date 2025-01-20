@@ -1,4 +1,6 @@
-export interface MusicMetadata {
+import { AudioFile, type AudioPlaybackOptions, type RepeatMode } from "@/features/audio/types";
+
+export interface MusicMetadata extends AudioPlaybackOptions {
   id: string;
   title: string;
   artist: string;
@@ -19,28 +21,6 @@ export interface MusicMetadata {
   bpm?: number;
   year?: number;
   genre?: string[];
-  volume?: number;
-  startTime?: number; // Time in seconds to start playback from
-  endTimeOffset?: number; // Time in seconds to end before the track's end
-  fadeDuration?: number;
-}
-
-export interface AudioFile {
-  id: string;
-  file: Blob;
-  metadata: MusicMetadata;
-  isReference?: boolean;
-  fileHandle?: FileSystemFileHandle;
-}
-
-export type RepeatMode = "none" | "one" | "all";
-
-export interface PlaybackState {
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  volume: number;
-  isMuted: boolean;
 }
 
 export interface PlayHistoryEvent {
@@ -50,3 +30,5 @@ export interface PlayHistoryEvent {
   // durationPlayed?: number;
   // deviceId?: string;
 }
+
+export type { AudioFile, AudioPlaybackOptions, RepeatMode };
