@@ -41,22 +41,18 @@ export function EditTrackDialog({
   useEffect(() => {
     if (!track) return;
 
-    const updates: Record<string, string> = {};
-    let needsUpdate = false;
-
-    customMetadata.fields.forEach((field) => {
+    // Check which custom fields need initialization
+    const updates = customMetadata.fields.reduce<Record<string, string>>((acc, field) => {
       const customKey = `custom_${field.id}`;
       if ((track as any)[customKey] === undefined) {
-        updates[customKey] = "";
-        needsUpdate = true;
+        acc[customKey] = "";
       }
-    });
+      return acc;
+    }, {});
 
-    if (needsUpdate) {
-      const updatedTrack = { ...track, ...updates };
-      onTrackChange(updatedTrack);
-      
-      // Save empty values to database
+    // Only update if there are new fields to initialize
+    if (Object.keys(updates).length > 0) {
+      onTrackChange({ ...track, ...updates });
       updateMetadata(track.id, updates).catch(console.error);
     }
   }, [track, customMetadata.fields, onTrackChange, updateMetadata]);
@@ -122,27 +118,23 @@ export function EditTrackDialog({
   };
 
   const handleAddCustomField = () => {
-    if (!newFieldName.trim()) return;
+    const name = newFieldName.trim();
+    if (!name) return;
     
     const newField = {
       id: uuidv4(),
-      name: newFieldName.trim(),
+      name,
       type: 'text' as const,
     };
     
-    addCustomMetadataField(newField);
-    setNewFieldName("");
-    
-    // Initialize the custom field in the track with an empty string
     const customKey = `custom_${newField.id}`;
-    handleTrackChange({
-      [customKey]: "",
-    });
     
-    // Save the empty value immediately to ensure it exists in the database
-    updateMetadata(track.id, {
-      [customKey]: "",
-    }).catch(console.error);
+    // Add field and initialize with empty value in one go
+    addCustomMetadataField(newField);
+    handleTrackChange({ [customKey]: "" });
+    updateMetadata(track.id, { [customKey]: "" }).catch(console.error);
+    
+    setNewFieldName("");
   };
 
   return (
@@ -259,12 +251,9 @@ export function EditTrackDialog({
                       <Input
                         id={customKey}
                         value={value ?? ""}
-                        onChange={(e) => {
-                          const newValue = e.target.value;
-                          handleTrackChange({
-                            [customKey]: newValue,
-                          });
-                        }}
+                        onChange={(e) => handleTrackChange({
+                          [customKey]: e.target.value,
+                        })}
                         className="col-span-3"
                       />
                     </div>
@@ -279,6 +268,12 @@ export function EditTrackDialog({
                       placeholder="New field name"
                       value={newFieldName}
                       onChange={(e) => setNewFieldName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomField();
+                        }
+                      }}
                     />
                     <Button
                       variant="outline"

@@ -31,7 +31,6 @@ export async function updateMetadata(
     // Update all provided fields, including custom fields
     Object.entries(metadata).forEach(([key, value]) => {
       // For custom fields, ensure empty strings are saved as empty strings
-      // rather than being skipped
       if (key.startsWith('custom_') && value === '') {
         updated[key] = '';
       }
@@ -41,7 +40,6 @@ export async function updateMetadata(
       }
     });
     
-    console.log('Saving metadata with custom fields:', updated); // Debug log
     await db.put("metadata", updated);
   }
 }

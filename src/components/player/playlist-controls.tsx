@@ -54,8 +54,6 @@ export function PlaylistControls({
 
   // Get unique values for filters
   const uniqueValues = useMemo(() => {
-    console.log('Tracks:', tracks); // Debug log
-    
     const values = {
       artist: new Set<string>(),
       album: new Set<string>(),
@@ -67,30 +65,27 @@ export function PlaylistControls({
       values[`custom_${field.id}`] = new Set<string>();
     });
 
-    console.log('Custom metadata fields:', customMetadata.fields); // Debug log
-
     // Collect all values including custom metadata
     tracks.forEach((track) => {
+      // Standard metadata
       if (track.artist) values.artist.add(track.artist);
       if (track.album) values.album.add(track.album);
       if (track.genre) track.genre.forEach((g) => values.genre.add(g));
 
-      // Collect custom metadata values
+      // Custom metadata values
       customMetadata.fields.forEach((field) => {
         const customKey = `custom_${field.id}`;
         const value = (track as any)[customKey];
-        console.log(`Track ${track.title} - ${field.name}:`, value); // Debug log
         
-        // Include empty strings and undefined values as "(Empty)"
         if (value === undefined || value === '') {
           values[customKey].add('(Empty)');
         } else if (typeof value === 'string') {
-          values[customKey].add(value.trim());
+          const trimmed = value.trim();
+          if (trimmed) values[customKey].add(trimmed);
         }
       });
     });
 
-    console.log('Final unique values:', values); // Debug log
     return values;
   }, [tracks, customMetadata.fields]);
 
@@ -226,7 +221,6 @@ export function PlaylistControls({
       {customMetadata.fields.map((field) => {
         const customKey = `custom_${field.id}`;
         const options = Array.from(uniqueValues[customKey] || new Set());
-        console.log(`Options for ${field.name}:`, options); // Debug log
         
         return (
           <FilterSelect
