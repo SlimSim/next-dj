@@ -155,7 +155,7 @@ export function Playlist({
           <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground">
             <p>No tracks found</p>
             <p>
-              Add tracks in the settings (<GearIcon className="inline-block" />{" "}
+              Add tracks in the settings (<GearIcon className="inline-block" />
               ) or with this button:
             </p>
             <FileUpload onlyFolderUpload />

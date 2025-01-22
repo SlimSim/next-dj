@@ -322,12 +322,21 @@ export const usePlayerStore = create<PlayerStore>()(
             },
           })),
         removeCustomMetadataField: (fieldId: string) =>
-          set((state) => ({
-            customMetadata: {
-              ...state.customMetadata,
-              fields: state.customMetadata.fields.filter(field => field.id !== fieldId),
-            }
-          })),
+          set((state) => {
+            // Remove the field's filter if it exists
+            const customKey = `custom_${fieldId}`;
+            const updatedFilters = { ...state.filters };
+            delete updatedFilters[customKey];
+
+            return {
+              customMetadata: {
+                ...state.customMetadata,
+                fields: state.customMetadata.fields.filter(field => field.id !== fieldId),
+              },
+              // Update filters to remove the deleted field's filter
+              filters: updatedFilters,
+            };
+          }),
       };
     },
     {
