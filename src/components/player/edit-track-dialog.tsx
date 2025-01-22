@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "@radix-ui/react-icons";
+import { PlusIcon, Cross2Icon } from "@radix-ui/react-icons";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +34,13 @@ export function EditTrackDialog({
   onTrackChange,
   onSave,
 }: EditTrackDialogProps) {
-  const { triggerRefresh, updateTrackMetadata, customMetadata, addCustomMetadataField } = usePlayerStore();
+  const { 
+    triggerRefresh, 
+    updateTrackMetadata, 
+    customMetadata, 
+    addCustomMetadataField,
+    removeCustomMetadataField 
+  } = usePlayerStore();
   const [newFieldName, setNewFieldName] = useState("");
 
   // Initialize custom fields when track or customMetadata changes
@@ -135,6 +141,24 @@ export function EditTrackDialog({
     updateMetadata(track.id, { [customKey]: "" }).catch(console.error);
     
     setNewFieldName("");
+  };
+
+  const handleRemoveField = async (fieldId: string) => {
+    const customKey = `custom_${fieldId}`;
+    
+    // Remove the field from customMetadata
+    removeCustomMetadataField(fieldId);
+    
+    // Remove the field from the track
+    if (track) {
+      const updatedTrack = { ...track };
+      delete (updatedTrack as any)[customKey];
+      onTrackChange(updatedTrack);
+      
+      // Update the database
+      const updates = { [customKey]: undefined };
+      await updateMetadata(track.id, updates).catch(console.error);
+    }
   };
 
   return (
@@ -245,7 +269,17 @@ export function EditTrackDialog({
                   
                   return (
                     <div key={field.id} className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor={customKey} className="text-right">
+                      <Label htmlFor={customKey} className="text-right flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0"
+                          onClick={() => handleRemoveField(field.id)}
+                          type="button"
+                          title="Remove field"
+                        >
+                          <Cross2Icon className="h-3 w-3" />
+                        </Button>
                         {field.name}
                       </Label>
                       <Input

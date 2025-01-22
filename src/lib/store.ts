@@ -325,8 +325,8 @@ export const usePlayerStore = create<PlayerStore>()(
           set((state) => ({
             customMetadata: {
               ...state.customMetadata,
-              fields: state.customMetadata.fields.filter((f) => f.id !== fieldId),
-            },
+              fields: state.customMetadata.fields.filter(field => field.id !== fieldId),
+            }
           })),
       };
     },
