@@ -37,11 +37,8 @@ export function EditTrackDialog({
   const { 
     triggerRefresh, 
     updateTrackMetadata, 
-    customMetadata, 
-    addCustomMetadataField,
-    removeCustomMetadataField 
+    customMetadata,
   } = usePlayerStore();
-  const [newFieldName, setNewFieldName] = useState("");
 
   // Initialize custom fields when track or customMetadata changes
   useEffect(() => {
@@ -121,44 +118,6 @@ export function EditTrackDialog({
       ...updates,
       __preserveRef: true,
     });
-  };
-
-  const handleAddCustomField = () => {
-    const name = newFieldName.trim();
-    if (!name) return;
-    
-    const newField = {
-      id: uuidv4(),
-      name,
-      type: 'text' as const,
-    };
-    
-    const customKey = `custom_${newField.id}`;
-    
-    // Add field and initialize with empty value in one go
-    addCustomMetadataField(newField);
-    handleTrackChange({ [customKey]: "" });
-    updateMetadata(track.id, { [customKey]: "" }).catch(console.error);
-    
-    setNewFieldName("");
-  };
-
-  const handleRemoveField = async (fieldId: string) => {
-    const customKey = `custom_${fieldId}`;
-    
-    // Remove the field from customMetadata
-    removeCustomMetadataField(fieldId);
-    
-    // Remove the field from the track
-    if (track) {
-      const updatedTrack = { ...track };
-      delete (updatedTrack as any)[customKey];
-      onTrackChange(updatedTrack);
-      
-      // Update the database
-      const updates = { [customKey]: undefined };
-      await updateMetadata(track.id, updates).catch(console.error);
-    }
   };
 
   return (
@@ -269,17 +228,7 @@ export function EditTrackDialog({
                   
                   return (
                     <div key={field.id} className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor={customKey} className="text-right flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-4 w-4 p-0"
-                          onClick={() => handleRemoveField(field.id)}
-                          type="button"
-                          title="Remove field"
-                        >
-                          <Cross2Icon className="h-3 w-3" />
-                        </Button>
+                      <Label htmlFor={customKey} className="text-right">
                         {field.name}
                       </Label>
                       <Input
@@ -293,32 +242,6 @@ export function EditTrackDialog({
                     </div>
                   );
                 })}
-
-                {/* Add New Custom Field */}
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Add Field</Label>
-                  <div className="col-span-3 flex gap-2">
-                    <Input
-                      placeholder="New field name"
-                      value={newFieldName}
-                      onChange={(e) => setNewFieldName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomField();
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleAddCustomField}
-                      type="button"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
               </div>
             </TabsContent>
             <TabsContent value="details" className="mt-0 border-0">
@@ -482,9 +405,6 @@ export function EditTrackDialog({
           </ScrollArea>
         </Tabs>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
           <Button onClick={handleSave}>Save changes</Button>
         </DialogFooter>
       </DialogContent>

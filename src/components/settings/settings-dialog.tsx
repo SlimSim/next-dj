@@ -34,27 +34,48 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { Cross2Icon } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
 
 interface SettingsContentProps {
   hasRemovedSongs: boolean;
   setHasRemovedSongs: (hasRemovedSongs: boolean) => void;
 }
 
+interface CustomMetadataField {
+  id: string;
+  name: string;
+  type: 'text';
+}
+
+interface CustomMetadata {
+  fields: CustomMetadataField[];
+}
+
+const initialCustomMetadata: CustomMetadata = {
+  fields: [],
+};
+
 export function SettingsContent({
   hasRemovedSongs,
   setHasRemovedSongs,
 }: SettingsContentProps) {
   const {
-    recentPlayHours,
-    setRecentPlayHours,
-    monthlyPlayDays,
-    setMonthlyPlayDays,
-  } = useSettings();
+    selectedFolderNames,
+    removeFolder,
+    clearSelectedFolders,
+    removeRemovedSongs,
+    addCustomMetadataField,
+    removeCustomMetadataField: removeField,
+    customMetadata,
+  } = usePlayerStore();
+  const [newFieldName, setNewFieldName] = useState("");
 
-  const selectedFolderNames = usePlayerStore(
-    (state) => state.selectedFolderNames
-  );
-  const removeFolder = usePlayerStore((state) => state.removeFolder);
+  const recentPlayHours = useSettings((state) => state.recentPlayHours);
+  const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
+  const monthlyPlayDays = useSettings((state) => state.monthlyPlayDays);
+  const setMonthlyPlayDays = useSettings((state) => state.setMonthlyPlayDays);
+
   const [showFolderList, setShowFolderList] = useState(false);
   const [hasAudioPermission, setHasAudioPermission] = useState(false);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
@@ -101,15 +122,34 @@ export function SettingsContent({
     checkAudioPermission();
   }, []);
 
+  const handleAddCustomField = () => {
+    const name = newFieldName.trim();
+    if (!name) return;
+    
+    const newField = {
+      id: uuidv4(),
+      name,
+      type: 'text' as const,
+    };
+    
+    addCustomMetadataField(newField);
+    setNewFieldName("");
+  };
+
+  const removeCustomMetadataField = (id: string) => {
+    removeField(id);
+  };
+
   return (
     <div>
       <DialogHeader>
         <DialogTitle>Settings</DialogTitle>
       </DialogHeader>
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          <TabsTrigger value="customTags">Custom Tags</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -162,7 +202,7 @@ export function SettingsContent({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    usePlayerStore.getState().removeRemovedSongs();
+                    removeRemovedSongs();
                     checkForRemovedSongs();
                   }}
                 >
@@ -294,6 +334,63 @@ export function SettingsContent({
                   <span className="text-xs text-muted-foreground w-8">
                     days
                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="customTags" className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-medium">Add Custom metadata to songs</h3>
+            <p className="text-sm text-muted-foreground">
+              Add custom tags to organize your music library. These tags can be used to filter and sort your tracks.
+              For example, add tags like "Vocals", "Energy Level", or "Set Time" to better organize your DJ sets.
+            </p>
+            <div className="flex flex-col gap-4">
+              {/* Existing Custom Fields */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Existing Custom Fields</h4>
+                <div className="grid gap-2">
+                  {customMetadata.fields.map((field) => (
+                    <div key={field.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                      <span className="text-sm">{field.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeField(field.id)}
+                        className="h-8 px-2"
+                      >
+                        {/* <Cross2Icon className="h-4 w-4" /> */}
+                        X
+                        <span className="sr-only">Remove {field.name}</span>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add New Field */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Add New Field</h4>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New field name"
+                    value={newFieldName}
+                    onChange={(e) => setNewFieldName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomField();
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleAddCustomField}
+                    disabled={!newFieldName.trim()}
+                  >
+                    Add Field
+                  </Button>
                 </div>
               </div>
             </div>
