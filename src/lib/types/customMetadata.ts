@@ -1,7 +1,7 @@
 export interface CustomMetadataField {
   id: string;
   name: string;
-  type: 'text' | 'array'; // We can expand this later if needed
+  type: 'text';  // For now, we only support text fields
 }
 
 export interface CustomMetadataValue {

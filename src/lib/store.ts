@@ -11,6 +11,7 @@ import {
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
 import { getRemovedSongs, deleteAudioFile, getAllMetadata } from "@/db/audio-operations";
+import { FilterCriteria } from "@/components/player/playlist-controls";
 
 const initialState: PlayerState = {
   currentTrack: null,
@@ -55,10 +56,17 @@ export const usePlayerStore = create<PlayerStore>()(
       const queueActions = createQueueActions(set, get);
       const playbackActions = createPlaybackActions(set, get);
 
-      // Load metadata from IndexedDB when store is created
-      getAllMetadata().then(metadata => {
-        set({ metadata });
-      }).catch(console.error);
+      // Only try to initialize metadata in browser environment
+      if (typeof window !== 'undefined') {
+        // Delay metadata loading to ensure it runs after hydration
+        Promise.resolve().then(() => {
+          getAllMetadata()
+            .then((metadata) => {
+              set({ metadata });
+            })
+            .catch(console.error);
+        });
+      }
 
       return {
         ...initialState,
@@ -324,9 +332,10 @@ export const usePlayerStore = create<PlayerStore>()(
         removeCustomMetadataField: (fieldId: string) =>
           set((state) => {
             // Remove the field's filter if it exists
-            const customKey = `custom_${fieldId}`;
-            const updatedFilters = { ...state.filters };
-            delete updatedFilters[customKey];
+            const customKey = `custom_${fieldId}` as const;
+            const updatedFilters = { ...state.filters } as FilterCriteria;
+            const typedKey = customKey as keyof typeof updatedFilters;
+            delete updatedFilters[typedKey];
 
             return {
               customMetadata: {

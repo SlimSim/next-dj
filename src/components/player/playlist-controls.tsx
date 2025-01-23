@@ -32,6 +32,8 @@ export type FilterCriteria = {
   artist?: string;
   album?: string;
   genre?: string; // Even though genre is string[] in metadata, we filter by a single genre
+} & {
+  [K in `custom_${string}`]?: string; // Allow custom metadata fields
 };
 
 interface PlaylistControlsProps {
@@ -219,7 +221,7 @@ export function PlaylistControls({
 
       {/* Custom Metadata Filters */}
       {customMetadata.fields.map((field) => {
-        const customKey = `custom_${field.id}`;
+        const customKey = `custom_${field.id}` as `custom_${string}`;
         const options = Array.from(uniqueValues[customKey] || new Set());
         
         return (

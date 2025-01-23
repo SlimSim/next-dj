@@ -2,41 +2,44 @@ import { MusicMetadata, PlayHistoryEvent } from "@/lib/types/types";
 import { initMusicDB } from "./schema";
 import { usePlayerStore } from "@/lib/store";
 
+type MetadataUpdate = {
+  title?: string;
+  artist?: string;
+  album?: string;
+  track?: number;
+  year?: number;
+  genre?: string[];
+  bpm?: number;
+  rating?: number;
+  comment?: string;
+  volume?: number;
+  startTime?: number;
+  endTimeOffset?: number;
+  fadeDuration?: number;
+  endTimeFadeDuration?: number;
+} & {
+  [K in `custom_${string}`]?: string;
+};
+
 export async function updateMetadata(
   id: string,
-  metadata: {
-    title?: string;
-    artist?: string;
-    album?: string;
-    track?: number;
-    year?: number;
-    genre?: string[];
-    bpm?: number;
-    rating?: number;
-    comment?: string;
-    volume?: number;
-    startTime?: number;
-    endTimeOffset?: number;
-    fadeDuration?: number;
-    endTimeFadeDuration?: number;
-    [key: string]: any; // Allow custom metadata fields
-  }
+  metadata: MetadataUpdate
 ): Promise<void> {
   const db = await initMusicDB();
-  const existing = await db.get("metadata", id);
+  const existing = await db.get("metadata", id) as (MusicMetadata & { [key: `custom_${string}`]: string });
   if (existing) {
     // Merge existing and new metadata, preserving custom fields
-    const updated = { ...existing };
+    const updated = { ...existing } as (typeof existing);
     
     // Update all provided fields, including custom fields
     Object.entries(metadata).forEach(([key, value]) => {
       // For custom fields, ensure empty strings are saved as empty strings
       if (key.startsWith('custom_') && value === '') {
-        updated[key] = '';
+        (updated as any)[key] = '';
       }
       // For other fields, only update if value is defined
       else if (value !== undefined) {
-        updated[key] = value;
+        (updated as any)[key] = value;
       }
     });
     

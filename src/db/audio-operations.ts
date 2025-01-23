@@ -1,6 +1,7 @@
 import { AudioFile, MusicMetadata } from "@/lib/types/types";
 import { initMusicDB } from "./schema";
 import { readAudioMetadata } from "@/lib/metadata";
+import { v4 as uuidv4 } from 'uuid';
 
 export async function deleteAudioFile(id: string): Promise<void> {
   const db = await initMusicDB();
@@ -27,7 +28,7 @@ export async function addAudioFile(
     }
   }
 
-  const id = crypto.randomUUID();
+  const id = uuidv4();
   let fileMetadata: any;
   let audioFile: AudioFile;
 
@@ -41,7 +42,7 @@ export async function addAudioFile(
         ...fileMetadata,
         ...metadata,
         id,
-        queueId: crypto.randomUUID(),
+        queueId: uuidv4(),
       },
     };
   } else {
@@ -58,7 +59,7 @@ export async function addAudioFile(
         ...fileMetadata,
         ...metadata,
         id,
-        queueId: crypto.randomUUID(),
+        queueId: uuidv4(),
       },
     };
   }
@@ -85,7 +86,7 @@ export async function addAudioFile(
     coverArt: metadata.coverArt,
     isReference,
     removed: false,
-    queueId: crypto.randomUUID(),
+    queueId: uuidv4(),
   };
 
   try {
@@ -178,5 +179,6 @@ export async function getUniqueValues(): Promise<{
 
 export async function updateAudioMetadata(metadata: MusicMetadata): Promise<void> {
   const db = await initMusicDB();
-  await db.put("metadata", metadata);
+  const tx = db.transaction("metadata", "readwrite");
+  await tx.store.put(metadata);
 }

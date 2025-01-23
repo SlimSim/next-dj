@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, RefObject, useMemo } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { useSettings } from "../settings/settings-context";

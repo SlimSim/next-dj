@@ -9,21 +9,24 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import {
-  Settings,
+  SettingsIcon,
   ChevronDown,
   ChevronUp,
   Folder,
   X,
   Music,
   Music2,
+  PlusIcon,
+  Trash,
 } from "lucide-react";
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
-import { useSettings } from "./settings-context";
-import { useCallback, useEffect, useState } from "react";
+import { useSettings } from "@/lib/settings";
 import { usePlayerStore } from "@/lib/store";
-import { ConfirmButton } from "../ui/confirm-button";
+import type { Settings } from "@/lib/types/settings";
+import type { CustomMetadataField } from "@/lib/types/customMetadata";
+import { useCallback, useEffect, useState } from "react";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { Input } from "../ui/input";
 import { InputWithDefault } from "../ui/input-with-default";
@@ -34,27 +37,27 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { Cross2Icon } from "lucide-react";
+import { CrossIcon } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 
-interface SettingsContentProps {
-  hasRemovedSongs: boolean;
-  setHasRemovedSongs: (hasRemovedSongs: boolean) => void;
-}
-
-interface CustomMetadataField {
+interface CustomField {
   id: string;
   name: string;
   type: 'text';
 }
 
 interface CustomMetadata {
-  fields: CustomMetadataField[];
+  fields: CustomField[];
 }
 
 const initialCustomMetadata: CustomMetadata = {
   fields: [],
 };
+
+interface SettingsContentProps {
+  hasRemovedSongs: boolean;
+  setHasRemovedSongs: (value: boolean) => void;
+}
 
 export function SettingsContent({
   hasRemovedSongs,
@@ -65,16 +68,18 @@ export function SettingsContent({
     removeFolder,
     clearSelectedFolders,
     removeRemovedSongs,
-    addCustomMetadataField,
-    removeCustomMetadataField: removeField,
-    customMetadata,
   } = usePlayerStore();
-  const [newFieldName, setNewFieldName] = useState("");
+
+  const customMetadata = usePlayerStore((state) => state.customMetadata);
+  const addCustomMetadataField = usePlayerStore((state) => state.addCustomMetadataField);
+  const removeField = usePlayerStore((state) => state.removeCustomMetadataField);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
   const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
   const monthlyPlayDays = useSettings((state) => state.monthlyPlayDays);
   const setMonthlyPlayDays = useSettings((state) => state.setMonthlyPlayDays);
+
+  const [newFieldName, setNewFieldName] = useState("");
 
   const [showFolderList, setShowFolderList] = useState(false);
   const [hasAudioPermission, setHasAudioPermission] = useState(false);
@@ -126,10 +131,10 @@ export function SettingsContent({
     const name = newFieldName.trim();
     if (!name) return;
     
-    const newField = {
+    const newField: CustomMetadataField = {
       id: uuidv4(),
       name,
-      type: 'text' as const,
+      type: 'text',
     };
     
     addCustomMetadataField(newField);
@@ -198,7 +203,7 @@ export function SettingsContent({
                 <span className="text-sm ">
                   Some songs were removed from your library
                 </span>
-                <ConfirmButton
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
@@ -207,7 +212,7 @@ export function SettingsContent({
                   }}
                 >
                   Clean up
-                </ConfirmButton>
+                </Button>
               </div>
             )}
           </div>
@@ -268,73 +273,37 @@ export function SettingsContent({
               the song name in the songlist
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center sm:items-start flex-row sm:flex-col gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <label className="flex-grow" htmlFor="recentPlayHours">
-                        First counter:
-                      </label>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs text-muted-foreground">
-                        Set the time window for the first play counter. <br />
-                        Only counts plays within the last X hours (default: 18)
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <InputWithDefault
-                    id="recentPlayHours"
-                    type="number"
-                    min="0"
-                    value={recentPlayHours || ""}
-                    defaultValue={18}
-                    onValueChange={(val) => {
-                      const numVal = val === "" ? 0 : Number(val);
-                      setRecentPlayHours(numVal);
-                    }}
-                    className="w-24"
-                  />
-                  <span className="text-xs text-muted-foreground w-8">
-                    hours
-                  </span>
-                </div>
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <label className="text-sm" htmlFor="recentPlayHours">Recent Play Hours</label>
+                <Input
+                  type="number"
+                  id="recentPlayHours"
+                  value={recentPlayHours.toString()}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value)) {
+                      setRecentPlayHours(value);
+                    }
+                  }}
+                  min={1}
+                  max={168}
+                />
               </div>
-              <div className="flex items-center sm:items-start flex-row sm:flex-col gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <label className="flex-grow" htmlFor="monthlyPlayDays">
-                        Second counter:
-                      </label>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs text-muted-foreground">
-                        Set the time window for the second play counter. <br />
-                        Only counts plays within the last X days (default: 42)
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <InputWithDefault
-                    id="monthlyPlayDays"
-                    type="number"
-                    min="0"
-                    value={monthlyPlayDays || ""}
-                    defaultValue={42}
-                    onValueChange={(val) => {
-                      const numVal = val === "" ? 0 : Number(val);
-                      setMonthlyPlayDays(numVal);
-                    }}
-                    className="w-24"
-                  />
-                  <span className="text-xs text-muted-foreground w-8">
-                    days
-                  </span>
-                </div>
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <label className="text-sm" htmlFor="monthlyPlayDays">Monthly Play Days</label>
+                <Input
+                  type="number"
+                  id="monthlyPlayDays"
+                  value={monthlyPlayDays.toString()}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value)) {
+                      setMonthlyPlayDays(value);
+                    }
+                  }}
+                  min={1}
+                  max={31}
+                />
               </div>
             </div>
           </div>
@@ -352,7 +321,7 @@ export function SettingsContent({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Existing Custom Fields</h4>
                 <div className="grid gap-2">
-                  {customMetadata.fields.map((field) => (
+                  {customMetadata.fields.map((field: CustomMetadataField) => (
                     <div key={field.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
                       <span className="text-sm">{field.name}</span>
                       <Button
@@ -361,8 +330,7 @@ export function SettingsContent({
                         onClick={() => removeField(field.id)}
                         className="h-8 px-2"
                       >
-                        {/* <Cross2Icon className="h-4 w-4" /> */}
-                        X
+                        <Trash className="mr-2 h-4 w-4" />
                         <span className="sr-only">Remove {field.name}</span>
                       </Button>
                     </div>
@@ -389,7 +357,8 @@ export function SettingsContent({
                     onClick={handleAddCustomField}
                     disabled={!newFieldName.trim()}
                   >
-                    Add Field
+                    <PlusIcon className="h-4 w-4" />
+                    <span className="sr-only">Add Field</span>
                   </Button>
                 </div>
               </div>
@@ -446,7 +415,8 @@ export function SettingsDialog({
       {triggerButton && (
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
+            <SettingsIcon className="h-[1.2rem] w-[1.2rem]" />
+            <span className="sr-only">Settings</span>
           </Button>
         </DialogTrigger>
       )}
