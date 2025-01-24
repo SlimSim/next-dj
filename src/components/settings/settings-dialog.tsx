@@ -18,6 +18,7 @@ import {
   Music2,
   PlusIcon,
   Trash,
+  MoreVertical,
 } from "lucide-react";
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
@@ -39,6 +40,12 @@ import {
 } from "../ui/tooltip";
 import { CrossIcon } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 interface CustomField {
   id: string;
@@ -324,15 +331,22 @@ export function SettingsContent({
                   {customMetadata.fields.map((field: CustomMetadataField) => (
                     <div key={field.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
                       <span className="text-sm">{field.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeField(field.id)}
-                        className="h-8 px-2"
-                      >
-                        <Trash className="mr-2 h-4 w-4" />
-                        <span className="sr-only">Remove {field.name}</span>
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => removeField(field.id)}
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   ))}
                 </div>

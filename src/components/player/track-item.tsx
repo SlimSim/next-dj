@@ -460,7 +460,7 @@ export function TrackItem({
               Edit metadata
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="text-destructive"
+              className="text-destructive focus:text-destructive"
               onClick={() => onDeleteTrack(track)}
             >
               <Trash className="mr-2 h-4 w-4" />
