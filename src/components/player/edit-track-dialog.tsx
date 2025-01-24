@@ -123,8 +123,9 @@ export function EditTrackDialog({
           <DialogTitle>Edit Track Metadata</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="custom">Custom Tags</TabsTrigger>
             <TabsTrigger value="details">Advanced</TabsTrigger>
           </TabsList>
           <ScrollArea className="h-[60vh] sm:h-[50vh]">
@@ -250,41 +251,67 @@ export function EditTrackDialog({
                   <Label htmlFor="volume" className="text-right">
                     Volume
                   </Label>
-                  <Input
-                    id="volume"
-                    type="number"
-                    step="0.1"
-                    value={track.volume?.toString() || "1"}
-                    onChange={(e) =>
-                      handleTrackChange({
-                        volume: parseFloat(e.target.value) || 1,
-                      })
-                    }
-                    className="col-span-3"
-                  />
+                  <div className="col-span-3 flex items-center gap-4">
+                    <Slider
+                      id="volume"
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      value={[track.volume || 1]}
+                      onValueChange={([value]) =>
+                        handleTrackChange({
+                          volume: value,
+                        })
+                      }
+                    />
+                    <span className="w-12 text-sm">
+                      {(track.volume || 1).toFixed(1)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="rating" className="text-right">
                     Rating
                   </Label>
+                  <div className="col-span-3 flex items-center gap-4">
+                    <Slider
+                      id="rating"
+                      min={0}
+                      max={5}
+                      step={1}
+                      value={[track.rating || 0]}
+                      onValueChange={([value]) =>
+                        handleTrackChange({
+                          rating: value,
+                        })
+                      }
+                    />
+                    <span className="w-12 text-sm">
+                      {track.rating || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="comment" className="text-right">
+                    Comment
+                  </Label>
                   <Input
-                    id="rating"
-                    type="number"
-                    min="0"
-                    max="5"
-                    value={track.rating?.toString() || ""}
-                    onChange={(e) =>
-                      handleTrackChange({
-                        rating: e.target.value ? parseInt(e.target.value) : undefined,
-                      })
-                    }
+                    id="comment"
+                    value={track.comment || ""}
                     className="col-span-3"
+                    onChange={(e) =>
+                      handleTrackChange({ comment: e.currentTarget.value })
+                    }
                   />
                 </div>
 
-                {/* Custom Metadata Fields */}
-                {customMetadata.fields.map((field: CustomField) => {
+              </div>
+            </TabsContent>
+            <TabsContent value="custom" className="mt-0 border-0">
+              <div className="grid gap-4 py-4">
+              {/* Custom Metadata Fields */}
+              {customMetadata.fields.map((field: CustomField) => {
                   const customKey = `custom_${field.id}`;
                   const value = (track as any)[customKey];
                   
@@ -398,19 +425,6 @@ export function EditTrackDialog({
                       seconds
                     </span>
                   </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="comment" className="text-right">
-                    Comment
-                  </Label>
-                  <Input
-                    id="comment"
-                    value={track.comment || ""}
-                    className="col-span-3"
-                    onChange={(e) =>
-                      handleTrackChange({ comment: e.currentTarget.value })
-                    }
-                  />
                 </div>
               </div>
             </TabsContent>
