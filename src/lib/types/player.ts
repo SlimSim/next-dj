@@ -100,6 +100,7 @@ export interface PlayerActions {
   updateTrackMetadata: (trackId: string, updates: Partial<MusicMetadata>) => void;
   addCustomMetadataField: (field: CustomMetadataField) => void;
   removeCustomMetadataField: (fieldId: string) => void;
+  toggleCustomMetadataFilter: (fieldId: string) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

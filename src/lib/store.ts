@@ -322,11 +322,23 @@ export const usePlayerStore = create<PlayerStore>()(
             };
           });
         },
-        addCustomMetadataField: (field: CustomMetadataField) =>
+        addCustomMetadataField: (field: { id: string; name: string; type: 'text' }) =>
           set((state) => ({
             customMetadata: {
-              ...state.customMetadata,
-              fields: [...state.customMetadata.fields, field],
+              fields: [
+                ...state.customMetadata.fields,
+                { ...field, showInFilter: true }  // Default to showing in filter
+              ],
+            },
+          })),
+        toggleCustomMetadataFilter: (fieldId: string) =>
+          set((state) => ({
+            customMetadata: {
+              fields: state.customMetadata.fields.map(field =>
+                field.id === fieldId
+                  ? { ...field, showInFilter: !field.showInFilter }
+                  : field
+              ),
             },
           })),
         removeCustomMetadataField: (fieldId: string) =>

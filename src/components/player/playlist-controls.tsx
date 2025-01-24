@@ -116,6 +116,12 @@ export function PlaylistControls({
 
   const showFilters = usePlayerStore((state) => state.showFilters);
 
+  // Only show custom metadata fields that have showInFilter enabled
+  const visibleCustomFields = useMemo(() => 
+    customMetadata.fields.filter(field => field.showInFilter),
+    [customMetadata.fields]
+  );
+
   return (
     <div
       className={cn(
@@ -219,19 +225,20 @@ export function PlaylistControls({
         items={Array.from(uniqueValues.genre)}
       />
 
-      {/* Custom Metadata Filters */}
-      {customMetadata.fields.map((field) => {
-        const customKey = `custom_${field.id}` as `custom_${string}`;
-        const options = Array.from(uniqueValues[customKey] || new Set());
+      {/* Custom metadata filters */}
+      {visibleCustomFields.map((field) => {
+        const filterKey = `custom_${field.id}` as keyof FilterCriteria;
+        const currentValue = filters[filterKey];
+        const options = Array.from(uniqueValues[filterKey] || new Set());
         
         return (
           <FilterSelect
             key={field.id}
-            value={filters[customKey]}
+            value={currentValue}
             onValueChange={(value) =>
               onFilterChange({
                 ...filters,
-                [customKey]: value === '(Empty)' ? '' : value,
+                [filterKey]: value === '(Empty)' ? '' : value,
               })
             }
             placeholder={`Filter by ${field.name}`}

@@ -46,6 +46,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { Switch } from "../ui/switch";
 
 interface CustomField {
   id: string;
@@ -80,6 +81,7 @@ export function SettingsContent({
   const customMetadata = usePlayerStore((state) => state.customMetadata);
   const addCustomMetadataField = usePlayerStore((state) => state.addCustomMetadataField);
   const removeField = usePlayerStore((state) => state.removeCustomMetadataField);
+  const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
   const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
@@ -135,17 +137,15 @@ export function SettingsContent({
   }, []);
 
   const handleAddCustomField = () => {
+    if (!newFieldName.trim()) return;
     const name = newFieldName.trim();
-    if (!name) return;
-    
-    const newField: CustomMetadataField = {
+    addCustomMetadataField({
       id: uuidv4(),
       name,
       type: 'text',
-    };
-    
-    addCustomMetadataField(newField);
-    setNewFieldName("");
+      showInFilter: true,
+    });
+    setNewFieldName('');
   };
 
   const removeCustomMetadataField = (id: string) => {
@@ -330,7 +330,17 @@ export function SettingsContent({
                 <div className="grid gap-2">
                   {customMetadata.fields.map((field: CustomMetadataField) => (
                     <div key={field.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
-                      <span className="text-sm">{field.name}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm">{field.name}</span>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={field.showInFilter}
+                            onCheckedChange={() => toggleCustomMetadataFilter(field.id)}
+                            aria-label={`Show ${field.name} in filters`}
+                          />
+                          <span className="text-sm text-muted-foreground">Show in filters</span>
+                        </div>
+                      </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
