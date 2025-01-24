@@ -17,8 +17,7 @@ type MetadataUpdate = {
   endTimeOffset?: number;
   fadeDuration?: number;
   endTimeFadeDuration?: number;
-} & {
-  [K in `custom_${string}`]?: string;
+  customMetadata?: { [K in `custom_${string}`]: string };
 };
 
 export async function updateMetadata(
@@ -26,19 +25,20 @@ export async function updateMetadata(
   metadata: MetadataUpdate
 ): Promise<void> {
   const db = await initMusicDB();
-  const existing = await db.get("metadata", id) as (MusicMetadata & { [key: `custom_${string}`]: string });
+  const existing = await db.get("metadata", id) as MusicMetadata;
   if (existing) {
-    // Merge existing and new metadata, preserving custom fields
-    const updated = { ...existing } as (typeof existing);
+    // Create updated metadata object
+    const updated = { ...existing };
     
-    // Update all provided fields, including custom fields
+    // Update standard fields
     Object.entries(metadata).forEach(([key, value]) => {
-      // For custom fields, ensure empty strings are saved as empty strings
-      if (key.startsWith('custom_') && value === '') {
-        (updated as any)[key] = '';
-      }
-      // For other fields, only update if value is defined
-      else if (value !== undefined) {
+      if (key === 'customMetadata' && value && typeof value === 'object') {
+        // Handle custom metadata separately
+        updated.customMetadata = {
+          ...updated.customMetadata,
+          ...(value as { [K in `custom_${string}`]: string })
+        };
+      } else if (value !== undefined) {
         (updated as any)[key] = value;
       }
     });
