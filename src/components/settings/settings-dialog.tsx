@@ -82,6 +82,7 @@ export function SettingsContent({
   const addCustomMetadataField = usePlayerStore((state) => state.addCustomMetadataField);
   const removeField = usePlayerStore((state) => state.removeCustomMetadataField);
   const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
+  const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
   const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
@@ -144,6 +145,7 @@ export function SettingsContent({
       name,
       type: 'text',
       showInFilter: true,
+      showInList: true,
     });
     setNewFieldName('');
   };
@@ -332,13 +334,23 @@ export function SettingsContent({
                     <div key={field.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
                       <div className="flex items-center gap-4">
                         <span className="text-sm">{field.name}</span>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={field.showInFilter}
-                            onCheckedChange={() => toggleCustomMetadataFilter(field.id)}
-                            aria-label={`Show ${field.name} in filters`}
-                          />
-                          <span className="text-sm text-muted-foreground">Show in filters</span>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={field.showInFilter}
+                              onCheckedChange={() => toggleCustomMetadataFilter(field.id)}
+                              aria-label={`Show ${field.name} in filters`}
+                            />
+                            <span className="text-sm text-muted-foreground">Show in filters</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={field.showInList}
+                              onCheckedChange={() => toggleCustomMetadataVisibility(field.id)}
+                              aria-label={`Show ${field.name} values in track list`}
+                            />
+                            <span className="text-sm text-muted-foreground">Show in list</span>
+                          </div>
                         </div>
                       </div>
                       <DropdownMenu>

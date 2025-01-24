@@ -16,6 +16,7 @@ import { updateMetadata } from "@/db/metadata-operations";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
 import { useState, useEffect } from "react";
+import { asCustomKey } from "@/lib/utils/metadata";
 
 interface CustomField {
   id: string;
@@ -49,28 +50,34 @@ export function EditTrackDialog({
     if (!track) return;
 
     // Check which custom fields need initialization
-    const updates = customMetadata.fields.reduce<Record<string, string>>((acc: Record<string, string>, field: CustomField) => {
-      const customKey = `custom_${field.id}`;
-      if ((track as any)[customKey] === undefined) {
-        acc[customKey] = "";
+    const updates: { customMetadata: { [key: `custom_${string}`]: string } } = { customMetadata: {} };
+    let needsUpdate = false;
+
+    customMetadata.fields.forEach((field: CustomField) => {
+      const customKey = asCustomKey(field.id);
+      if (!track.customMetadata) {
+        needsUpdate = true;
+        updates.customMetadata[customKey] = "";
+      } else if (!(customKey in track.customMetadata)) {
+        needsUpdate = true;
+        updates.customMetadata[customKey] = "";
       }
-      return acc;
-    }, {});
+    });
 
     // Only update if there are new fields to initialize
-    if (Object.keys(updates).length > 0) {
-      onTrackChange({ ...track, ...updates });
-      updateMetadata(track.id, updates).catch(console.error);
+    if (needsUpdate) {
+      const newCustomMetadata = track.customMetadata || {};
+      onTrackChange({
+        ...track,
+        customMetadata: { ...newCustomMetadata, ...updates.customMetadata }
+      });
     }
-  }, [track, customMetadata.fields, onTrackChange, updateMetadata]);
+  }, [track?.id, customMetadata.fields]);
 
   const handleSave = async () => {
     if (!track) return;
     
     try {
-      // Get all custom metadata keys
-      const customKeys = customMetadata.fields.map((field: CustomField) => `custom_${field.id}`);
-      
       // Create metadata object including custom fields
       const metadata: Partial<MusicMetadata> = {
         title: track.title || "",
@@ -87,12 +94,8 @@ export function EditTrackDialog({
         endTimeOffset: track.endTimeOffset,
         fadeDuration: track.fadeDuration,
         endTimeFadeDuration: track.endTimeFadeDuration,
+        customMetadata: track.customMetadata || {},
       };
-
-      // Add custom metadata
-      customKeys.forEach(key => {
-        (metadata as any)[key] = (track as any)[key] || "";
-      });
 
       await updateTrackMetadata(track.id, metadata);
       onSave(track);
@@ -312,8 +315,8 @@ export function EditTrackDialog({
               <div className="grid gap-4 py-4">
               {/* Custom Metadata Fields */}
               {customMetadata.fields.map((field: CustomField) => {
-                  const customKey = `custom_${field.id}`;
-                  const value = (track as any)[customKey];
+                  const customKey = asCustomKey(field.id);
+                  const value = track.customMetadata?.[customKey] ?? "";
                   
                   return (
                     <div key={field.id} className="grid grid-cols-4 items-center gap-4">
@@ -322,9 +325,12 @@ export function EditTrackDialog({
                       </Label>
                       <Input
                         id={customKey}
-                        value={value ?? ""}
+                        value={value}
                         onChange={(e) => handleTrackChange({
-                          [customKey]: e.target.value,
+                          customMetadata: {
+                            ...track.customMetadata,
+                            [customKey]: e.target.value,
+                          }
                         })}
                         className="col-span-3"
                       />

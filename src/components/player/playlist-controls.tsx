@@ -17,6 +17,7 @@ import { getUniqueValues } from "@/db/audio-operations";
 import { cn } from "@/lib/utils/common";
 import { usePlayerStore } from "@/lib/store";
 import { FilterSelect } from "./filter-select";
+import { asCustomKey } from "@/lib/utils/metadata";
 
 export type SortField =
   | "title"
@@ -76,8 +77,8 @@ export function PlaylistControls({
 
       // Custom metadata values
       customMetadata.fields.forEach((field) => {
-        const customKey = `custom_${field.id}`;
-        const value = (track as any)[customKey];
+        const customKey = asCustomKey(field.id);
+        const value = track.customMetadata?.[customKey];
         
         if (value === undefined || value === '') {
           values[customKey].add('(Empty)');

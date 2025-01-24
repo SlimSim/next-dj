@@ -1,4 +1,5 @@
 import { AudioFile, type AudioPlaybackOptions, type RepeatMode } from "@/features/audio/types";
+import { CustomMetadataValue } from "./customMetadata";
 
 export interface MusicMetadata extends AudioPlaybackOptions {
   id: string;
@@ -21,6 +22,7 @@ export interface MusicMetadata extends AudioPlaybackOptions {
   bpm?: number;
   year?: number;
   genre?: string[];
+  customMetadata?: { [key: `custom_${string}`]: string };
 }
 
 export interface PlayHistoryEvent {

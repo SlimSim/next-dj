@@ -13,6 +13,7 @@ import { FileUpload } from "../common/file-upload";
 import { GearIcon } from "@radix-ui/react-icons";
 import { SortField, SortOrder, FilterCriteria } from "./playlist-controls";
 import { createErrorHandler } from "@/features/audio/utils/errorUtils";
+import { asCustomKey } from "@/lib/utils/metadata";
 
 const handleError = createErrorHandler('Playlist');
 
@@ -78,7 +79,7 @@ export function Playlist({
     Object.entries(filters).forEach(([key, value]) => {
       if (key.startsWith('custom_') && value) {
         filteredTracks = filteredTracks.filter((track) => {
-          const customValue = (track as any)[key];
+          const customValue = track.customMetadata?.[asCustomKey(key.slice(7))];
           return customValue && customValue.trim() === value;
         });
       }

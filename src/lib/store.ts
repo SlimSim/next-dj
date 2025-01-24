@@ -327,7 +327,11 @@ export const usePlayerStore = create<PlayerStore>()(
             customMetadata: {
               fields: [
                 ...state.customMetadata.fields,
-                { ...field, showInFilter: true }  // Default to showing in filter
+                { 
+                  ...field, 
+                  showInFilter: true,  // Default to showing in filter
+                  showInList: true,    // Default to showing in list
+                }
               ],
             },
           })),
@@ -337,6 +341,16 @@ export const usePlayerStore = create<PlayerStore>()(
               fields: state.customMetadata.fields.map(field =>
                 field.id === fieldId
                   ? { ...field, showInFilter: !field.showInFilter }
+                  : field
+              ),
+            },
+          })),
+        toggleCustomMetadataVisibility: (fieldId: string) =>
+          set((state) => ({
+            customMetadata: {
+              fields: state.customMetadata.fields.map(field =>
+                field.id === fieldId
+                  ? { ...field, showInList: !field.showInList }
                   : field
               ),
             },

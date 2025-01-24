@@ -101,6 +101,7 @@ export interface PlayerActions {
   addCustomMetadataField: (field: CustomMetadataField) => void;
   removeCustomMetadataField: (fieldId: string) => void;
   toggleCustomMetadataFilter: (fieldId: string) => void;
+  toggleCustomMetadataVisibility: (fieldId: string) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;
