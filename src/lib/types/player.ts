@@ -4,6 +4,7 @@ import {
   SortOrder,
   FilterCriteria,
 } from "@/components/player/playlist-controls";
+import { CustomMetadataField, CustomMetadataState } from "./customMetadata";
 
 export interface SongList {
   id: string;
@@ -44,7 +45,8 @@ export interface PlayerState {
   songLists: SongList[];
   showLists: boolean;
   selectedListId: string | null;
-  metadata: MusicMetadata[]; 
+  metadata: MusicMetadata[];
+  customMetadata: CustomMetadataState;
 }
 
 export interface PlayerActions {
@@ -95,10 +97,13 @@ export interface PlayerActions {
   removeFolder: (folderName: string) => void;
   removeRemovedSongs: () => void;
   clearSelectedFolders: () => void;
-  updateTrackMetadata: (
-    trackId: string,
-    updates: Partial<MusicMetadata> & { __volumeOnly?: boolean; __preserveRef?: boolean }
-  ) => void;
+  updateTrackMetadata: (trackId: string, updates: Partial<MusicMetadata>) => void;
+  addCustomMetadataField: (field: CustomMetadataField) => void;
+  removeCustomMetadataField: (fieldId: string) => void;
+  toggleCustomMetadataFilter: (fieldId: string) => void;
+  toggleCustomMetadataVisibility: (fieldId: string) => void;
+  renameCustomMetadataField: (fieldId: string, newName: string) => void;
+  reorderCustomMetadataFields: (oldIndex: number, newIndex: number) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

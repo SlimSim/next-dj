@@ -15,6 +15,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateMetadata } from "@/db/metadata-operations";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
+import { useState, useEffect } from "react";
+import { asCustomKey } from "@/lib/utils/metadata";
+
+interface CustomField {
+  id: string;
+  name: string;
+  type: 'text';
+}
 
 interface EditTrackDialogProps {
   isOpen: boolean;
@@ -31,52 +39,85 @@ export function EditTrackDialog({
   onTrackChange,
   onSave,
 }: EditTrackDialogProps) {
-  const { triggerRefresh, updateTrackMetadata } = usePlayerStore();
+  const { 
+    triggerRefresh, 
+    updateTrackMetadata, 
+    customMetadata,
+  } = usePlayerStore();
 
-  if (!track) return null;
+  // Initialize custom fields when track or customMetadata changes
+  useEffect(() => {
+    if (!track) return;
+
+    // Check which custom fields need initialization
+    const updates: { customMetadata: { [key: `custom_${string}`]: string } } = { customMetadata: {} };
+    let needsUpdate = false;
+
+    customMetadata.fields.forEach((field: CustomField) => {
+      const customKey = asCustomKey(field.id);
+      if (!track.customMetadata) {
+        needsUpdate = true;
+        updates.customMetadata[customKey] = "";
+      } else if (!(customKey in track.customMetadata)) {
+        needsUpdate = true;
+        updates.customMetadata[customKey] = "";
+      }
+    });
+
+    // Only update if there are new fields to initialize
+    if (needsUpdate) {
+      const newCustomMetadata = track.customMetadata || {};
+      onTrackChange({
+        ...track,
+        customMetadata: { ...newCustomMetadata, ...updates.customMetadata }
+      });
+    }
+  }, [track?.id, customMetadata.fields]);
 
   const handleSave = async () => {
+    if (!track) return;
+    
     try {
-      await updateMetadata(track.id, {
-        title: track.title,
-        artist: track.artist,
-        album: track.album,
+      // Create metadata object including custom fields
+      const metadata: Partial<MusicMetadata> = {
+        title: track.title || "",
+        artist: track.artist || "",
+        album: track.album || "",
         track: track.track,
         year: track.year,
         genre: track.genre,
         bpm: track.bpm,
         rating: track.rating,
-        comment: track.comment,
+        comment: track.comment || "",
         volume: track.volume,
         startTime: track.startTime,
         endTimeOffset: track.endTimeOffset,
         fadeDuration: track.fadeDuration,
         endTimeFadeDuration: track.endTimeFadeDuration,
-      });
+        customMetadata: track.customMetadata || {},
+      };
 
-      // Always preserve reference when saving to prevent restart
-      updateTrackMetadata(track.id, {
-        ...track,
-        __preserveRef: true,
-      });
-
-      triggerRefresh();
+      await updateTrackMetadata(track.id, metadata);
       onSave(track);
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error updating metadata:", error);
+      console.error('Error saving metadata:', error);
     }
   };
 
   const handleTrackChange = (updates: Partial<MusicMetadata>) => {
+    if (!track) return;
     const updatedTrack = { ...track, ...updates };
     onTrackChange(updatedTrack);
-
-    // Mark all metadata updates from dialog as non-restarting
+    
+    // Add type assertion to include __preserveRef
     updateTrackMetadata(track.id, {
       ...updates,
-      __preserveRef: true, // Special flag to prevent track restart
-    });
+      __preserveRef: true,
+    } as Partial<MusicMetadata> & { __preserveRef: boolean });
   };
+
+  if (!track) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -85,8 +126,9 @@ export function EditTrackDialog({
           <DialogTitle>Edit Track Metadata</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="custom">Custom Tags</TabsTrigger>
             <TabsTrigger value="details">Advanced</TabsTrigger>
           </TabsList>
           <ScrollArea className="h-[60vh] sm:h-[50vh]">
@@ -98,39 +140,48 @@ export function EditTrackDialog({
                   </Label>
                   <Input
                     id="title"
-                    value={track.title}
-                    className="col-span-3"
+                    value={track.title || ""}
                     onChange={(e) =>
-                      handleTrackChange({ title: e.currentTarget.value })
+                      handleTrackChange({
+                        title: e.target.value,
+                      })
                     }
+                    className="col-span-3"
                   />
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="artist" className="text-right">
                     Artist
                   </Label>
                   <Input
                     id="artist"
-                    value={track.artist}
-                    className="col-span-3"
+                    value={track.artist || ""}
                     onChange={(e) =>
-                      handleTrackChange({ artist: e.currentTarget.value })
+                      handleTrackChange({
+                        artist: e.target.value,
+                      })
                     }
+                    className="col-span-3"
                   />
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="album" className="text-right">
                     Album
                   </Label>
                   <Input
                     id="album"
-                    value={track.album}
-                    className="col-span-3"
+                    value={track.album || ""}
                     onChange={(e) =>
-                      handleTrackChange({ album: e.currentTarget.value })
+                      handleTrackChange({
+                        album: e.target.value,
+                      })
                     }
+                    className="col-span-3"
                   />
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="track" className="text-right">
                     Track Number
@@ -138,15 +189,16 @@ export function EditTrackDialog({
                   <Input
                     id="track"
                     type="number"
-                    value={track.track || ""}
-                    className="col-span-3"
+                    value={track.track?.toString() || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        track: parseInt(e.currentTarget.value) || undefined,
+                        track: e.target.value ? parseInt(e.target.value) : undefined,
                       })
                     }
+                    className="col-span-3"
                   />
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="year" className="text-right">
                     Year
@@ -154,15 +206,16 @@ export function EditTrackDialog({
                   <Input
                     id="year"
                     type="number"
-                    value={track.year || ""}
-                    className="col-span-3"
+                    value={track.year?.toString() || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        year: parseInt(e.currentTarget.value) || undefined,
+                        year: e.target.value ? parseInt(e.target.value) : undefined,
                       })
                     }
+                    className="col-span-3"
                   />
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="genre" className="text-right">
                     Genre
@@ -170,22 +223,16 @@ export function EditTrackDialog({
                   <Input
                     id="genre"
                     value={track.genre?.join(", ") || ""}
-                    className="col-span-3"
                     onChange={(e) =>
                       handleTrackChange({
-                        genre: e.currentTarget.value
-                          .split(",")
-                          .map((g) => g.trim())
-                          .filter(Boolean),
+                        genre: e.target.value.split(",").map(g => g.trim()).filter(Boolean),
                       })
                     }
-                    placeholder="Jazz, Rock, Pop, Swing etc."
+                    className="col-span-3"
+                    placeholder="Rock, Pop, etc."
                   />
                 </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="details" className="mt-0 border-0">
-              <div className="grid gap-4 py-4">
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="bpm" className="text-right">
                     BPM
@@ -193,32 +240,107 @@ export function EditTrackDialog({
                   <Input
                     id="bpm"
                     type="number"
-                    value={track.bpm || ""}
-                    className="col-span-3"
+                    value={track.bpm?.toString() || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        bpm: parseInt(e.currentTarget.value) || undefined,
+                        bpm: e.target.value ? parseInt(e.target.value) : undefined,
                       })
                     }
+                    className="col-span-3"
                   />
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="volume" className="text-right">
                     Volume
                   </Label>
-                  <div className="col-span-3">
+                  <div className="col-span-3 flex items-center gap-4">
                     <Slider
                       id="volume"
-                      min={0.1}
+                      min={0}
                       max={2}
-                      step={0.05}
-                      value={[track.volume ?? 0.75]}
+                      step={0.1}
+                      value={[track.volume || 1]}
                       onValueChange={([value]) =>
-                        handleTrackChange({ volume: value })
+                        handleTrackChange({
+                          volume: value,
+                        })
                       }
                     />
+                    <span className="w-12 text-sm">
+                      {(track.volume || 1).toFixed(1)}
+                    </span>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="rating" className="text-right">
+                    Rating
+                  </Label>
+                  <div className="col-span-3 flex items-center gap-4">
+                    <Slider
+                      id="rating"
+                      min={0}
+                      max={5}
+                      step={1}
+                      value={[track.rating || 0]}
+                      onValueChange={([value]) =>
+                        handleTrackChange({
+                          rating: value,
+                        })
+                      }
+                    />
+                    <span className="w-12 text-sm">
+                      {track.rating || 0}
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="comment" className="text-right">
+                    Comment
+                  </Label>
+                  <Input
+                    id="comment"
+                    value={track.comment || ""}
+                    className="col-span-3"
+                    onChange={(e) =>
+                      handleTrackChange({ comment: e.currentTarget.value })
+                    }
+                  />
+                </div>
+
+              </div>
+            </TabsContent>
+            <TabsContent value="custom" className="mt-0 border-0">
+              <div className="grid gap-4 py-4">
+              {/* Custom Metadata Fields */}
+              {customMetadata.fields.map((field: CustomField) => {
+                  const customKey = asCustomKey(field.id);
+                  const value = track.customMetadata?.[customKey] ?? "";
+                  
+                  return (
+                    <div key={field.id} className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor={customKey} className="text-right">
+                        {field.name}
+                      </Label>
+                      <Input
+                        id={customKey}
+                        value={value}
+                        onChange={(e) => handleTrackChange({
+                          customMetadata: {
+                            ...track.customMetadata,
+                            [customKey]: e.target.value,
+                          }
+                        })}
+                        className="col-span-3"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </TabsContent>
+            <TabsContent value="details" className="mt-0 border-0">
+              <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="startTime" className="text-right">
                     Start Time
@@ -235,27 +357,6 @@ export function EditTrackDialog({
                       onValueChange={(val) =>
                         handleTrackChange({
                           startTime: Number(val),
-                        })
-                      }
-                    />
-                    <span className="text-sm text-gray-500">seconds</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="fadeDuration" className="text-right">
-                    Fade Duration
-                  </Label>
-                  <div className="col-span-3 flex items-center gap-2">
-                    <InputWithDefault
-                      id="fadeDuration"
-                      type="number"
-                      min={0}
-                      step={0.1}
-                      value={track.fadeDuration || ""}
-                      defaultValue={0}
-                      onValueChange={(val) =>
-                        handleTrackChange({
-                          fadeDuration: Number(val),
                         })
                       }
                     />
@@ -287,6 +388,27 @@ export function EditTrackDialog({
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="fadeDuration" className="text-right">
+                    Fade Duration
+                  </Label>
+                  <div className="col-span-3 flex items-center gap-2">
+                    <InputWithDefault
+                      id="fadeDuration"
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={track.fadeDuration || ""}
+                      defaultValue={0}
+                      onValueChange={(val) =>
+                        handleTrackChange({
+                          fadeDuration: Number(val),
+                        })
+                      }
+                    />
+                    <span className="text-sm text-gray-500">seconds</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="endTimeFadeDuration" className="text-right">
                     End Fade duration
                   </Label>
@@ -310,44 +432,11 @@ export function EditTrackDialog({
                     </span>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="rating" className="text-right">
-                    Rating
-                  </Label>
-                  <div className="col-span-3">
-                    <Slider
-                      id="rating"
-                      min={0}
-                      max={1}
-                      step={0.2}
-                      value={[track.rating || 0]}
-                      onValueChange={([value]) =>
-                        handleTrackChange({ rating: value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="comment" className="text-right">
-                    Comment
-                  </Label>
-                  <Input
-                    id="comment"
-                    value={track.comment || ""}
-                    className="col-span-3"
-                    onChange={(e) =>
-                      handleTrackChange({ comment: e.currentTarget.value })
-                    }
-                  />
-                </div>
               </div>
             </TabsContent>
           </ScrollArea>
         </Tabs>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
           <Button onClick={handleSave}>Save changes</Button>
         </DialogFooter>
       </DialogContent>

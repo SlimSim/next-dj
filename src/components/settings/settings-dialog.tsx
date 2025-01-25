@@ -9,21 +9,25 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import {
-  Settings,
+  SettingsIcon,
   ChevronDown,
   ChevronUp,
   Folder,
   X,
   Music,
   Music2,
+  PlusIcon,
+  Trash,
+  MoreVertical,
 } from "lucide-react";
 import { FileUpload } from "../common/file-upload";
 import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
-import { useSettings } from "./settings-context";
-import { useCallback, useEffect, useState } from "react";
+import { useSettings } from "@/lib/settings";
 import { usePlayerStore } from "@/lib/store";
-import { ConfirmButton } from "../ui/confirm-button";
+import type { Settings } from "@/lib/types/settings";
+import type { CustomMetadataField } from "@/lib/types/customMetadata";
+import { useCallback, useEffect, useState } from "react";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { Input } from "../ui/input";
 import { InputWithDefault } from "../ui/input-with-default";
@@ -34,10 +38,173 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { CrossIcon } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
+import { PencilIcon, TrashIcon, GripVertical } from "lucide-react";
+import { ConfirmButton } from "../ui/confirm-button";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface CustomField {
+  id: string;
+  name: string;
+  type: 'text';
+}
+
+interface CustomMetadata {
+  fields: CustomField[];
+}
+
+const initialCustomMetadata: CustomMetadata = {
+  fields: [],
+};
 
 interface SettingsContentProps {
   hasRemovedSongs: boolean;
-  setHasRemovedSongs: (hasRemovedSongs: boolean) => void;
+  setHasRemovedSongs: (value: boolean) => void;
+}
+
+interface SortableFieldProps {
+  id: string;
+  field: CustomMetadataField;
+  isEditing: boolean;
+  editingName: string;
+  onEditStart: () => void;
+  onEditChange: (value: string) => void;
+  onEditSubmit: () => void;
+  onEditCancel: () => void;
+  toggleCustomMetadataFilter: (fieldId: string) => void;
+  toggleCustomMetadataVisibility: (fieldId: string) => void;
+  removeCustomMetadataField: (fieldId: string) => void;
+}
+
+function SortableField({
+  id,
+  field,
+  isEditing,
+  editingName,
+  onEditStart,
+  onEditChange,
+  onEditSubmit,
+  onEditCancel,
+  toggleCustomMetadataFilter,
+  toggleCustomMetadataVisibility,
+  removeCustomMetadataField,
+}: SortableFieldProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center justify-between space-x-2 rounded-lg border p-2 ${
+        isDragging ? 'bg-accent' : ''
+      }`}
+    >
+      <div className="flex items-center space-x-2">
+        <button
+          className="cursor-grab hover:text-accent-foreground/50 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        {isEditing ? (
+          <Input
+            className="h-8 w-48"
+            value={editingName}
+            onChange={(e) => onEditChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onEditSubmit();
+              } else if (e.key === 'Escape') {
+                onEditCancel();
+              }
+            }}
+            onBlur={onEditSubmit}
+            autoFocus
+          />
+        ) : (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">{field.name}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onEditStart}
+            >
+              <PencilIcon className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={field.showInFilter}
+            onCheckedChange={() =>
+              toggleCustomMetadataFilter(field.id)
+            }
+          />
+          <Label className="text-xs">Filter</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={field.showInList}
+            onCheckedChange={() =>
+              toggleCustomMetadataVisibility(field.id)
+            }
+          />
+          <Label className="text-xs">List</Label>
+        </div>
+        <ConfirmButton
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-destructive"
+          onClick={() => removeCustomMetadataField(field.id)}
+        >
+          <TrashIcon className="h-3 w-3" />
+          <span className="sr-only">Remove field</span>
+        </ConfirmButton>
+      </div>
+    </div>
+  );
 }
 
 export function SettingsContent({
@@ -45,16 +212,29 @@ export function SettingsContent({
   setHasRemovedSongs,
 }: SettingsContentProps) {
   const {
-    recentPlayHours,
-    setRecentPlayHours,
-    monthlyPlayDays,
-    setMonthlyPlayDays,
-  } = useSettings();
+    selectedFolderNames,
+    removeFolder,
+    clearSelectedFolders,
+    removeRemovedSongs,
+  } = usePlayerStore();
 
-  const selectedFolderNames = usePlayerStore(
-    (state) => state.selectedFolderNames
-  );
-  const removeFolder = usePlayerStore((state) => state.removeFolder);
+  const customMetadata = usePlayerStore((state) => state.customMetadata);
+  const addCustomMetadataField = usePlayerStore((state) => state.addCustomMetadataField);
+  const removeField = usePlayerStore((state) => state.removeCustomMetadataField);
+  const renameCustomMetadataField = usePlayerStore((state) => state.renameCustomMetadataField);
+  const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
+  const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
+  const reorderCustomMetadataFields = usePlayerStore((state) => state.reorderCustomMetadataFields);
+
+  const recentPlayHours = useSettings((state) => state.recentPlayHours);
+  const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
+  const monthlyPlayDays = useSettings((state) => state.monthlyPlayDays);
+  const setMonthlyPlayDays = useSettings((state) => state.setMonthlyPlayDays);
+
+  const [newFieldName, setNewFieldName] = useState("");
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+
   const [showFolderList, setShowFolderList] = useState(false);
   const [hasAudioPermission, setHasAudioPermission] = useState(false);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
@@ -101,15 +281,57 @@ export function SettingsContent({
     checkAudioPermission();
   }, []);
 
+  const handleAddCustomField = () => {
+    if (!newFieldName.trim()) return;
+    const name = newFieldName.trim();
+    addCustomMetadataField({
+      id: uuidv4(),
+      name,
+      type: 'text',
+      showInFilter: true,
+      showInList: true,
+    });
+    setNewFieldName('');
+  };
+
+  const removeCustomMetadataField = (id: string) => {
+    removeField(id);
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = customMetadata.fields.findIndex(
+        (field) => field.id === active.id
+      );
+      const newIndex = customMetadata.fields.findIndex(
+        (field) => field.id === over?.id
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderCustomMetadataFields(oldIndex, newIndex);
+      }
+    }
+  };
+
   return (
     <div>
       <DialogHeader>
         <DialogTitle>Settings</DialogTitle>
       </DialogHeader>
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          <TabsTrigger value="customTags">Custom Tags</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -158,16 +380,16 @@ export function SettingsContent({
                 <span className="text-sm ">
                   Some songs were removed from your library
                 </span>
-                <ConfirmButton
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    usePlayerStore.getState().removeRemovedSongs();
+                    removeRemovedSongs();
                     checkForRemovedSongs();
                   }}
                 >
                   Clean up
-                </ConfirmButton>
+                </Button>
               </div>
             )}
           </div>
@@ -228,72 +450,111 @@ export function SettingsContent({
               the song name in the songlist
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center sm:items-start flex-row sm:flex-col gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <label className="flex-grow" htmlFor="recentPlayHours">
-                        First counter:
-                      </label>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs text-muted-foreground">
-                        Set the time window for the first play counter. <br />
-                        Only counts plays within the last X hours (default: 18)
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <InputWithDefault
-                    id="recentPlayHours"
-                    type="number"
-                    min="0"
-                    value={recentPlayHours || ""}
-                    defaultValue={18}
-                    onValueChange={(val) => {
-                      const numVal = val === "" ? 0 : Number(val);
-                      setRecentPlayHours(numVal);
-                    }}
-                    className="w-24"
-                  />
-                  <span className="text-xs text-muted-foreground w-8">
-                    hours
-                  </span>
-                </div>
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <label className="text-sm" htmlFor="recentPlayHours">Recent Play Hours</label>
+                <Input
+                  type="number"
+                  id="recentPlayHours"
+                  value={recentPlayHours.toString()}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value)) {
+                      setRecentPlayHours(value);
+                    }
+                  }}
+                  min={1}
+                  max={168}
+                />
               </div>
-              <div className="flex items-center sm:items-start flex-row sm:flex-col gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <label className="flex-grow" htmlFor="monthlyPlayDays">
-                        Second counter:
-                      </label>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs text-muted-foreground">
-                        Set the time window for the second play counter. <br />
-                        Only counts plays within the last X days (default: 42)
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <div className="flex items-center gap-2">
-                  <InputWithDefault
-                    id="monthlyPlayDays"
-                    type="number"
-                    min="0"
-                    value={monthlyPlayDays || ""}
-                    defaultValue={42}
-                    onValueChange={(val) => {
-                      const numVal = val === "" ? 0 : Number(val);
-                      setMonthlyPlayDays(numVal);
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <label className="text-sm" htmlFor="monthlyPlayDays">Monthly Play Days</label>
+                <Input
+                  type="number"
+                  id="monthlyPlayDays"
+                  value={monthlyPlayDays.toString()}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value)) {
+                      setMonthlyPlayDays(value);
+                    }
+                  }}
+                  min={1}
+                  max={31}
+                />
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="customTags" className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-medium">Add Custom Tags to Songs</h3>
+            <p className="text-sm text-muted-foreground">
+              Add custom tags to organize your music library. These tags can be used to filter and sort your tracks.
+              For example, add tags like "Vocals" or "Energy Level" to better organize your DJ sets.
+            </p>
+            <div className="flex flex-col gap-4">
+              {/* Existing Custom Fields */}
+              <div className="space-y-4">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={customMetadata.fields.map(field => field.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {customMetadata.fields.map((field) => (
+                        <SortableField
+                          key={field.id}
+                          id={field.id}
+                          field={field}
+                          isEditing={editingFieldId === field.id}
+                          editingName={editingName}
+                          onEditStart={() => {
+                            setEditingFieldId(field.id);
+                            setEditingName(field.name);
+                          }}
+                          onEditChange={setEditingName}
+                          onEditSubmit={() => {
+                            if (editingName.trim()) {
+                              renameCustomMetadataField(field.id, editingName);
+                            }
+                            setEditingFieldId(null);
+                          }}
+                          onEditCancel={() => setEditingFieldId(null)}
+                          toggleCustomMetadataFilter={toggleCustomMetadataFilter}
+                          toggleCustomMetadataVisibility={toggleCustomMetadataVisibility}
+                          removeCustomMetadataField={removeCustomMetadataField}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+
+              {/* Add New Field */}
+              <div className="space-y-2">
+              <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const id = uuidv4();
+                      addCustomMetadataField({
+                        id,
+                        name: "New Field",
+                        type: "text",
+                        showInFilter: true,
+                        showInList: true,
+                      });
+                      setEditingFieldId(id); // Start editing the new field
                     }}
-                    className="w-24"
-                  />
-                  <span className="text-xs text-muted-foreground w-8">
-                    days
-                  </span>
+                  >
+                    Add Custom Tag
+                  </Button>
                 </div>
               </div>
             </div>
@@ -349,7 +610,8 @@ export function SettingsDialog({
       {triggerButton && (
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
+            <SettingsIcon className="h-[1.2rem] w-[1.2rem]" />
+            <span className="sr-only">Settings</span>
           </Button>
         </DialogTrigger>
       )}

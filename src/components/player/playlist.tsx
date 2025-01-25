@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, RefObject, useMemo } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { useSettings } from "../settings/settings-context";
@@ -11,6 +13,7 @@ import { FileUpload } from "../common/file-upload";
 import { GearIcon } from "@radix-ui/react-icons";
 import { SortField, SortOrder, FilterCriteria } from "./playlist-controls";
 import { createErrorHandler } from "@/features/audio/utils/errorUtils";
+import { asCustomKey } from "@/lib/utils/metadata";
 
 const handleError = createErrorHandler('Playlist');
 
@@ -35,7 +38,7 @@ export function Playlist({
   const selectedListId = usePlayerStore((state) => state.selectedListId);
   const songLists = usePlayerStore((state) => state.songLists);
 
-  const { currentTrack, prelistenTrack, isPrelistening, queue, history } =
+  const { currentTrack, prelistenTrack, isPrelistening, queue, history, customMetadata } =
     usePlayerStore();
 
   const { showPreListenButtons } = useSettings();
@@ -71,6 +74,16 @@ export function Playlist({
         track.genre ? track.genre.includes(filters.genre as string) : false
       );
     }
+
+    // Apply custom metadata filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key.startsWith('custom_') && value) {
+        filteredTracks = filteredTracks.filter((track) => {
+          const customValue = track.customMetadata?.[asCustomKey(key.slice(7))];
+          return customValue && customValue.trim() === value;
+        });
+      }
+    });
 
     // Apply sorting
     filteredTracks.sort((a, b) => {
@@ -145,7 +158,7 @@ export function Playlist({
           <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground">
             <p>No tracks found</p>
             <p>
-              Add tracks in the settings (<GearIcon className="inline-block" />{" "}
+              Add tracks in the settings (<GearIcon className="inline-block" />
               ) or with this button:
             </p>
             <FileUpload onlyFolderUpload />

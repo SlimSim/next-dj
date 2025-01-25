@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -17,6 +17,7 @@ import { getUniqueValues } from "@/db/audio-operations";
 import { cn } from "@/lib/utils/common";
 import { usePlayerStore } from "@/lib/store";
 import { FilterSelect } from "./filter-select";
+import { asCustomKey } from "@/lib/utils/metadata";
 
 export type SortField =
   | "title"
@@ -32,6 +33,8 @@ export type FilterCriteria = {
   artist?: string;
   album?: string;
   genre?: string; // Even though genre is string[] in metadata, we filter by a single genre
+} & {
+  [K in `custom_${string}`]?: string; // Allow custom metadata fields
 };
 
 interface PlaylistControlsProps {
@@ -43,29 +46,51 @@ interface PlaylistControlsProps {
 }
 
 export function PlaylistControls({
-  onSortChange,
   onFilterChange,
-  sortField,
-  sortOrder,
   filters,
+  sortField,
+  onSortChange,
+  sortOrder,
 }: PlaylistControlsProps) {
-  const [uniqueValues, setUniqueValues] = useState<{
-    artists: string[];
-    albums: string[];
-    genres: string[];
-  }>({
-    artists: [],
-    albums: [],
-    genres: [],
-  });
+  const tracks = usePlayerStore((state) => state.metadata);
+  const customMetadata = usePlayerStore((state) => state.customMetadata);
 
-  useEffect(() => {
-    const loadUniqueValues = async () => {
-      const values = await getUniqueValues();
-      setUniqueValues(values);
-    };
-    loadUniqueValues();
-  }, []);
+  // Get unique values for filters
+  const uniqueValues = useMemo(() => {
+    const values = {
+      artist: new Set<string>(),
+      album: new Set<string>(),
+      genre: new Set<string>(),
+    } as Record<string, Set<string>>;
+
+    // Initialize sets for custom metadata fields
+    customMetadata.fields.forEach((field) => {
+      values[`custom_${field.id}`] = new Set<string>();
+    });
+
+    // Collect all values including custom metadata
+    tracks.forEach((track) => {
+      // Standard metadata
+      if (track.artist) values.artist.add(track.artist);
+      if (track.album) values.album.add(track.album);
+      if (track.genre) track.genre.forEach((g) => values.genre.add(g));
+
+      // Custom metadata values
+      customMetadata.fields.forEach((field) => {
+        const customKey = asCustomKey(field.id);
+        const value = track.customMetadata?.[customKey];
+        
+        if (value === undefined || value === '') {
+          values[customKey].add('(Empty)');
+        } else if (typeof value === 'string') {
+          const trimmed = value.trim();
+          if (trimmed) values[customKey].add(trimmed);
+        }
+      });
+    });
+
+    return values;
+  }, [tracks, customMetadata.fields]);
 
   const getSortLabel = (field: string) => {
     switch (field) {
@@ -91,6 +116,12 @@ export function PlaylistControls({
   };
 
   const showFilters = usePlayerStore((state) => state.showFilters);
+
+  // Only show custom metadata fields that have showInFilter enabled
+  const visibleCustomFields = useMemo(() => 
+    customMetadata.fields.filter(field => field.showInFilter),
+    [customMetadata.fields]
+  );
 
   return (
     <div
@@ -168,7 +199,7 @@ export function PlaylistControls({
           })
         }
         placeholder="Artist"
-        items={uniqueValues.artists}
+        items={Array.from(uniqueValues.artist)}
       />
 
       <FilterSelect
@@ -180,7 +211,7 @@ export function PlaylistControls({
           })
         }
         placeholder="Album"
-        items={uniqueValues.albums}
+        items={Array.from(uniqueValues.album)}
       />
 
       <FilterSelect
@@ -192,8 +223,30 @@ export function PlaylistControls({
           })
         }
         placeholder="Genre"
-        items={uniqueValues.genres}
+        items={Array.from(uniqueValues.genre)}
       />
+
+      {/* Custom metadata filters */}
+      {visibleCustomFields.map((field) => {
+        const filterKey = `custom_${field.id}` as keyof FilterCriteria;
+        const currentValue = filters[filterKey];
+        const options = Array.from(uniqueValues[filterKey] || new Set());
+        
+        return (
+          <FilterSelect
+            key={field.id}
+            value={currentValue}
+            onValueChange={(value) =>
+              onFilterChange({
+                ...filters,
+                [filterKey]: value === '(Empty)' ? '' : value,
+              })
+            }
+            placeholder={`Filter by ${field.name}`}
+            items={options}
+          />
+        );
+      })}
     </div>
   );
 }

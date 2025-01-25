@@ -88,6 +88,8 @@ export function TrackItem({
   const songLists = usePlayerStore((state) => state.songLists);
   const addSongToList = usePlayerStore((state) => state.addSongToList);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
+  const customMetadata = usePlayerStore((state) => state.customMetadata);
+  const visibleCustomFields = customMetadata.fields.filter(field => field.showInList);
 
   const handlePreListenClick = (track: MusicMetadata) => {
     // If we're already prelistening to this track, just pause it
@@ -330,6 +332,29 @@ export function TrackItem({
                 </button>
               </div>
             )}
+            {visibleCustomFields.map(field => {
+              const value = track.customMetadata?.[`custom_${field.id}`];
+              if (!value) return null;
+              return (
+                <div key={field.id} className="flex items-center gap-1">
+                  <span>•</span>
+                  <TooltipProvider>
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 cursor-help">
+                          <span className="text-sm text-muted-foreground truncate max-w-[150px]">
+                            {`${field.name}: ${value.length > 20 ? `${value.substring(0, 20)}...` : value}`}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="start">
+                        {field.name}: {value}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              );
+            })}
           </div>
         )}
         {isCommentExpanded && track.comment && (
@@ -460,7 +485,7 @@ export function TrackItem({
               Edit metadata
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="text-destructive"
+              className="text-destructive focus:text-destructive"
               onClick={() => onDeleteTrack(track)}
             >
               <Trash className="mr-2 h-4 w-4" />
