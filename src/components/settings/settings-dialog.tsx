@@ -49,6 +49,7 @@ import {
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { PencilIcon, TrashIcon } from "lucide-react";
+import { ConfirmButton } from "../ui/confirm-button";
 
 interface CustomField {
   id: string;
@@ -396,14 +397,15 @@ export function SettingsContent({
                           />
                           <Label className="text-xs">List</Label>
                         </div>
-                        <Button
+                        <ConfirmButton
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 text-destructive"
                           onClick={() => removeCustomMetadataField(field.id)}
                         >
                           <TrashIcon className="h-3 w-3" />
-                        </Button>
+                          <span className="sr-only">Remove field</span>
+                        </ConfirmButton>
                       </div>
                     </div>
                   ))}

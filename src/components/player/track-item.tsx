@@ -335,7 +335,6 @@ export function TrackItem({
             {visibleCustomFields.map(field => {
               const value = track.customMetadata?.[`custom_${field.id}`];
               if (!value) return null;
-              console.log("value", value)
               return (
                 <div key={field.id} className="flex items-center gap-1">
                   <span>•</span>
