@@ -382,6 +382,18 @@ export const usePlayerStore = create<PlayerStore>()(
               ),
             },
           })),
+        reorderCustomMetadataFields: (oldIndex: number, newIndex: number) =>
+          set((state) => {
+            const fields = [...state.customMetadata.fields];
+            const [movedField] = fields.splice(oldIndex, 1);
+            fields.splice(newIndex, 0, movedField);
+            return {
+              customMetadata: {
+                ...state.customMetadata,
+                fields,
+              },
+            };
+          }),
       };
     },
     {

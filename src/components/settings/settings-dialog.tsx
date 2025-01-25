@@ -48,8 +48,25 @@ import {
 } from "../ui/dropdown-menu";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
-import { PencilIcon, TrashIcon } from "lucide-react";
+import { PencilIcon, TrashIcon, GripVertical } from "lucide-react";
 import { ConfirmButton } from "../ui/confirm-button";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface CustomField {
   id: string;
@@ -70,6 +87,126 @@ interface SettingsContentProps {
   setHasRemovedSongs: (value: boolean) => void;
 }
 
+interface SortableFieldProps {
+  id: string;
+  field: CustomMetadataField;
+  isEditing: boolean;
+  editingName: string;
+  onEditStart: () => void;
+  onEditChange: (value: string) => void;
+  onEditSubmit: () => void;
+  onEditCancel: () => void;
+  toggleCustomMetadataFilter: (fieldId: string) => void;
+  toggleCustomMetadataVisibility: (fieldId: string) => void;
+  removeCustomMetadataField: (fieldId: string) => void;
+}
+
+function SortableField({
+  id,
+  field,
+  isEditing,
+  editingName,
+  onEditStart,
+  onEditChange,
+  onEditSubmit,
+  onEditCancel,
+  toggleCustomMetadataFilter,
+  toggleCustomMetadataVisibility,
+  removeCustomMetadataField,
+}: SortableFieldProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center justify-between space-x-2 rounded-lg border p-2 ${
+        isDragging ? 'bg-accent' : ''
+      }`}
+    >
+      <div className="flex items-center space-x-2">
+        <button
+          className="cursor-grab hover:text-accent-foreground/50 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        {isEditing ? (
+          <Input
+            className="h-8 w-48"
+            value={editingName}
+            onChange={(e) => onEditChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onEditSubmit();
+              } else if (e.key === 'Escape') {
+                onEditCancel();
+              }
+            }}
+            onBlur={onEditSubmit}
+            autoFocus
+          />
+        ) : (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">{field.name}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onEditStart}
+            >
+              <PencilIcon className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={field.showInFilter}
+            onCheckedChange={() =>
+              toggleCustomMetadataFilter(field.id)
+            }
+          />
+          <Label className="text-xs">Filter</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={field.showInList}
+            onCheckedChange={() =>
+              toggleCustomMetadataVisibility(field.id)
+            }
+          />
+          <Label className="text-xs">List</Label>
+        </div>
+        <ConfirmButton
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-destructive"
+          onClick={() => removeCustomMetadataField(field.id)}
+        >
+          <TrashIcon className="h-3 w-3" />
+          <span className="sr-only">Remove field</span>
+        </ConfirmButton>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsContent({
   hasRemovedSongs,
   setHasRemovedSongs,
@@ -87,6 +224,7 @@ export function SettingsContent({
   const renameCustomMetadataField = usePlayerStore((state) => state.renameCustomMetadataField);
   const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
   const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
+  const reorderCustomMetadataFields = usePlayerStore((state) => state.reorderCustomMetadataFields);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
   const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
@@ -158,6 +296,30 @@ export function SettingsContent({
 
   const removeCustomMetadataField = (id: string) => {
     removeField(id);
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = customMetadata.fields.findIndex(
+        (field) => field.id === active.id
+      );
+      const newIndex = customMetadata.fields.findIndex(
+        (field) => field.id === over?.id
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderCustomMetadataFields(oldIndex, newIndex);
+      }
+    }
   };
 
   return (
@@ -334,82 +496,43 @@ export function SettingsContent({
             <div className="flex flex-col gap-4">
               {/* Existing Custom Fields */}
               <div className="space-y-4">
-                
-                <div className="space-y-2">
-                  {customMetadata.fields.map((field) => (
-                    <div
-                      key={field.id}
-                      className="flex items-center justify-between space-x-2 rounded-lg border p-2"
-                    >
-                      {editingFieldId === field.id ? (
-                        <Input
-                          className="h-8 w-48"
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              renameCustomMetadataField(field.id, editingName);
-                              setEditingFieldId(null);
-                            } else if (e.key === 'Escape') {
-                              setEditingFieldId(null);
-                            }
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={customMetadata.fields.map(field => field.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {customMetadata.fields.map((field) => (
+                        <SortableField
+                          key={field.id}
+                          id={field.id}
+                          field={field}
+                          isEditing={editingFieldId === field.id}
+                          editingName={editingName}
+                          onEditStart={() => {
+                            setEditingFieldId(field.id);
+                            setEditingName(field.name);
                           }}
-                          onBlur={() => {
+                          onEditChange={setEditingName}
+                          onEditSubmit={() => {
                             if (editingName.trim()) {
                               renameCustomMetadataField(field.id, editingName);
                             }
                             setEditingFieldId(null);
                           }}
-                          autoFocus
+                          onEditCancel={() => setEditingFieldId(null)}
+                          toggleCustomMetadataFilter={toggleCustomMetadataFilter}
+                          toggleCustomMetadataVisibility={toggleCustomMetadataVisibility}
+                          removeCustomMetadataField={removeCustomMetadataField}
                         />
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">{field.name}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => {
-                              setEditingFieldId(field.id);
-                              setEditingName(field.name);
-                            }}
-                          >
-                            <PencilIcon className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={field.showInFilter}
-                            onCheckedChange={() =>
-                              toggleCustomMetadataFilter(field.id)
-                            }
-                          />
-                          <Label className="text-xs">Filter</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={field.showInList}
-                            onCheckedChange={() =>
-                              toggleCustomMetadataVisibility(field.id)
-                            }
-                          />
-                          <Label className="text-xs">List</Label>
-                        </div>
-                        <ConfirmButton
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive"
-                          onClick={() => removeCustomMetadataField(field.id)}
-                        >
-                          <TrashIcon className="h-3 w-3" />
-                          <span className="sr-only">Remove field</span>
-                        </ConfirmButton>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               </div>
 
               {/* Add New Field */}
