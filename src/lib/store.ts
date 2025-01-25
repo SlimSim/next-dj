@@ -372,6 +372,16 @@ export const usePlayerStore = create<PlayerStore>()(
               filters: updatedFilters,
             };
           }),
+        renameCustomMetadataField: (fieldId: string, newName: string) =>
+          set((state) => ({
+            customMetadata: {
+              fields: state.customMetadata.fields.map(field =>
+                field.id === fieldId
+                  ? { ...field, name: newName.trim() }
+                  : field
+              ),
+            },
+          })),
       };
     },
     {

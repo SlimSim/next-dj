@@ -47,6 +47,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
+import { PencilIcon, TrashIcon } from "lucide-react";
 
 interface CustomField {
   id: string;
@@ -81,6 +83,7 @@ export function SettingsContent({
   const customMetadata = usePlayerStore((state) => state.customMetadata);
   const addCustomMetadataField = usePlayerStore((state) => state.addCustomMetadataField);
   const removeField = usePlayerStore((state) => state.removeCustomMetadataField);
+  const renameCustomMetadataField = usePlayerStore((state) => state.renameCustomMetadataField);
   const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
   const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
 
@@ -90,6 +93,8 @@ export function SettingsContent({
   const setMonthlyPlayDays = useSettings((state) => state.setMonthlyPlayDays);
 
   const [newFieldName, setNewFieldName] = useState("");
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const [showFolderList, setShowFolderList] = useState(false);
   const [hasAudioPermission, setHasAudioPermission] = useState(false);
@@ -320,55 +325,86 @@ export function SettingsContent({
 
         <TabsContent value="customTags" className="space-y-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">Add Custom metadata to songs</h3>
+            <h3 className="text-sm font-medium">Add Custom Tags to Songs</h3>
             <p className="text-sm text-muted-foreground">
               Add custom tags to organize your music library. These tags can be used to filter and sort your tracks.
-              For example, add tags like "Vocals", "Energy Level", or "Set Time" to better organize your DJ sets.
+              For example, add tags like "Vocals" or "Energy Level" to better organize your DJ sets.
             </p>
             <div className="flex flex-col gap-4">
               {/* Existing Custom Fields */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Existing Custom Fields</h4>
-                <div className="grid gap-2">
-                  {customMetadata.fields.map((field: CustomMetadataField) => (
-                    <div key={field.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm">{field.name}</span>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={field.showInFilter}
-                              onCheckedChange={() => toggleCustomMetadataFilter(field.id)}
-                              aria-label={`Show ${field.name} in filters`}
-                            />
-                            <span className="text-sm text-muted-foreground">Show in filters</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={field.showInList}
-                              onCheckedChange={() => toggleCustomMetadataVisibility(field.id)}
-                              aria-label={`Show ${field.name} values in track list`}
-                            />
-                            <span className="text-sm text-muted-foreground">Show in list</span>
-                          </div>
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => removeField(field.id)}
+              <div className="space-y-4">
+                
+                <div className="space-y-2">
+                  {customMetadata.fields.map((field) => (
+                    <div
+                      key={field.id}
+                      className="flex items-center justify-between space-x-2 rounded-lg border p-2"
+                    >
+                      {editingFieldId === field.id ? (
+                        <Input
+                          className="h-8 w-48"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              renameCustomMetadataField(field.id, editingName);
+                              setEditingFieldId(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingFieldId(null);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (editingName.trim()) {
+                              renameCustomMetadataField(field.id, editingName);
+                            }
+                            setEditingFieldId(null);
+                          }}
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">{field.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => {
+                              setEditingFieldId(field.id);
+                              setEditingName(field.name);
+                            }}
                           >
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <PencilIcon className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={field.showInFilter}
+                            onCheckedChange={() =>
+                              toggleCustomMetadataFilter(field.id)
+                            }
+                          />
+                          <Label className="text-xs">Filter</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={field.showInList}
+                            onCheckedChange={() =>
+                              toggleCustomMetadataVisibility(field.id)
+                            }
+                          />
+                          <Label className="text-xs">List</Label>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive"
+                          onClick={() => removeCustomMetadataField(field.id)}
+                        >
+                          <TrashIcon className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -376,25 +412,23 @@ export function SettingsContent({
 
               {/* Add New Field */}
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">Add New Field</h4>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="New field name"
-                    value={newFieldName}
-                    onChange={(e) => setNewFieldName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddCustomField();
-                      }
-                    }}
-                  />
+              <div className="flex items-center">
                   <Button
-                    onClick={handleAddCustomField}
-                    disabled={!newFieldName.trim()}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const id = uuidv4();
+                      addCustomMetadataField({
+                        id,
+                        name: "New Field",
+                        type: "text",
+                        showInFilter: true,
+                        showInList: true,
+                      });
+                      setEditingFieldId(id); // Start editing the new field
+                    }}
                   >
-                    <PlusIcon className="h-4 w-4" />
-                    <span className="sr-only">Add Field</span>
+                    Add Custom Tag
                   </Button>
                 </div>
               </div>
