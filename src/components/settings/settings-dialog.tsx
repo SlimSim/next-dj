@@ -89,30 +89,34 @@ interface SettingsContentProps {
 
 interface SortableFieldProps {
   id: string;
-  field: CustomMetadataField;
-  isEditing: boolean;
-  editingName: string;
-  onEditStart: () => void;
-  onEditChange: (value: string) => void;
-  onEditSubmit: () => void;
-  onEditCancel: () => void;
-  toggleCustomMetadataFilter: (fieldId: string) => void;
-  toggleCustomMetadataVisibility: (fieldId: string) => void;
-  removeCustomMetadataField: (fieldId: string) => void;
+  name: string;
+  showInFilter: boolean;
+  showInList: boolean;
+  isEditing?: boolean;
+  editingName?: string;
+  onEditStart?: () => void;
+  onEditChange?: (value: string) => void;
+  onEditSubmit?: () => void;
+  onEditCancel?: () => void;
+  toggleFilter: (fieldId: string) => void;
+  toggleVisibility: (fieldId: string) => void;
+  removeField?: (fieldId: string) => void;
 }
 
 function SortableField({
   id,
-  field,
+  name,
+  showInFilter,
+  showInList,
   isEditing,
   editingName,
   onEditStart,
   onEditChange,
   onEditSubmit,
   onEditCancel,
-  toggleCustomMetadataFilter,
-  toggleCustomMetadataVisibility,
-  removeCustomMetadataField,
+  toggleFilter,
+  toggleVisibility,
+  removeField,
 }: SortableFieldProps) {
   const {
     attributes,
@@ -149,12 +153,12 @@ function SortableField({
           <Input
             className="h-8 w-48"
             value={editingName}
-            onChange={(e) => onEditChange(e.target.value)}
+            onChange={(e) => onEditChange?.(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                onEditSubmit();
+                onEditSubmit?.();
               } else if (e.key === 'Escape') {
-                onEditCancel();
+                onEditCancel?.();
               }
             }}
             onBlur={onEditSubmit}
@@ -162,46 +166,46 @@ function SortableField({
           />
         ) : (
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{field.name}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={onEditStart}
-            >
-              <PencilIcon className="h-3 w-3" />
-            </Button>
+            <span className="text-sm font-medium">{name}</span>
+            {onEditStart && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={onEditStart}
+              >
+                <PencilIcon className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         )}
       </div>
       <div className="flex items-center space-x-2">
         <div className="flex items-center space-x-2">
           <Switch
-            checked={field.showInFilter}
-            onCheckedChange={() =>
-              toggleCustomMetadataFilter(field.id)
-            }
+            checked={showInFilter}
+            onCheckedChange={() => toggleFilter(id)}
           />
           <Label className="text-xs">Filter</Label>
         </div>
         <div className="flex items-center space-x-2">
           <Switch
-            checked={field.showInList}
-            onCheckedChange={() =>
-              toggleCustomMetadataVisibility(field.id)
-            }
+            checked={showInList}
+            onCheckedChange={() => toggleVisibility(id)}
           />
           <Label className="text-xs">List</Label>
         </div>
-        <ConfirmButton
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-destructive"
-          onClick={() => removeCustomMetadataField(field.id)}
-        >
-          <TrashIcon className="h-3 w-3" />
-          <span className="sr-only">Remove field</span>
-        </ConfirmButton>
+        {removeField && (
+          <ConfirmButton
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-destructive"
+            onClick={() => removeField(id)}
+          >
+            <TrashIcon className="h-3 w-3" />
+            <span className="sr-only">Remove field</span>
+          </ConfirmButton>
+        )}
       </div>
     </div>
   );
@@ -225,6 +229,11 @@ export function SettingsContent({
   const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
   const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
   const reorderCustomMetadataFields = usePlayerStore((state) => state.reorderCustomMetadataFields);
+
+  const standardMetadataFields = usePlayerStore((state) => state.standardMetadataFields);
+  const toggleStandardMetadataFilter = usePlayerStore((state) => state.toggleStandardMetadataFilter);
+  const toggleStandardMetadataVisibility = usePlayerStore((state) => state.toggleStandardMetadataVisibility);
+  const reorderStandardMetadataFields = usePlayerStore((state) => state.reorderStandardMetadataFields);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
   const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
@@ -322,6 +331,23 @@ export function SettingsContent({
     }
   };
 
+  const handleStandardDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = standardMetadataFields.findIndex(
+        (field) => field.id === active.id
+      );
+      const newIndex = standardMetadataFields.findIndex(
+        (field) => field.id === over?.id
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderStandardMetadataFields(oldIndex, newIndex);
+      }
+    }
+  };
+
   return (
     <div>
       <DialogHeader>
@@ -331,7 +357,7 @@ export function SettingsContent({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="customTags">Custom Tags</TabsTrigger>
+          <TabsTrigger value="metadata">Metadata</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -486,56 +512,79 @@ export function SettingsContent({
           </div>
         </TabsContent>
 
-        <TabsContent value="customTags" className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">Add Custom Tags to Songs</h3>
-            <p className="text-sm text-muted-foreground">
-              Add custom tags to organize your music library. These tags can be used to filter and sort your tracks.
-              For example, add tags like "Vocals" or "Energy Level" to better organize your DJ sets.
-            </p>
-            <div className="flex flex-col gap-4">
-              {/* Existing Custom Fields */}
-              <div className="space-y-4">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
+        <TabsContent value="metadata" className="space-y-6">
+          <div className="flex flex-col gap-4">
+            {/* Standard Metadata Fields */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Standard Metadata Fields</h4>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleStandardDragEnd}
+              >
+                <SortableContext
+                  items={standardMetadataFields.map(field => field.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <SortableContext
-                    items={customMetadata.fields.map(field => field.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-2">
-                      {customMetadata.fields.map((field) => (
-                        <SortableField
-                          key={field.id}
-                          id={field.id}
-                          field={field}
-                          isEditing={editingFieldId === field.id}
-                          editingName={editingName}
-                          onEditStart={() => {
-                            setEditingFieldId(field.id);
-                            setEditingName(field.name);
-                          }}
-                          onEditChange={setEditingName}
-                          onEditSubmit={() => {
-                            if (editingName.trim()) {
-                              renameCustomMetadataField(field.id, editingName);
-                            }
-                            setEditingFieldId(null);
-                          }}
-                          onEditCancel={() => setEditingFieldId(null)}
-                          toggleCustomMetadataFilter={toggleCustomMetadataFilter}
-                          toggleCustomMetadataVisibility={toggleCustomMetadataVisibility}
-                          removeCustomMetadataField={removeCustomMetadataField}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </div>
+                  <div className="space-y-2">
+                    {standardMetadataFields.map((field) => (
+                      <SortableField
+                        key={field.id}
+                        id={field.id}
+                        name={field.name}
+                        showInFilter={field.showInFilter}
+                        showInList={field.showInList}
+                        toggleFilter={toggleStandardMetadataFilter}
+                        toggleVisibility={toggleStandardMetadataVisibility}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
 
-              {/* Add New Field */}
+            {/* Custom Metadata Fields */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Custom Metadata Fields</h4>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={customMetadata.fields.map(field => field.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {customMetadata.fields.map((field) => (
+                      <SortableField
+                        key={field.id}
+                        id={field.id}
+                        name={field.name}
+                        showInFilter={field.showInFilter}
+                        showInList={field.showInList}
+                        isEditing={editingFieldId === field.id}
+                        editingName={editingName}
+                        onEditStart={() => {
+                          setEditingFieldId(field.id);
+                          setEditingName(field.name);
+                        }}
+                        onEditChange={setEditingName}
+                        onEditSubmit={() => {
+                          if (editingName.trim()) {
+                            renameCustomMetadataField(field.id, editingName);
+                          }
+                          setEditingFieldId(null);
+                        }}
+                        onEditCancel={() => setEditingFieldId(null)}
+                        toggleFilter={toggleCustomMetadataFilter}
+                        toggleVisibility={toggleCustomMetadataVisibility}
+                        removeField={removeCustomMetadataField}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
               <div className="space-y-2">
               <div className="flex items-center">
                   <Button

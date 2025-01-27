@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { PlayerStore, PlayerState, SongList } from "./types/player";
 import { MusicMetadata } from "./types/types";
 import { CustomMetadataState, CustomMetadataField } from './types/customMetadata';
+import { StandardMetadataField } from './types/settings';
 import {
   createQueueActions,
   createPlaybackActions,
@@ -48,6 +49,29 @@ const initialState: PlayerState = {
   customMetadata: {
     fields: [],
   },
+  standardMetadataFields: [
+    {
+      id: 'artist',
+      name: 'Artist',
+      key: 'artist',
+      showInFilter: true,
+      showInList: true,
+    },
+    {
+      id: 'album',
+      name: 'Album',
+      key: 'album',
+      showInFilter: true,
+      showInList: true,
+    },
+    {
+      id: 'genre',
+      name: 'Genre',
+      key: 'genre',
+      showInFilter: true,
+      showInList: true,
+    },
+  ],
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -394,6 +418,31 @@ export const usePlayerStore = create<PlayerStore>()(
               },
             };
           }),
+        toggleStandardMetadataFilter: (fieldId: string) =>
+          set((state) => ({
+            standardMetadataFields: state.standardMetadataFields.map(field =>
+              field.id === fieldId
+                ? { ...field, showInFilter: !field.showInFilter }
+                : field
+            ),
+          })),
+        toggleStandardMetadataVisibility: (fieldId: string) =>
+          set((state) => ({
+            standardMetadataFields: state.standardMetadataFields.map(field =>
+              field.id === fieldId
+                ? { ...field, showInList: !field.showInList }
+                : field
+            ),
+          })),
+        reorderStandardMetadataFields: (oldIndex: number, newIndex: number) =>
+          set((state) => {
+            const fields = [...state.standardMetadataFields];
+            const [movedField] = fields.splice(oldIndex, 1);
+            fields.splice(newIndex, 0, movedField);
+            return {
+              standardMetadataFields: fields,
+            };
+          }),
       };
     },
     {
@@ -419,6 +468,7 @@ export const usePlayerStore = create<PlayerStore>()(
         selectedListId: state.selectedListId,
         metadata: state.metadata,
         customMetadata: state.customMetadata,
+        standardMetadataFields: state.standardMetadataFields,
       }),
     }
   )

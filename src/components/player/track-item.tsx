@@ -39,6 +39,8 @@ import { PreListenDialog } from "./pre-listen-dialog";
 import { usePlayerStore } from "@/lib/store";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { SettingsDialog } from "../settings/settings-dialog";
+import { StandardMetadataField } from "@/lib/types/settings";
+import { CustomMetadataField } from "@/lib/types/customMetadata";
 
 interface TrackItemProps {
   track: MusicMetadata;
@@ -89,7 +91,9 @@ export function TrackItem({
   const addSongToList = usePlayerStore((state) => state.addSongToList);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const customMetadata = usePlayerStore((state) => state.customMetadata);
-  const visibleCustomFields = customMetadata.fields.filter(field => field.showInList);
+  const standardMetadataFields = usePlayerStore((state) => state.standardMetadataFields);
+  const visibleCustomFields = customMetadata.fields.filter((field: CustomMetadataField) => field.showInList);
+  const visibleStandardFields = standardMetadataFields.filter((field: StandardMetadataField) => field.showInList);
 
   const handlePreListenClick = (track: MusicMetadata) => {
     // If we're already prelistening to this track, just pause it
@@ -226,137 +230,154 @@ export function TrackItem({
             {track.title}
           </div>
         </div>
-        {track.artist && (
-          <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
-            {track.artist && (
-              <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+          {visibleStandardFields.map(field => {
+            const value = field.key === 'genre' ? track[field.key]?.join(', ') : track[field.key];
+            if (!value) return null;
+            return (
+              <div key={field.id} className="flex items-center gap-1">
                 <TooltipProvider>
                   <Tooltip delayDuration={300}>
                     <TooltipTrigger className="cursor-help">
-                      <span className="truncate">{track.artist}</span>
+                      <span className="truncate">y {value}</span>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="start">
-                      Artist
+                      {field.name}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <span>•</span>
               </div>
-            )}
-            {track.album && (
-              <div className="flex items-center gap-1">
+            );
+          })}
+          {track.artist && (
+            <div className="flex items-center gap-1">
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger className="cursor-help">
+                    x <span className="truncate">{track.artist}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start">
+                    Artist
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span>•</span>
+            </div>
+          )}
+          {track.album && (
+            <div className="flex items-center gap-1">
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger className="cursor-help">
+                    <span className="truncate">{track.album}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start">
+                    Album
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span>•</span>
+            </div>
+          )}
+          {track.track && (
+            <div className="flex items-center gap-1">
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger className="cursor-help">
+                    <span className="truncate">#{track.track}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start">
+                    Track
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span>•</span>
+            </div>
+          )}
+          {track.year && (
+            <div className="flex items-center gap-1">
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger className="cursor-help">
+                    <span>{track.year}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start">
+                    Year
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span>•</span>
+            </div>
+          )}
+          {track.genre && track.genre.length > 0 && (
+            <div className="flex items-center gap-1">
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger className="cursor-help">
+                    <span className="truncate">{track.genre.join(", ")}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="start">
+                    Genre
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {track.comment && <span>•</span>}
+            </div>
+          )}
+          {track.comment && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCommentExpanded(!isCommentExpanded);
+                }}
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+              >
                 <TooltipProvider>
                   <Tooltip delayDuration={300}>
-                    <TooltipTrigger className="cursor-help">
-                      <span className="truncate">{track.album}</span>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 cursor-help">
+                        <MessageSquare className="h-3 w-3" />
+                        <span className="truncate max-w-[150px]">
+                          {track.comment.length > 20
+                            ? `${track.comment.substring(0, 20)}...`
+                            : track.comment}
+                        </span>
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="start">
-                      Album
+                      Comment
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+              </button>
+            </div>
+          )}
+          {visibleCustomFields.map(field => {
+            const value = track.customMetadata?.[`custom_${field.id}`];
+            if (!value) return null;
+            return (
+              <div key={field.id} className="flex items-center gap-1">
                 <span>•</span>
-              </div>
-            )}
-            {track.track && (
-              <div className="flex items-center gap-1">
                 <TooltipProvider>
                   <Tooltip delayDuration={300}>
-                    <TooltipTrigger className="cursor-help">
-                      <span className="truncate">#{track.track}</span>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-1 cursor-help">
+                        <span className="text-sm text-muted-foreground truncate max-w-[150px]">
+                          {`${field.name}: ${value.length > 20 ? `${value.substring(0, 20)}...` : value}`}
+                        </span>
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="start">
-                      Track
+                      {field.name}: {value}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <span>•</span>
               </div>
-            )}
-            {track.year && (
-              <div className="flex items-center gap-1">
-                <TooltipProvider>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger className="cursor-help">
-                      <span>{track.year}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" align="start">
-                      Year
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <span>•</span>
-              </div>
-            )}
-            {track.genre && track.genre.length > 0 && (
-              <div className="flex items-center gap-1">
-                <TooltipProvider>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger className="cursor-help">
-                      <span className="truncate">{track.genre.join(", ")}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" align="start">
-                      Genre
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                {track.comment && <span>•</span>}
-              </div>
-            )}
-            {track.comment && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCommentExpanded(!isCommentExpanded);
-                  }}
-                  className="flex items-center gap-1 hover:text-foreground transition-colors"
-                >
-                  <TooltipProvider>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1 cursor-help">
-                          <MessageSquare className="h-3 w-3" />
-                          <span className="truncate max-w-[150px]">
-                            {track.comment.length > 20
-                              ? `${track.comment.substring(0, 20)}...`
-                              : track.comment}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="start">
-                        Comment
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </button>
-              </div>
-            )}
-            {visibleCustomFields.map(field => {
-              const value = track.customMetadata?.[`custom_${field.id}`];
-              if (!value) return null;
-              return (
-                <div key={field.id} className="flex items-center gap-1">
-                  <span>•</span>
-                  <TooltipProvider>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1 cursor-help">
-                          <span className="text-sm text-muted-foreground truncate max-w-[150px]">
-                            {`${field.name}: ${value.length > 20 ? `${value.substring(0, 20)}...` : value}`}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="start">
-                        {field.name}: {value}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              );
-            })}
-          </div>
-        )}
+            );
+          })}
+        </div>
         {isCommentExpanded && track.comment && (
           <div
             className="mt-1 text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap "
