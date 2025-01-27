@@ -614,61 +614,37 @@ export function SettingsContent({
   );
 }
 
-// import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
-// import { Settings } from "lucide-react";
-// import { SettingsContent } from "./settings-content";
-// import { Button } from "../ui/button";
-// import { useState } from "react";
-// import { getRemovedSongs } from "@/db/audio-operations";
-// import { usePlayerStore } from "@/lib/store";
-
-interface SettingsDialogProps {
-  triggerButton?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
 export function SettingsDialog({
   triggerButton = true,
   open,
   onOpenChange,
-}: SettingsDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
+}: {
+  triggerButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const [hasRemovedSongs, setHasRemovedSongs] = useState(false);
-  const isControlled = open !== undefined;
-  const isOpen = isControlled ? open : internalOpen;
-  const handleOpenChange = isControlled ? onOpenChange : setInternalOpen;
-  const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
-
-  const handleOpen = async (open: boolean) => {
-    if (open) {
-      // Check for removed songs when dialog opens
-      console.log("Dialog opening, checking for removed songs");
-      const removedSongs = await getRemovedSongs();
-      console.log("Found removed songs when opening dialog:", removedSongs);
-      setHasRemovedSongs(removedSongs.length > 0);
-      if (removedSongs.length > 0) {
-        triggerRefresh();
-      }
-    }
-    handleOpenChange?.(open);
-  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       {triggerButton && (
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
-            <SettingsIcon className="h-[1.2rem] w-[1.2rem]" />
+            <SettingsIcon className="h-5 w-5" />
             <span className="sr-only">Settings</span>
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent>
-        <SettingsContent
-          hasRemovedSongs={hasRemovedSongs}
-          setHasRemovedSongs={setHasRemovedSongs}
-        />
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto pr-6 -mr-6">
+          <SettingsContent
+            hasRemovedSongs={hasRemovedSongs}
+            setHasRemovedSongs={setHasRemovedSongs}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
