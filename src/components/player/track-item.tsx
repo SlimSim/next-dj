@@ -41,6 +41,7 @@ import { Dialog, DialogContent } from "../ui/dialog";
 import { SettingsDialog } from "../settings/settings-dialog";
 import { StandardMetadataField } from "@/lib/types/settings";
 import { CustomMetadataField } from "@/lib/types/customMetadata";
+import React from "react";
 
 interface TrackItemProps {
   track: MusicMetadata;
@@ -252,35 +253,35 @@ export function TrackItem({
                 : comment;
 
               return (
-                <>
-                {index > 0 && <span>•</span>}
-                <div key={field.id} className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3" />
-                  <TooltipProvider>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger 
-                        className={cn(
-                          "cursor-help",
-                          isLong && "cursor-pointer hover:underline"
-                        )}
-                        onClick={isLong ? () => setIsCommentExpanded(!isCommentExpanded) : undefined}
-                      >
-                        <span className="truncate">{displayText}</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="start">
-                        {isLong ? (isCommentExpanded ? 'Comment: Click to collapse' : 'Comment: Click to expand') : field.name}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </>
+                <React.Fragment key={field.id}>
+                  {index > 0 && <span>•</span>}
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    <TooltipProvider>
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger 
+                          className={cn(
+                            "cursor-help",
+                            isLong && "cursor-pointer hover:underline"
+                          )}
+                          onClick={isLong ? () => setIsCommentExpanded(!isCommentExpanded) : undefined}
+                        >
+                          <span className="truncate">{displayText}</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="start">
+                          {isLong ? (isCommentExpanded ? 'Comment: Click to collapse' : 'Comment: Click to expand') : field.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </React.Fragment>
               );
             }
 
             return (
-              <>
+              <React.Fragment key={field.id}>
                 {index > 0 && <span>•</span>}
-                <div key={field.id} className="flex items-center gap-1">
+                <div className="flex items-center gap-1">
                   <TooltipProvider>
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger className="cursor-help">
@@ -292,16 +293,16 @@ export function TrackItem({
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </>
+              </React.Fragment>
             );
           })}
           {visibleCustomFields.map((field, index) => {
             const value = track.customMetadata?.[`custom_${field.id}`];
             if (!value) return null;
             return (
-              <>
+              <React.Fragment key={field.id}>
                 {(visibleStandardFields.some(f => track[f.key]) || index > 0) && <span>•</span>}
-                <div key={field.id} className="flex items-center gap-1">
+                <div className="flex items-center gap-1">
                   <TooltipProvider>
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger className="cursor-help">
@@ -313,7 +314,7 @@ export function TrackItem({
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </>
+              </React.Fragment>
             );
           })}
         </div>

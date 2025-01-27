@@ -228,11 +228,13 @@ export function SettingsContent({
   const renameCustomMetadataField = usePlayerStore((state) => state.renameCustomMetadataField);
   const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
   const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
+  const toggleCustomMetadataSearch = usePlayerStore((state) => state.toggleCustomMetadataSearch);
   const reorderCustomMetadataFields = usePlayerStore((state) => state.reorderCustomMetadataFields);
 
   const standardMetadataFields = usePlayerStore((state) => state.standardMetadataFields);
   const toggleStandardMetadataFilter = usePlayerStore((state) => state.toggleStandardMetadataFilter);
   const toggleStandardMetadataVisibility = usePlayerStore((state) => state.toggleStandardMetadataVisibility);
+  const toggleStandardMetadataSearch = usePlayerStore((state) => state.toggleStandardMetadataSearch);
   const reorderStandardMetadataFields = usePlayerStore((state) => state.reorderStandardMetadataFields);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
@@ -299,6 +301,7 @@ export function SettingsContent({
       type: 'text',
       showInFilter: true,
       showInList: true,
+      showInSearch: true,
     });
     setNewFieldName('');
   };
@@ -517,30 +520,45 @@ export function SettingsContent({
             {/* Standard Metadata Fields */}
             <div className="space-y-4">
               <h4 className="text-sm font-medium">Standard Metadata Fields</h4>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleStandardDragEnd}
-              >
-                <SortableContext
-                  items={standardMetadataFields.map(field => field.id)}
-                  strategy={verticalListSortingStrategy}
+              <div className="grid grid-cols-[1fr_100px_100px_100px] gap-4 items-center">
+                <div className="font-medium">Field</div>
+                <div className="text-center font-medium">List</div>
+                <div className="text-center font-medium">Filter</div>
+                <div className="text-center font-medium">Search</div>
+              </div>
+              {standardMetadataFields.map((field) => (
+                <div
+                  key={field.id}
+                  className="grid grid-cols-[1fr_100px_100px_100px] gap-4 items-center"
                 >
-                  <div className="space-y-2">
-                    {standardMetadataFields.map((field) => (
-                      <SortableField
-                        key={field.id}
-                        id={field.id}
-                        name={field.name}
-                        showInFilter={field.showInFilter}
-                        showInList={field.showInList}
-                        toggleFilter={toggleStandardMetadataFilter}
-                        toggleVisibility={toggleStandardMetadataVisibility}
-                      />
-                    ))}
+                  <div className="font-medium">{field.name}</div>
+                  <div className="flex justify-center">
+                    <Switch
+                      checked={field.showInList}
+                      onCheckedChange={() =>
+                        toggleStandardMetadataVisibility(field.id)
+                      }
+                    />
                   </div>
-                </SortableContext>
-              </DndContext>
+                  <div className="flex justify-center">
+                    <Switch
+                      checked={field.showInFilter}
+                      onCheckedChange={() =>
+                        toggleStandardMetadataFilter(field.id)
+                      }
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <Switch
+                      checked={field.showInSearch}
+                      onCheckedChange={() =>
+                        toggleStandardMetadataSearch(field.id)
+                      }
+                      disabled={field.key === 'title'}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Custom Metadata Fields */}
@@ -598,6 +616,7 @@ export function SettingsContent({
                         type: "text",
                         showInFilter: true,
                         showInList: true,
+                        showInSearch: true,
                       });
                       setEditingFieldId(id); // Start editing the new field
                     }}

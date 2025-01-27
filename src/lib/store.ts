@@ -56,6 +56,7 @@ const initialState: PlayerState = {
       key: 'artist',
       showInFilter: true,
       showInList: true,
+      showInSearch: true,
     },
     {
       id: 'album',
@@ -63,6 +64,7 @@ const initialState: PlayerState = {
       key: 'album',
       showInFilter: true,
       showInList: true,
+      showInSearch: true,
     },
     {
       id: 'genre',
@@ -70,6 +72,7 @@ const initialState: PlayerState = {
       key: 'genre',
       showInFilter: true,
       showInList: true,
+      showInSearch: false,
     },
     {
       id: 'track',
@@ -77,6 +80,7 @@ const initialState: PlayerState = {
       key: 'track',
       showInFilter: false,
       showInList: true,
+      showInSearch: false,
     },
     {
       id: 'year',
@@ -84,6 +88,7 @@ const initialState: PlayerState = {
       key: 'year',
       showInFilter: false,
       showInList: true,
+      showInSearch: false,
     },
     {
       id: 'comment',
@@ -91,6 +96,7 @@ const initialState: PlayerState = {
       key: 'comment',
       showInFilter: false,
       showInList: true,
+      showInSearch: false,
     },
   ],
 };
@@ -452,6 +458,14 @@ export const usePlayerStore = create<PlayerStore>()(
             standardMetadataFields: state.standardMetadataFields.map(field =>
               field.id === fieldId
                 ? { ...field, showInList: !field.showInList }
+                : field
+            ),
+          })),
+        toggleStandardMetadataSearch: (fieldId: string) =>
+          set((state) => ({
+            standardMetadataFields: state.standardMetadataFields.map((field) =>
+              field.id === fieldId && field.key !== 'title'
+                ? { ...field, showInSearch: !field.showInSearch }
                 : field
             ),
           })),

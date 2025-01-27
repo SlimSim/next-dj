@@ -4,6 +4,7 @@ export interface StandardMetadataField {
   key: 'artist' | 'album' | 'genre' | 'track' | 'year' | 'comment';
   showInFilter: boolean;
   showInList: boolean;
+  showInSearch: boolean;
 }
 
 export interface Settings {
