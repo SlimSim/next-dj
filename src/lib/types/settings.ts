@@ -1,7 +1,7 @@
 export interface StandardMetadataField {
   id: string;
   name: string;
-  key: 'artist' | 'album' | 'genre';
+  key: 'artist' | 'album' | 'genre' | 'track' | 'year' | 'comment';
   showInFilter: boolean;
   showInList: boolean;
 }

@@ -36,6 +36,9 @@ export type FilterCriteria = {
   artist?: string;
   album?: string;
   genre?: string; // Even though genre is string[] in metadata, we filter by a single genre
+  track?: string;
+  year?: string;
+  comment?: string;
 } & {
   [K in `custom_${string}`]?: string; // Allow custom metadata fields
 };
@@ -65,6 +68,9 @@ export function PlaylistControls({
       artist: new Set<string>(),
       album: new Set<string>(),
       genre: new Set<string>(),
+      track: new Set<string>(),
+      year: new Set<string>(),
+      comment: new Set<string>(),
     } as Record<string, Set<string>>;
 
     // Initialize sets for custom metadata fields
@@ -78,6 +84,9 @@ export function PlaylistControls({
       if (track.artist) values.artist.add(track.artist);
       if (track.album) values.album.add(track.album);
       if (track.genre) track.genre.forEach((g) => values.genre.add(g));
+      if (track.track) values.track.add(track.track.toString().padStart(2, '0'));
+      if (track.year) values.year.add(track.year.toString());
+      if (track.comment) values.comment.add(track.comment);
 
       // Custom metadata values
       customMetadata.fields.forEach((field) => {

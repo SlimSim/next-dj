@@ -71,6 +71,27 @@ const initialState: PlayerState = {
       showInFilter: true,
       showInList: true,
     },
+    {
+      id: 'track',
+      name: 'Track #',
+      key: 'track',
+      showInFilter: false,
+      showInList: true,
+    },
+    {
+      id: 'year',
+      name: 'Year',
+      key: 'year',
+      showInFilter: false,
+      showInList: true,
+    },
+    {
+      id: 'comment',
+      name: 'Comment',
+      key: 'comment',
+      showInFilter: false,
+      showInList: true,
+    },
   ],
 };
 
@@ -448,17 +469,13 @@ export const usePlayerStore = create<PlayerStore>()(
     {
       name: "player-storage",
       partialize: (state) => ({
-        currentTrack: state.currentTrack,
-        queue: state.queue,
-        history: state.history,
-        volume: state.volume,
-        shuffle: state.shuffle,
-        repeat: state.repeat,
         selectedFolderNames: state.selectedFolderNames,
+        selectedDeviceId: state.selectedDeviceId,
+        prelistenDeviceId: state.prelistenDeviceId,
         showPreListenButtons: state.showPreListenButtons,
         recentPlayHours: state.recentPlayHours,
         monthlyPlayDays: state.monthlyPlayDays,
-        searchQuery: state.searchQuery,
+        hasShownPreListenWarning: state.hasShownPreListenWarning,
         sortField: state.sortField,
         sortOrder: state.sortOrder,
         filters: state.filters,
@@ -470,6 +487,22 @@ export const usePlayerStore = create<PlayerStore>()(
         customMetadata: state.customMetadata,
         standardMetadataFields: state.standardMetadataFields,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Ensure all standard metadata fields exist with default values
+        if (state) {
+          const existingFields = state.standardMetadataFields || [];
+          const existingFieldKeys = new Set(existingFields.map(f => f.key));
+          
+          // Add any missing fields from initialState
+          const missingFields = initialState.standardMetadataFields.filter(
+            field => !existingFieldKeys.has(field.key)
+          );
+          
+          if (missingFields.length > 0) {
+            state.standardMetadataFields = [...existingFields, ...missingFields];
+          }
+        }
+      },
     }
   )
 );
