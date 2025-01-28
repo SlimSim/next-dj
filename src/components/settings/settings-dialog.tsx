@@ -92,6 +92,7 @@ interface SortableFieldProps {
   name: string;
   showInFilter: boolean;
   showInList: boolean;
+  showInSearch: boolean;
   isEditing?: boolean;
   editingName?: string;
   onEditStart?: () => void;
@@ -100,6 +101,7 @@ interface SortableFieldProps {
   onEditCancel?: () => void;
   toggleFilter: (fieldId: string) => void;
   toggleVisibility: (fieldId: string) => void;
+  toggleSearch: (fieldId: string) => void;
   removeField?: (fieldId: string) => void;
 }
 
@@ -108,6 +110,7 @@ function SortableField({
   name,
   showInFilter,
   showInList,
+  showInSearch,
   isEditing,
   editingName,
   onEditStart,
@@ -116,6 +119,7 @@ function SortableField({
   onEditCancel,
   toggleFilter,
   toggleVisibility,
+  toggleSearch,
   removeField,
 }: SortableFieldProps) {
   const {
@@ -194,6 +198,13 @@ function SortableField({
             onCheckedChange={() => toggleVisibility(id)}
           />
           <Label className="text-xs">List</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={showInSearch}
+            onCheckedChange={() => toggleSearch(id)}
+          />
+          <Label className="text-xs">Search</Label>
         </div>
         {removeField && (
           <ConfirmButton
@@ -548,13 +559,20 @@ export function SettingsContent({
                       }
                     />
                   </div>
-                  <div className="flex justify-center">
+                  <div className="flex items-center space-x-2">
                     <Switch
                       checked={field.showInSearch}
                       onCheckedChange={() =>
                         toggleStandardMetadataSearch(field.id)
                       }
-                      disabled={field.key === 'title'}
+                      disabled={field.key === 'title' || field.key === 'artist' || field.key === 'album'}
+                      title={
+                        field.key === 'title'
+                          ? 'Title is always searchable'
+                          : field.key === 'artist' || field.key === 'album'
+                          ? 'Artist and Album are always searchable'
+                          : undefined
+                      }
                     />
                   </div>
                 </div>
@@ -581,6 +599,7 @@ export function SettingsContent({
                         name={field.name}
                         showInFilter={field.showInFilter}
                         showInList={field.showInList}
+                        showInSearch={field.showInSearch}
                         isEditing={editingFieldId === field.id}
                         editingName={editingName}
                         onEditStart={() => {
@@ -597,6 +616,7 @@ export function SettingsContent({
                         onEditCancel={() => setEditingFieldId(null)}
                         toggleFilter={toggleCustomMetadataFilter}
                         toggleVisibility={toggleCustomMetadataVisibility}
+                        toggleSearch={toggleCustomMetadataSearch}
                         removeField={removeCustomMetadataField}
                       />
                     ))}
@@ -604,7 +624,7 @@ export function SettingsContent({
                 </SortableContext>
               </DndContext>
               <div className="space-y-2">
-              <div className="flex items-center">
+                <div className="flex items-center">
                   <Button
                     variant="outline"
                     size="sm"

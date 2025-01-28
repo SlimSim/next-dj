@@ -109,6 +109,8 @@ export interface PlayerActions {
   toggleStandardMetadataFilter: (fieldId: string) => void;
   toggleStandardMetadataVisibility: (fieldId: string) => void;
   reorderStandardMetadataFields: (oldIndex: number, newIndex: number) => void;
+  toggleCustomMetadataSearch: (fieldId: string) => void;
+  toggleStandardMetadataSearch: (fieldId: string) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

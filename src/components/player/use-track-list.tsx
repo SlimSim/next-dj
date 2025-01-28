@@ -44,16 +44,23 @@ export function useTrackList(searchQuery: string) {
 
   const filteredTracks = tracks.filter((track) => {
     const searchTerms = searchQuery.toLowerCase().split(" ");
+    const store = usePlayerStore.getState();
     
-    // Get searchable fields from store
-    const searchableFields = usePlayerStore.getState().standardMetadataFields
+    // Get searchable standard fields
+    const searchableStandardFields = store.standardMetadataFields
       .filter(field => field.showInSearch)
       .map(field => track[field.key]);
+
+    // Get searchable custom fields
+    const searchableCustomFields = store.customMetadata.fields
+      .filter(field => field.showInSearch)
+      .map(field => track.customMetadata?.[`custom_${field.id}`]);
 
     // Combine title (always searchable) with other searchable fields
     const searchText = [
       track.title, // Always include title
-      ...searchableFields
+      ...searchableStandardFields,
+      ...searchableCustomFields
     ]
       .filter(Boolean)  // Remove null/undefined values
       .join(" ")

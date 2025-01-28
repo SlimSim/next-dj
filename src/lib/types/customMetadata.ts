@@ -2,13 +2,14 @@ export interface CustomMetadataField {
   id: string;
   name: string;
   type: 'text';  // For now, we only support text fields
-  showInFilter: boolean;  // Controls whether this field appears in the filter dropdown
-  showInList: boolean;   // Controls whether this field's value appears in the track list
+  showInFilter: boolean;
+  showInList: boolean;
+  showInSearch: boolean;
 }
 
 export interface CustomMetadataValue {
-  fieldId: string;
-  value: string | string[];
+  id: string;
+  value: string;
 }
 
 export interface CustomMetadataState {

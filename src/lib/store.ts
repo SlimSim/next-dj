@@ -376,12 +376,14 @@ export const usePlayerStore = create<PlayerStore>()(
         addCustomMetadataField: (field: { id: string; name: string; type: 'text' }) =>
           set((state) => ({
             customMetadata: {
+              ...state.customMetadata,
               fields: [
                 ...state.customMetadata.fields,
                 { 
                   ...field, 
-                  showInFilter: true,  // Default to showing in filter
-                  showInList: true,    // Default to showing in list
+                  showInFilter: true,   // Default to showing in filter
+                  showInList: true,     // Default to showing in list
+                  showInSearch: true,   // Default to showing in search
                 }
               ],
             },
@@ -402,6 +404,16 @@ export const usePlayerStore = create<PlayerStore>()(
               fields: state.customMetadata.fields.map(field =>
                 field.id === fieldId
                   ? { ...field, showInList: !field.showInList }
+                  : field
+              ),
+            },
+          })),
+        toggleCustomMetadataSearch: (fieldId: string) =>
+          set((state) => ({
+            customMetadata: {
+              fields: state.customMetadata.fields.map(field =>
+                field.id === fieldId
+                  ? { ...field, showInSearch: !field.showInSearch }
                   : field
               ),
             },
@@ -468,6 +480,21 @@ export const usePlayerStore = create<PlayerStore>()(
                 ? { ...field, showInSearch: !field.showInSearch }
                 : field
             ),
+          })),
+        toggleSearch: (fieldId: string) =>
+          set((state) => ({
+            standardMetadataFields: state.standardMetadataFields.map((field) =>
+              field.id === fieldId
+                ? { ...field, showInSearch: !field.showInSearch }
+                : field
+            ),
+            customMetadata: {
+              fields: state.customMetadata.fields.map(field =>
+                field.id === fieldId
+                  ? { ...field, showInSearch: !field.showInSearch }
+                  : field
+              ),
+            },
           })),
         reorderStandardMetadataFields: (oldIndex: number, newIndex: number) =>
           set((state) => {

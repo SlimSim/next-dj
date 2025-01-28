@@ -33,14 +33,9 @@ export type SortField =
   | "year";
 export type SortOrder = "asc" | "desc";
 export type FilterCriteria = {
-  artist?: string;
-  album?: string;
-  genre?: string; // Even though genre is string[] in metadata, we filter by a single genre
-  track?: string;
-  year?: string;
-  comment?: string;
+  [K in StandardMetadataField['key']]?: string;
 } & {
-  [K in `custom_${string}`]?: string; // Allow custom metadata fields
+  [key: `custom_${string}`]: string;
 };
 
 interface PlaylistControlsProps {

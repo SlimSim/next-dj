@@ -12,11 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { updateMetadata } from "@/db/metadata-operations";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { asCustomKey } from "@/lib/utils/metadata";
+import { useForm } from "react-hook-form";
 
 interface CustomField {
   id: string;
@@ -45,34 +45,18 @@ export function EditTrackDialog({
     customMetadata,
   } = usePlayerStore();
 
-  // Initialize custom fields when track or customMetadata changes
+  const { register, setValue } = useForm();
+
+  // Initialize custom metadata values at component level
   useEffect(() => {
-    if (!track) return;
-
-    // Check which custom fields need initialization
-    const updates: { customMetadata: { [key: `custom_${string}`]: string } } = { customMetadata: {} };
-    let needsUpdate = false;
-
-    customMetadata.fields.forEach((field: CustomField) => {
+    customMetadata.fields.forEach((field) => {
       const customKey = asCustomKey(field.id);
-      if (!track.customMetadata) {
-        needsUpdate = true;
-        updates.customMetadata[customKey] = "";
-      } else if (!(customKey in track.customMetadata)) {
-        needsUpdate = true;
-        updates.customMetadata[customKey] = "";
+      const value = track?.customMetadata?.[customKey];
+      if (value) {
+        setValue(customKey, value);
       }
     });
-
-    // Only update if there are new fields to initialize
-    if (needsUpdate) {
-      const newCustomMetadata = track.customMetadata || {};
-      onTrackChange({
-        ...track,
-        customMetadata: { ...newCustomMetadata, ...updates.customMetadata }
-      });
-    }
-  }, [track?.id, customMetadata.fields]);
+  }, [customMetadata.fields, setValue, track?.customMetadata]);
 
   const handleSave = async () => {
     if (!track) return;
@@ -105,16 +89,9 @@ export function EditTrackDialog({
     }
   };
 
-  const handleTrackChange = (updates: Partial<MusicMetadata>) => {
+  const handleTrackChange = (changes: Partial<MusicMetadata>) => {
     if (!track) return;
-    const updatedTrack = { ...track, ...updates };
-    onTrackChange(updatedTrack);
-    
-    // Add type assertion to include __preserveRef
-    updateTrackMetadata(track.id, {
-      ...updates,
-      __preserveRef: true,
-    } as Partial<MusicMetadata> & { __preserveRef: boolean });
+    onTrackChange({ ...track, ...changes });
   };
 
   if (!track) return null;
@@ -125,6 +102,7 @@ export function EditTrackDialog({
         <DialogHeader>
           <DialogTitle>Edit Track Metadata</DialogTitle>
         </DialogHeader>
+
         <Tabs defaultValue="basic" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -192,7 +170,7 @@ export function EditTrackDialog({
                     value={track.track?.toString() || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        track: e.target.value ? parseInt(e.target.value) : undefined,
+                        track: Number(e.target.value),
                       })
                     }
                     className="col-span-3"
@@ -209,7 +187,7 @@ export function EditTrackDialog({
                     value={track.year?.toString() || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        year: e.target.value ? parseInt(e.target.value) : undefined,
+                        year: Number(e.target.value),
                       })
                     }
                     className="col-span-3"
@@ -225,11 +203,10 @@ export function EditTrackDialog({
                     value={track.genre?.join(", ") || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        genre: e.target.value.split(",").map(g => g.trim()).filter(Boolean),
+                        genre: e.target.value.split(", "),
                       })
                     }
                     className="col-span-3"
-                    placeholder="Rock, Pop, etc."
                   />
                 </div>
 
@@ -243,7 +220,7 @@ export function EditTrackDialog({
                     value={track.bpm?.toString() || ""}
                     onChange={(e) =>
                       handleTrackChange({
-                        bpm: e.target.value ? parseInt(e.target.value) : undefined,
+                        bpm: Number(e.target.value),
                       })
                     }
                     className="col-span-3"
@@ -295,6 +272,7 @@ export function EditTrackDialog({
                     </span>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="comment" className="text-right">
                     Comment
@@ -302,19 +280,20 @@ export function EditTrackDialog({
                   <Input
                     id="comment"
                     value={track.comment || ""}
-                    className="col-span-3"
                     onChange={(e) =>
-                      handleTrackChange({ comment: e.currentTarget.value })
+                      handleTrackChange({
+                        comment: e.target.value,
+                      })
                     }
+                    className="col-span-3"
                   />
                 </div>
-
               </div>
             </TabsContent>
+
             <TabsContent value="custom" className="mt-0 border-0">
               <div className="grid gap-4 py-4">
-              {/* Custom Metadata Fields */}
-              {customMetadata.fields.map((field: CustomField) => {
+                {customMetadata.fields.map((field) => {
                   const customKey = asCustomKey(field.id);
                   const value = track.customMetadata?.[customKey] ?? "";
                   
@@ -339,6 +318,7 @@ export function EditTrackDialog({
                 })}
               </div>
             </TabsContent>
+
             <TabsContent value="details" className="mt-0 border-0">
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -436,6 +416,7 @@ export function EditTrackDialog({
             </TabsContent>
           </ScrollArea>
         </Tabs>
+
         <DialogFooter>
           <Button onClick={handleSave}>Save changes</Button>
         </DialogFooter>
