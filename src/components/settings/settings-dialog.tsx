@@ -122,6 +122,7 @@ function SortableField({
   toggleSearch,
   removeField,
 }: SortableFieldProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const {
     attributes,
     listeners,
@@ -141,21 +142,23 @@ function SortableField({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center justify-between space-x-2 rounded-lg border p-2 ${
+      className={`flex flex-col sm:flex-row sm:items-center sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-2 sm:gap-4 rounded-lg border p-2 ${
         isDragging ? 'bg-accent' : ''
       }`}
     >
-      <div className="flex items-center space-x-2">
+      {/* Main row - always visible */}
+      <div className="flex items-center gap-2 w-full">
         <button
-          className="cursor-grab hover:text-accent-foreground/50 active:cursor-grabbing"
+          className="cursor-grab hover:text-accent-foreground/50 active:cursor-grabbing shrink-0"
           {...attributes}
           {...listeners}
         >
           <GripVertical className="h-4 w-4" />
         </button>
+
         {isEditing ? (
           <Input
-            className="h-8 w-48"
+            className="h-8 flex-1"
             value={editingName}
             onChange={(e) => onEditChange?.(e.target.value)}
             onKeyDown={(e) => {
@@ -169,54 +172,123 @@ function SortableField({
             autoFocus
           />
         ) : (
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{name}</span>
-            {onEditStart && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={onEditStart}
-              >
-                <PencilIcon className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
+          <>
+            {/* Desktop view */}
+            <div className="hidden sm:flex items-center gap-2 flex-1">
+              <span className="text-sm font-medium">{name}</span>
+              {onEditStart && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={onEditStart}
+                >
+                  <PencilIcon className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile view with larger click area */}
+            <button
+              className="sm:hidden flex items-center justify-between flex-1 hover:bg-accent/50 rounded-md transition-colors"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <span className="text-sm font-medium px-2">{name}</span>
+              <div className="p-2">
+                <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+          </>
         )}
-      </div>
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={showInFilter}
-            onCheckedChange={() => toggleFilter(id)}
-          />
-          <Label className="text-xs">Filter</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={showInList}
-            onCheckedChange={() => toggleVisibility(id)}
-          />
-          <Label className="text-xs">List</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={showInSearch}
-            onCheckedChange={() => toggleSearch(id)}
-          />
-          <Label className="text-xs">Search</Label>
-        </div>
+        {/* Show delete button before toggles only when editing */}
         {removeField && (
-          <ConfirmButton
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive"
-            onClick={() => removeField(id)}
-          >
-            <TrashIcon className="h-3 w-3" />
-            <span className="sr-only">Remove field</span>
-          </ConfirmButton>
-        )}
+            <ConfirmButton
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive"
+              onClick={() => removeField(id)}
+            >
+              <TrashIcon className="h-3 w-3" />
+              <span className="sr-only">Remove field</span>
+            </ConfirmButton>
+          )}
+      </div>
+
+      {/* Desktop controls */}
+
+      <div className="hidden sm:flex sm:justify-center items-center">
+        <Switch
+          checked={showInList}
+          onCheckedChange={() => toggleVisibility(id)}
+        />
+      </div>
+
+      <div className="hidden sm:flex sm:justify-center items-center">
+        <Switch
+          checked={showInFilter}
+          onCheckedChange={() => toggleFilter(id)}
+        />
+      </div>
+
+      <div className="hidden sm:flex sm:justify-center items-center">
+        <Switch
+          checked={showInSearch}
+          onCheckedChange={() => toggleSearch(id)}
+        />
+      </div>
+
+      {/* Mobile controls - collapsible */}
+      <div className={`sm:hidden space-y-3 ${isExpanded ? 'block' : 'hidden'}`}>
+        <div className="flex items-center justify-between border-t pt-2">
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Show in List</Label>
+              <Switch
+                checked={showInList}
+                onCheckedChange={() => toggleVisibility(id)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Show in Filter</Label>
+              <Switch
+                checked={showInFilter}
+                onCheckedChange={() => toggleFilter(id)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Show in Search</Label>
+              <Switch
+                checked={showInSearch}
+                onCheckedChange={() => toggleSearch(id)}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 border-t pt-2">
+          {onEditStart && !isEditing && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={onEditStart}
+            >
+              <PencilIcon className="h-3 w-3 mr-2" />
+              Rename
+            </Button>
+          )}
+          {removeField && (
+            <ConfirmButton
+              variant="outline"
+              size="sm"
+              className="flex-1 text-destructive"
+              onClick={() => removeField(id)}
+            >
+              <TrashIcon className="h-3 w-3 mr-2" />
+              Remove
+            </ConfirmButton>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -364,9 +436,6 @@ export function SettingsContent({
 
   return (
     <div>
-      <DialogHeader>
-        <DialogTitle>Settings</DialogTitle>
-      </DialogHeader>
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
@@ -528,60 +597,66 @@ export function SettingsContent({
 
         <TabsContent value="metadata" className="space-y-6">
           <div className="flex flex-col gap-4">
+            {/* Header - Only visible on larger screens */}
+            <div className="hidden sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-4 items-center px-2">
+              <div className="font-medium">Field</div>
+              <div className="text-center font-medium">List</div>
+              <div className="text-center font-medium">Filter</div>
+              <div className="text-center font-medium">Search</div>
+            </div>
+
             {/* Standard Metadata Fields */}
             <div className="space-y-4">
               <h4 className="text-sm font-medium">Standard Metadata Fields</h4>
-              <div className="grid grid-cols-[1fr_100px_100px_100px] gap-4 items-center">
-                <div className="font-medium">Field</div>
-                <div className="text-center font-medium">List</div>
-                <div className="text-center font-medium">Filter</div>
-                <div className="text-center font-medium">Search</div>
-              </div>
-              {standardMetadataFields.map((field) => (
-                <div
-                  key={field.id}
-                  className="grid grid-cols-[1fr_100px_100px_100px] gap-4 items-center"
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleStandardDragEnd}
+              >
+                <SortableContext
+                  items={standardMetadataFields.map(field => field.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <div className="font-medium">{field.name}</div>
-                  <div className="flex justify-center">
-                    <Switch
-                      checked={field.showInList}
-                      onCheckedChange={() =>
-                        toggleStandardMetadataVisibility(field.id)
-                      }
-                    />
+                  <div className="space-y-2">
+                    {standardMetadataFields.map((field) => (
+                      <SortableField
+                        key={field.id}
+                        id={field.id}
+                        name={field.name}
+                        showInFilter={field.showInFilter}
+                        showInList={field.showInList}
+                        showInSearch={field.showInSearch}
+                        toggleFilter={() => toggleStandardMetadataFilter(field.id)}
+                        toggleVisibility={() => toggleStandardMetadataVisibility(field.id)}
+                        toggleSearch={() => toggleStandardMetadataSearch(field.id)}
+                      />
+                    ))}
                   </div>
-                  <div className="flex justify-center">
-                    <Switch
-                      checked={field.showInFilter}
-                      onCheckedChange={() =>
-                        toggleStandardMetadataFilter(field.id)
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={field.showInSearch}
-                      onCheckedChange={() =>
-                        toggleStandardMetadataSearch(field.id)
-                      }
-                      disabled={field.key === 'title' || field.key === 'artist' || field.key === 'album'}
-                      title={
-                        field.key === 'title'
-                          ? 'Title is always searchable'
-                          : field.key === 'artist' || field.key === 'album'
-                          ? 'Artist and Album are always searchable'
-                          : undefined
-                      }
-                    />
-                  </div>
-                </div>
-              ))}
+                </SortableContext>
+              </DndContext>
             </div>
 
             {/* Custom Metadata Fields */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium">Custom Metadata Fields</h4>
+              <div className="flex items-center flex-wrap justify-between">
+                <h4 className="text-sm font-medium pb-2 pr-2">Custom Metadata Fields</h4>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="New field name"
+                    value={newFieldName}
+                    onChange={(e) => setNewFieldName(e.target.value)}
+                    className="h-8 w-[200px]"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleAddCustomField}
+                    disabled={!newFieldName.trim()}
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -608,43 +683,25 @@ export function SettingsContent({
                         }}
                         onEditChange={setEditingName}
                         onEditSubmit={() => {
-                          if (editingName.trim()) {
-                            renameCustomMetadataField(field.id, editingName);
+                          if (editingName.trim() && editingName !== field.name) {
+                            renameCustomMetadataField(field.id, editingName.trim());
                           }
                           setEditingFieldId(null);
+                          setEditingName("");
                         }}
-                        onEditCancel={() => setEditingFieldId(null)}
-                        toggleFilter={toggleCustomMetadataFilter}
-                        toggleVisibility={toggleCustomMetadataVisibility}
-                        toggleSearch={toggleCustomMetadataSearch}
+                        onEditCancel={() => {
+                          setEditingFieldId(null);
+                          setEditingName("");
+                        }}
+                        toggleFilter={() => toggleCustomMetadataFilter(field.id)}
+                        toggleVisibility={() => toggleCustomMetadataVisibility(field.id)}
+                        toggleSearch={() => toggleCustomMetadataSearch(field.id)}
                         removeField={removeCustomMetadataField}
                       />
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const id = uuidv4();
-                      addCustomMetadataField({
-                        id,
-                        name: "New Field",
-                        type: "text",
-                        showInFilter: true,
-                        showInList: true,
-                        showInSearch: true,
-                      });
-                      setEditingFieldId(id); // Start editing the new field
-                    }}
-                  >
-                    Add Custom Tag
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
         </TabsContent>
