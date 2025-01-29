@@ -595,19 +595,19 @@ export function SettingsContent({
           </div>
         </TabsContent>
 
-        <TabsContent value="metadata" className="space-y-6">
-          <div className="flex flex-col gap-4">
-            {/* Header - Only visible on larger screens */}
-            <div className="hidden sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-4 items-center px-2">
-              <div className="font-medium">Field</div>
-              <div className="text-center font-medium">List</div>
-              <div className="text-center font-medium">Filter</div>
-              <div className="text-center font-medium">Search</div>
-            </div>
+        <TabsContent value="metadata" className="space-y-6 h-[calc(100vh-12rem)]">
+          {/* Header - Only visible on larger screens */}
+          <div className="hidden sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-4 items-center px-2 sticky top-0 bg-background z-10">
+            <div className="font-medium">Field</div>
+            <div className="text-center font-medium">List</div>
+            <div className="text-center font-medium">Filter</div>
+            <div className="text-center font-medium">Search</div>
+          </div>
 
+          <div className="flex flex-col gap-4 max-h-[calc(100vh-16rem)] overflow-y-auto">
             {/* Standard Metadata Fields */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium">Standard Metadata Fields</h4>
+              <h4 className="text-sm font-medium sticky top-0 bg-background py-2 z-10">Standard Metadata Fields</h4>
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -638,14 +638,14 @@ export function SettingsContent({
 
             {/* Custom Metadata Fields */}
             <div className="space-y-4">
-              <div className="flex items-center flex-wrap justify-between">
+              <div className="flex items-center flex-wrap justify-between sticky top-0 bg-background py-2 z-20">
                 <h4 className="text-sm font-medium pb-2 pr-2">Custom Metadata Fields</h4>
                 <div className="flex items-center gap-2">
                   <Input
                     placeholder="New field name"
                     value={newFieldName}
                     onChange={(e) => setNewFieldName(e.target.value)}
-                    className="h-8 w-[200px]"
+                    className="h-8"
                   />
                   <Button
                     size="sm"
@@ -735,7 +735,7 @@ export function SettingsDialog({
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto pr-6 -mr-6">
+        <div className="flex-1 pr-6 -mr-6">
           <SettingsContent
             hasRemovedSongs={hasRemovedSongs}
             setHasRemovedSongs={setHasRemovedSongs}
