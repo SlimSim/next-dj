@@ -88,9 +88,6 @@ export function SettingsContent({
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Settings</DialogTitle>
-      </DialogHeader>
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="general">General</TabsTrigger>

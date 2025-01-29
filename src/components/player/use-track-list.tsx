@@ -44,8 +44,29 @@ export function useTrackList(searchQuery: string) {
 
   const filteredTracks = tracks.filter((track) => {
     const searchTerms = searchQuery.toLowerCase().split(" ");
-    const trackText = `${track.title} ${track.artist} ${track.album}`.toLowerCase();
-    return searchTerms.every((term) => trackText.includes(term));
+    const store = usePlayerStore.getState();
+    
+    // Get searchable standard fields
+    const searchableStandardFields = store.standardMetadataFields
+      .filter(field => field.showInSearch)
+      .map(field => track[field.key]);
+
+    // Get searchable custom fields
+    const searchableCustomFields = store.customMetadata.fields
+      .filter(field => field.showInSearch)
+      .map(field => track.customMetadata?.[`custom_${field.id}`]);
+
+    // Combine title (always searchable) with other searchable fields
+    const searchText = [
+      track.title, // Always include title
+      ...searchableStandardFields,
+      ...searchableCustomFields
+    ]
+      .filter(Boolean)  // Remove null/undefined values
+      .join(" ")
+      .toLowerCase();
+
+    return searchTerms.every((term) => searchText.includes(term));
   });
 
   return { tracks: filteredTracks, loadTracks };

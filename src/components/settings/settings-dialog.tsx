@@ -89,31 +89,40 @@ interface SettingsContentProps {
 
 interface SortableFieldProps {
   id: string;
-  field: CustomMetadataField;
-  isEditing: boolean;
-  editingName: string;
-  onEditStart: () => void;
-  onEditChange: (value: string) => void;
-  onEditSubmit: () => void;
-  onEditCancel: () => void;
-  toggleCustomMetadataFilter: (fieldId: string) => void;
-  toggleCustomMetadataVisibility: (fieldId: string) => void;
-  removeCustomMetadataField: (fieldId: string) => void;
+  name: string;
+  showInFilter: boolean;
+  showInList: boolean;
+  showInSearch: boolean;
+  isEditing?: boolean;
+  editingName?: string;
+  onEditStart?: () => void;
+  onEditChange?: (value: string) => void;
+  onEditSubmit?: () => void;
+  onEditCancel?: () => void;
+  toggleFilter: (fieldId: string) => void;
+  toggleVisibility: (fieldId: string) => void;
+  toggleSearch: (fieldId: string) => void;
+  removeField?: (fieldId: string) => void;
 }
 
 function SortableField({
   id,
-  field,
+  name,
+  showInFilter,
+  showInList,
+  showInSearch,
   isEditing,
   editingName,
   onEditStart,
   onEditChange,
   onEditSubmit,
   onEditCancel,
-  toggleCustomMetadataFilter,
-  toggleCustomMetadataVisibility,
-  removeCustomMetadataField,
+  toggleFilter,
+  toggleVisibility,
+  toggleSearch,
+  removeField,
 }: SortableFieldProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const {
     attributes,
     listeners,
@@ -133,75 +142,153 @@ function SortableField({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center justify-between space-x-2 rounded-lg border p-2 ${
+      className={`flex flex-col sm:flex-row sm:items-center sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-2 sm:gap-4 rounded-lg border p-2 ${
         isDragging ? 'bg-accent' : ''
       }`}
     >
-      <div className="flex items-center space-x-2">
+      {/* Main row - always visible */}
+      <div className="flex items-center gap-2 w-full">
         <button
-          className="cursor-grab hover:text-accent-foreground/50 active:cursor-grabbing"
+          className="cursor-grab hover:text-accent-foreground/50 active:cursor-grabbing shrink-0"
           {...attributes}
           {...listeners}
         >
           <GripVertical className="h-4 w-4" />
         </button>
+
         {isEditing ? (
           <Input
-            className="h-8 w-48"
+            className="h-8 flex-1"
             value={editingName}
-            onChange={(e) => onEditChange(e.target.value)}
+            onChange={(e) => onEditChange?.(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                onEditSubmit();
+                onEditSubmit?.();
               } else if (e.key === 'Escape') {
-                onEditCancel();
+                onEditCancel?.();
               }
             }}
             onBlur={onEditSubmit}
             autoFocus
           />
         ) : (
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{field.name}</span>
-            <Button
+          <>
+            {/* Desktop view */}
+            <div className="hidden sm:flex items-center gap-2 flex-1">
+              <span className="text-sm font-medium">{name}</span>
+              {onEditStart && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={onEditStart}
+                >
+                  <PencilIcon className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile view with larger click area */}
+            <button
+              className="sm:hidden flex items-center justify-between flex-1 hover:bg-accent/50 rounded-md transition-colors"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <span className="text-sm font-medium px-2">{name}</span>
+              <div className="p-2">
+                <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+          </>
+        )}
+        {/* Show delete button before toggles only when editing */}
+        {removeField && (
+            <ConfirmButton
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-6 w-6 text-destructive"
+              onClick={() => removeField(id)}
+            >
+              <TrashIcon className="h-3 w-3" />
+              <span className="sr-only">Remove field</span>
+            </ConfirmButton>
+          )}
+      </div>
+
+      {/* Desktop controls */}
+
+      <div className="hidden sm:flex sm:justify-center items-center">
+        <Switch
+          checked={showInList}
+          onCheckedChange={() => toggleVisibility(id)}
+        />
+      </div>
+
+      <div className="hidden sm:flex sm:justify-center items-center">
+        <Switch
+          checked={showInFilter}
+          onCheckedChange={() => toggleFilter(id)}
+        />
+      </div>
+
+      <div className="hidden sm:flex sm:justify-center items-center">
+        <Switch
+          checked={showInSearch}
+          onCheckedChange={() => toggleSearch(id)}
+        />
+      </div>
+
+      {/* Mobile controls - collapsible */}
+      <div className={`sm:hidden space-y-3 ${isExpanded ? 'block' : 'hidden'}`}>
+        <div className="flex items-center justify-between border-t pt-2">
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Show in List</Label>
+              <Switch
+                checked={showInList}
+                onCheckedChange={() => toggleVisibility(id)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Show in Filter</Label>
+              <Switch
+                checked={showInFilter}
+                onCheckedChange={() => toggleFilter(id)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Show in Search</Label>
+              <Switch
+                checked={showInSearch}
+                onCheckedChange={() => toggleSearch(id)}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 border-t pt-2">
+          {onEditStart && !isEditing && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
               onClick={onEditStart}
             >
-              <PencilIcon className="h-3 w-3" />
+              <PencilIcon className="h-3 w-3 mr-2" />
+              Rename
             </Button>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center space-x-2">
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={field.showInFilter}
-            onCheckedChange={() =>
-              toggleCustomMetadataFilter(field.id)
-            }
-          />
-          <Label className="text-xs">Filter</Label>
+          )}
+          {removeField && (
+            <ConfirmButton
+              variant="outline"
+              size="sm"
+              className="flex-1 text-destructive"
+              onClick={() => removeField(id)}
+            >
+              <TrashIcon className="h-3 w-3 mr-2" />
+              Remove
+            </ConfirmButton>
+          )}
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={field.showInList}
-            onCheckedChange={() =>
-              toggleCustomMetadataVisibility(field.id)
-            }
-          />
-          <Label className="text-xs">List</Label>
-        </div>
-        <ConfirmButton
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-destructive"
-          onClick={() => removeCustomMetadataField(field.id)}
-        >
-          <TrashIcon className="h-3 w-3" />
-          <span className="sr-only">Remove field</span>
-        </ConfirmButton>
       </div>
     </div>
   );
@@ -224,7 +311,14 @@ export function SettingsContent({
   const renameCustomMetadataField = usePlayerStore((state) => state.renameCustomMetadataField);
   const toggleCustomMetadataFilter = usePlayerStore((state) => state.toggleCustomMetadataFilter);
   const toggleCustomMetadataVisibility = usePlayerStore((state) => state.toggleCustomMetadataVisibility);
+  const toggleCustomMetadataSearch = usePlayerStore((state) => state.toggleCustomMetadataSearch);
   const reorderCustomMetadataFields = usePlayerStore((state) => state.reorderCustomMetadataFields);
+
+  const standardMetadataFields = usePlayerStore((state) => state.standardMetadataFields);
+  const toggleStandardMetadataFilter = usePlayerStore((state) => state.toggleStandardMetadataFilter);
+  const toggleStandardMetadataVisibility = usePlayerStore((state) => state.toggleStandardMetadataVisibility);
+  const toggleStandardMetadataSearch = usePlayerStore((state) => state.toggleStandardMetadataSearch);
+  const reorderStandardMetadataFields = usePlayerStore((state) => state.reorderStandardMetadataFields);
 
   const recentPlayHours = useSettings((state) => state.recentPlayHours);
   const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
@@ -290,6 +384,7 @@ export function SettingsContent({
       type: 'text',
       showInFilter: true,
       showInList: true,
+      showInSearch: true,
     });
     setNewFieldName('');
   };
@@ -322,16 +417,30 @@ export function SettingsContent({
     }
   };
 
+  const handleStandardDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = standardMetadataFields.findIndex(
+        (field) => field.id === active.id
+      );
+      const newIndex = standardMetadataFields.findIndex(
+        (field) => field.id === over?.id
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderStandardMetadataFields(oldIndex, newIndex);
+      }
+    }
+  };
+
   return (
     <div>
-      <DialogHeader>
-        <DialogTitle>Settings</DialogTitle>
-      </DialogHeader>
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="customTags">Custom Tags</TabsTrigger>
+          <TabsTrigger value="metadata">Metadata</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
@@ -486,77 +595,113 @@ export function SettingsContent({
           </div>
         </TabsContent>
 
-        <TabsContent value="customTags" className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">Add Custom Tags to Songs</h3>
-            <p className="text-sm text-muted-foreground">
-              Add custom tags to organize your music library. These tags can be used to filter and sort your tracks.
-              For example, add tags like "Vocals" or "Energy Level" to better organize your DJ sets.
-            </p>
-            <div className="flex flex-col gap-4">
-              {/* Existing Custom Fields */}
-              <div className="space-y-4">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={customMetadata.fields.map(field => field.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-2">
-                      {customMetadata.fields.map((field) => (
-                        <SortableField
-                          key={field.id}
-                          id={field.id}
-                          field={field}
-                          isEditing={editingFieldId === field.id}
-                          editingName={editingName}
-                          onEditStart={() => {
-                            setEditingFieldId(field.id);
-                            setEditingName(field.name);
-                          }}
-                          onEditChange={setEditingName}
-                          onEditSubmit={() => {
-                            if (editingName.trim()) {
-                              renameCustomMetadataField(field.id, editingName);
-                            }
-                            setEditingFieldId(null);
-                          }}
-                          onEditCancel={() => setEditingFieldId(null)}
-                          toggleCustomMetadataFilter={toggleCustomMetadataFilter}
-                          toggleCustomMetadataVisibility={toggleCustomMetadataVisibility}
-                          removeCustomMetadataField={removeCustomMetadataField}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </div>
+        <TabsContent value="metadata" className="space-y-6 h-[calc(100vh-12rem)]">
+          {/* Header - Only visible on larger screens */}
+          <div className="hidden sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-4 items-center px-2 sticky top-0 bg-background z-10">
+            <div className="font-medium">Field</div>
+            <div className="text-center font-medium">List</div>
+            <div className="text-center font-medium">Filter</div>
+            <div className="text-center font-medium">Search</div>
+          </div>
 
-              {/* Add New Field */}
-              <div className="space-y-2">
-              <div className="flex items-center">
+          <div className="flex flex-col gap-4 max-h-[calc(100vh-16rem)] overflow-y-auto">
+            {/* Standard Metadata Fields */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium sticky top-0 bg-background py-2 z-10">Standard Metadata Fields</h4>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleStandardDragEnd}
+              >
+                <SortableContext
+                  items={standardMetadataFields.map(field => field.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {standardMetadataFields.map((field) => (
+                      <SortableField
+                        key={field.id}
+                        id={field.id}
+                        name={field.name}
+                        showInFilter={field.showInFilter}
+                        showInList={field.showInList}
+                        showInSearch={field.showInSearch}
+                        toggleFilter={() => toggleStandardMetadataFilter(field.id)}
+                        toggleVisibility={() => toggleStandardMetadataVisibility(field.id)}
+                        toggleSearch={() => toggleStandardMetadataSearch(field.id)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+
+            {/* Custom Metadata Fields */}
+            <div className="space-y-4">
+              <div className="flex items-center flex-wrap justify-between sticky top-0 bg-background py-2 z-20">
+                <h4 className="text-sm font-medium pb-2 pr-2">Custom Metadata Fields</h4>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="New field name"
+                    value={newFieldName}
+                    onChange={(e) => setNewFieldName(e.target.value)}
+                    className="h-8"
+                  />
                   <Button
-                    variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const id = uuidv4();
-                      addCustomMetadataField({
-                        id,
-                        name: "New Field",
-                        type: "text",
-                        showInFilter: true,
-                        showInList: true,
-                      });
-                      setEditingFieldId(id); // Start editing the new field
-                    }}
+                    onClick={handleAddCustomField}
+                    disabled={!newFieldName.trim()}
                   >
-                    Add Custom Tag
+                    <PlusIcon className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
+
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={customMetadata.fields.map(field => field.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {customMetadata.fields.map((field) => (
+                      <SortableField
+                        key={field.id}
+                        id={field.id}
+                        name={field.name}
+                        showInFilter={field.showInFilter}
+                        showInList={field.showInList}
+                        showInSearch={field.showInSearch}
+                        isEditing={editingFieldId === field.id}
+                        editingName={editingName}
+                        onEditStart={() => {
+                          setEditingFieldId(field.id);
+                          setEditingName(field.name);
+                        }}
+                        onEditChange={setEditingName}
+                        onEditSubmit={() => {
+                          if (editingName.trim() && editingName !== field.name) {
+                            renameCustomMetadataField(field.id, editingName.trim());
+                          }
+                          setEditingFieldId(null);
+                          setEditingName("");
+                        }}
+                        onEditCancel={() => {
+                          setEditingFieldId(null);
+                          setEditingName("");
+                        }}
+                        toggleFilter={() => toggleCustomMetadataFilter(field.id)}
+                        toggleVisibility={() => toggleCustomMetadataVisibility(field.id)}
+                        toggleSearch={() => toggleCustomMetadataSearch(field.id)}
+                        removeField={removeCustomMetadataField}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </div>
           </div>
         </TabsContent>
@@ -565,61 +710,37 @@ export function SettingsContent({
   );
 }
 
-// import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
-// import { Settings } from "lucide-react";
-// import { SettingsContent } from "./settings-content";
-// import { Button } from "../ui/button";
-// import { useState } from "react";
-// import { getRemovedSongs } from "@/db/audio-operations";
-// import { usePlayerStore } from "@/lib/store";
-
-interface SettingsDialogProps {
-  triggerButton?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
 export function SettingsDialog({
   triggerButton = true,
   open,
   onOpenChange,
-}: SettingsDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
+}: {
+  triggerButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const [hasRemovedSongs, setHasRemovedSongs] = useState(false);
-  const isControlled = open !== undefined;
-  const isOpen = isControlled ? open : internalOpen;
-  const handleOpenChange = isControlled ? onOpenChange : setInternalOpen;
-  const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
-
-  const handleOpen = async (open: boolean) => {
-    if (open) {
-      // Check for removed songs when dialog opens
-      console.log("Dialog opening, checking for removed songs");
-      const removedSongs = await getRemovedSongs();
-      console.log("Found removed songs when opening dialog:", removedSongs);
-      setHasRemovedSongs(removedSongs.length > 0);
-      if (removedSongs.length > 0) {
-        triggerRefresh();
-      }
-    }
-    handleOpenChange?.(open);
-  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       {triggerButton && (
         <DialogTrigger asChild>
           <Button variant="ghost" size="icon">
-            <SettingsIcon className="h-[1.2rem] w-[1.2rem]" />
+            <SettingsIcon className="h-5 w-5" />
             <span className="sr-only">Settings</span>
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent>
-        <SettingsContent
-          hasRemovedSongs={hasRemovedSongs}
-          setHasRemovedSongs={setHasRemovedSongs}
-        />
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 pr-6 -mr-6">
+          <SettingsContent
+            hasRemovedSongs={hasRemovedSongs}
+            setHasRemovedSongs={setHasRemovedSongs}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

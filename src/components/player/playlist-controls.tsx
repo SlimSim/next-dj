@@ -16,8 +16,11 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { getUniqueValues } from "@/db/audio-operations";
 import { cn } from "@/lib/utils/common";
 import { usePlayerStore } from "@/lib/store";
+import { useSettings } from "../settings/settings-context";
 import { FilterSelect } from "./filter-select";
 import { asCustomKey } from "@/lib/utils/metadata";
+import { StandardMetadataField } from "@/lib/types/settings";
+import { CustomMetadataField } from "@/lib/types/customMetadata";
 
 export type SortField =
   | "title"
@@ -30,11 +33,9 @@ export type SortField =
   | "year";
 export type SortOrder = "asc" | "desc";
 export type FilterCriteria = {
-  artist?: string;
-  album?: string;
-  genre?: string; // Even though genre is string[] in metadata, we filter by a single genre
+  [K in StandardMetadataField['key']]?: string;
 } & {
-  [K in `custom_${string}`]?: string; // Allow custom metadata fields
+  [key: `custom_${string}`]: string;
 };
 
 interface PlaylistControlsProps {
@@ -54,6 +55,7 @@ export function PlaylistControls({
 }: PlaylistControlsProps) {
   const tracks = usePlayerStore((state) => state.metadata);
   const customMetadata = usePlayerStore((state) => state.customMetadata);
+  const standardMetadataFields = usePlayerStore((state) => state.standardMetadataFields);
 
   // Get unique values for filters
   const uniqueValues = useMemo(() => {
@@ -61,6 +63,9 @@ export function PlaylistControls({
       artist: new Set<string>(),
       album: new Set<string>(),
       genre: new Set<string>(),
+      track: new Set<string>(),
+      year: new Set<string>(),
+      comment: new Set<string>(),
     } as Record<string, Set<string>>;
 
     // Initialize sets for custom metadata fields
@@ -74,6 +79,9 @@ export function PlaylistControls({
       if (track.artist) values.artist.add(track.artist);
       if (track.album) values.album.add(track.album);
       if (track.genre) track.genre.forEach((g) => values.genre.add(g));
+      if (track.track) values.track.add(track.track.toString().padStart(2, '0'));
+      if (track.year) values.year.add(track.year.toString());
+      if (track.comment) values.comment.add(track.comment);
 
       // Custom metadata values
       customMetadata.fields.forEach((field) => {
@@ -119,8 +127,14 @@ export function PlaylistControls({
 
   // Only show custom metadata fields that have showInFilter enabled
   const visibleCustomFields = useMemo(() => 
-    customMetadata.fields.filter(field => field.showInFilter),
+    customMetadata.fields.filter((field: CustomMetadataField) => field.showInFilter),
     [customMetadata.fields]
+  );
+
+  // Only show standard metadata fields that have showInFilter enabled
+  const visibleStandardFields = useMemo(() => 
+    standardMetadataFields.filter((field: StandardMetadataField) => field.showInFilter),
+    [standardMetadataFields]
   );
 
   return (
@@ -190,41 +204,21 @@ export function PlaylistControls({
         </Select>
       </div>
 
-      <FilterSelect
-        value={filters.artist}
-        onValueChange={(value) =>
-          onFilterChange({
-            ...filters,
-            artist: value,
-          })
-        }
-        placeholder="Artist"
-        items={Array.from(uniqueValues.artist)}
-      />
-
-      <FilterSelect
-        value={filters.album}
-        onValueChange={(value) =>
-          onFilterChange({
-            ...filters,
-            album: value,
-          })
-        }
-        placeholder="Album"
-        items={Array.from(uniqueValues.album)}
-      />
-
-      <FilterSelect
-        value={filters.genre}
-        onValueChange={(value) =>
-          onFilterChange({
-            ...filters,
-            genre: value,
-          })
-        }
-        placeholder="Genre"
-        items={Array.from(uniqueValues.genre)}
-      />
+      {/* Standard metadata filters */}
+      {visibleStandardFields.map((field) => (
+        <FilterSelect
+          key={field.id}
+          value={filters[field.key]}
+          onValueChange={(value) =>
+            onFilterChange({
+              ...filters,
+              [field.key]: field.key === 'genre' && value === '(Empty)' ? [] : value,
+            })
+          }
+          placeholder={field.name}
+          items={Array.from(uniqueValues[field.key])}
+        />
+      ))}
 
       {/* Custom metadata filters */}
       {visibleCustomFields.map((field) => {
