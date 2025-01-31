@@ -260,15 +260,15 @@ export function EditTrackDialog({
                       min={0}
                       max={5}
                       step={1}
-                      value={[track.rating || 0]}
+                      value={[Math.round((track.rating || 0) * 5)]}
                       onValueChange={([value]) =>
                         handleTrackChange({
-                          rating: value,
+                          rating: value / 5,
                         })
                       }
                     />
                     <span className="w-12 text-sm">
-                      {track.rating || 0}
+                      {Math.round((track.rating || 0) * 5)}
                     </span>
                   </div>
                 </div>

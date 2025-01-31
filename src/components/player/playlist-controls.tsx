@@ -18,9 +18,12 @@ import { cn } from "@/lib/utils/common";
 import { usePlayerStore } from "@/lib/store";
 import { useSettings } from "../settings/settings-context";
 import { FilterSelect } from "./filter-select";
+import { Switch } from "../ui/switch";
+import { AdvancedFilterSelect } from "./advanced-filter-select";
 import { asCustomKey } from "@/lib/utils/metadata";
 import { StandardMetadataField } from "@/lib/types/settings";
 import { CustomMetadataField } from "@/lib/types/customMetadata";
+import { Label } from "@radix-ui/react-label";
 
 export type SortField =
   | "title"
@@ -32,10 +35,43 @@ export type SortField =
   | "track"
   | "year";
 export type SortOrder = "asc" | "desc";
+
+export type FilterValue = {
+  values: string[];
+  exclude: boolean;
+};
+
+export type AdvancedFilter = {
+  recentPlayHours?: {
+    enabled: boolean;
+    maxPlays: number;
+    withinHours: number;
+  };
+  monthlyPlayCount?: {
+    enabled: boolean;
+    maxPlays: number;
+    withinDays: number;
+  };
+  totalPlayCount?: {
+    enabled: boolean;
+    min?: number;
+    max?: number;
+  };
+  rating?: {
+    enabled: boolean;
+    min?: number;
+    max?: number;
+  };
+  tempo?: {
+    enabled: boolean;
+    min?: number;
+    max?: number;
+  };
+};
+
 export type FilterCriteria = {
-  [K in StandardMetadataField['key']]?: string;
-} & {
-  [key: `custom_${string}`]: string;
+  advanced?: AdvancedFilter;
+  [key: string]: AdvancedFilter | FilterValue | undefined;
 };
 
 interface PlaylistControlsProps {
@@ -100,7 +136,7 @@ export function PlaylistControls({
     return values;
   }, [tracks, customMetadata.fields]);
 
-  const getSortLabel = (field: string) => {
+  const getSortFieldLabel = (field: string) => {
     switch (field) {
       case "title":
         return "Title";
@@ -127,14 +163,18 @@ export function PlaylistControls({
 
   // Only show custom metadata fields that have showInFilter enabled
   const visibleCustomFields = useMemo(() => 
-    customMetadata.fields.filter((field: CustomMetadataField) => field.showInFilter),
+    customMetadata.fields?.filter((field: CustomMetadataField) => field.showInFilter) ?? [],
     [customMetadata.fields]
   );
 
   // Only show standard metadata fields that have showInFilter enabled
   const visibleStandardFields = useMemo(() => 
-    standardMetadataFields.filter((field: StandardMetadataField) => field.showInFilter),
+    standardMetadataFields?.filter((field: StandardMetadataField) => field.showInFilter) ?? [],
     [standardMetadataFields]
+  );
+
+  const filterFields = useMemo(() => [...visibleStandardFields, ...visibleCustomFields], 
+    [visibleStandardFields, visibleCustomFields]
   );
 
   return (
@@ -146,6 +186,15 @@ export function PlaylistControls({
           : "h-0 overflow-hidden"
       )}
     >
+            <AdvancedFilterSelect
+        value={filters.advanced || {}}
+        onChange={(advanced) => {
+          onFilterChange({
+            ...filters,
+            advanced,
+          });
+        }}
+      />
       <div className="w-36">
         <Select
           value={sortField}
@@ -154,7 +203,7 @@ export function PlaylistControls({
           <SelectTrigger className="w-36">
             <SelectValue>
               <span className="line-clamp-2">
-                {getSortLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
+                {getSortFieldLabel(sortField)} {sortOrder === "asc" ? "↑" : "↓"}
               </span>
             </SelectValue>
           </SelectTrigger>
@@ -205,35 +254,67 @@ export function PlaylistControls({
       </div>
 
       {/* Standard metadata filters */}
-      {visibleStandardFields.map((field) => (
-        <FilterSelect
-          key={field.id}
-          value={filters[field.key]}
-          onValueChange={(value) =>
-            onFilterChange({
-              ...filters,
-              [field.key]: field.key === 'genre' && value === '(Empty)' ? [] : value,
-            })
-          }
-          placeholder={field.name}
-          items={Array.from(uniqueValues[field.key])}
-        />
-      ))}
+      {visibleStandardFields.map((field) => {
+        const filterKey = field.key as keyof FilterCriteria;
+        const currentFilter = filters[filterKey] as FilterValue | undefined;
+        const options = Array.from(uniqueValues[filterKey] || new Set());
+
+        return (
+          <FilterSelect
+            key={field.key}
+            value={currentFilter?.values ?? []}
+            onValueChange={(value) =>
+              onFilterChange({
+                ...filters,
+                [filterKey]: {
+                  values: value,
+                  exclude: currentFilter?.exclude ?? false,
+                } as FilterValue,
+              })
+            }
+            exclude={currentFilter?.exclude ?? false}
+            onExcludeChange={(exclude) =>
+              onFilterChange({
+                ...filters,
+                [filterKey]: {
+                  values: currentFilter?.values ?? [],
+                  exclude,
+                } as FilterValue,
+              })
+            }
+            placeholder={`Filter by ${field.name}`}
+            items={options}
+          />
+        );
+      })}
 
       {/* Custom metadata filters */}
       {visibleCustomFields.map((field) => {
         const filterKey = `custom_${field.id}` as keyof FilterCriteria;
-        const currentValue = filters[filterKey];
+        const currentFilter = filters[filterKey] as FilterValue | undefined;
         const options = Array.from(uniqueValues[filterKey] || new Set());
         
         return (
           <FilterSelect
             key={field.id}
-            value={currentValue}
+            value={currentFilter?.values ?? []}
             onValueChange={(value) =>
               onFilterChange({
                 ...filters,
-                [filterKey]: value === '(Empty)' ? '' : value,
+                [filterKey]: { 
+                  values: value, 
+                  exclude: currentFilter?.exclude ?? false 
+                } as FilterValue,
+              })
+            }
+            exclude={currentFilter?.exclude ?? false}
+            onExcludeChange={(exclude) =>
+              onFilterChange({
+                ...filters,
+                [filterKey]: {
+                  values: currentFilter?.values ?? [],
+                  exclude,
+                } as FilterValue,
               })
             }
             placeholder={`Filter by ${field.name}`}

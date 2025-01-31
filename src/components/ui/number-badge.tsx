@@ -8,10 +8,10 @@ import {
 } from "./tooltip";
 
 interface NumberBadgeProps {
-  number: number;
+  number: number | string;
   className?: string;
   variant?: "primary" | "danger" | "ghost" | "muted";
-  size?: "sm" | "default";
+  size?: "xs" | "sm" | "default";
   tooltip?: string;
   tooltipSide?: "top" | "right" | "bottom" | "left";
   tooltipAlign?: "start" | "center" | "end";
@@ -27,6 +27,7 @@ export function NumberBadge({
   tooltipAlign = "center",
 }: NumberBadgeProps) {
   const sizeClasses = {
+    xs: "h-2 w-2 text-[6px]",
     sm: "h-3 w-3 text-[8px]",
     default: "h-4 w-4 text-[10px]",
   };

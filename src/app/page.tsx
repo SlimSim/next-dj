@@ -17,6 +17,7 @@ import {
   SortField,
   SortOrder,
   FilterCriteria,
+  FilterValue,
 } from "@/components/player/playlist-controls";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { usePlayerStore } from "@/lib/store";
@@ -59,7 +60,12 @@ export default function Home() {
     setSortOrder(order);
   };
 
-  const hasActiveFilters = Object.values(filters).some((value) => value !== undefined && value !== "all");
+  const hasActiveFilters = Object.values(filters).some(
+    (filter) => {
+      const filterValue = filter as FilterValue | undefined;
+      return filterValue?.values && filterValue.values.length > 0
+    }
+  );
 
   return (
     <>

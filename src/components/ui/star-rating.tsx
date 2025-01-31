@@ -5,7 +5,7 @@ interface StarRatingProps {
   fillLevel: number;
 }
 
-export function StarRating({ className = "", fillLevel }: StarRatingProps) {
+export function StarRating({ className = "", fillLevel: ratingValue }: StarRatingProps) {
   // Calculate the actual fill level based on the rating thresholds
   const getFillPercentage = (rating: number) => {
     if (rating <= 0.2) return 0;
@@ -15,7 +15,7 @@ export function StarRating({ className = "", fillLevel }: StarRatingProps) {
     return 1; // full fill
   };
 
-  const actualFillLevel = getFillPercentage(fillLevel);
+  const actualFillLevel = getFillPercentage(ratingValue);
 
   return (
     <svg
@@ -31,7 +31,7 @@ export function StarRating({ className = "", fillLevel }: StarRatingProps) {
     >
       <defs>
         <linearGradient
-          id={`starFill-${fillLevel}`}
+          id={`starFill-${ratingValue}`}
           x1="0%"
           y1="0%"
           x2="100%"
@@ -49,14 +49,14 @@ export function StarRating({ className = "", fillLevel }: StarRatingProps) {
       </defs>
       <path
         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-        fill={`url(#starFill-${fillLevel})`}
+        fill={`url(#starFill-${ratingValue})`}
       />
       <path
         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
         stroke="currentColor"
         fill="none"
       />
-      {fillLevel === 0 && (
+      {ratingValue === 0 && (
         <line
           x1="2"
           y1="22"
