@@ -59,41 +59,40 @@ const FilterIcon = ({
   totalPlaysFilter,
 }: FilterIconProps) => {
   return (
-    <div className="flex gap-0.5">
-      <div className="flex flex-col gap-0.5">
-        <div className="h-2.5">
-          <StarRating
-            fillLevel={ratingFilterActive ? (ratingValue / 5) / 5 : 0}
-            className={cn(
-              "w-2.5 h-2.5",
-              !ratingFilterActive && "text-muted-foreground"
-            )}
-          />
-        </div>
-        <div className="h-2.5 text-[8px] text-muted-foreground flex items-center justify-center">
-          {minBPM || 0}
-        </div>
-        <div className="h-2.5 text-[8px] text-muted-foreground flex items-center justify-center">
-          {tempoFilterActive ? (maxBPM ?? '∞') : ''}
-        </div>
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <NumberBadge
-          number={recentHoursFilter.value}
-          size="xs"
-          variant={recentHoursFilter.active ? 'primary' : 'ghost'}
-        />
-        <NumberBadge
-          number={monthlyFilter.value}
-          size="xs"
-          variant={monthlyFilter.active ? 'primary' : 'ghost'}
-        />
-        <NumberBadge
-          number={totalPlaysFilter.active ? totalPlaysFilter.value : '∞'}
-          size="xs"
-          variant={totalPlaysFilter.active ? 'primary' : 'ghost'}
+    <div className="xxxx grid grid-cols-2 grid-rows-3 gap-x-0.5 gap-y-0 place-items-center">
+      <div>
+        <StarRating
+          fillLevel={ratingFilterActive ? (ratingValue / 5) / 5 : 0}
+          className={cn(
+            "w-2.5 h-2.5",
+            !ratingFilterActive && "text-muted-foreground"
+          )}
         />
       </div>
+      <NumberBadge
+        number={recentHoursFilter.value}
+        size="xs"
+        variant={recentHoursFilter.active ? 'primary' : 'ghost'}
+        className="h-2.5"
+      />
+      <div className="text-[7px] -mt-2.5 text-muted-foreground h-2.5">
+        {minBPM || 0}
+      </div>
+      <NumberBadge
+        number={monthlyFilter.value}
+        size="xs"
+        variant={monthlyFilter.active ? 'primary' : 'ghost'}
+        className="h-2.5"
+      />
+      <div className="text-[7px] -mt-2.5 text-muted-foreground h-2.5">
+        {tempoFilterActive ? (maxBPM ?? '∞') : ''}
+      </div>
+      <NumberBadge
+        number={totalPlaysFilter.active ? totalPlaysFilter.value : '∞'}
+        size="xs"
+        variant={totalPlaysFilter.active ? 'primary' : 'ghost'}
+        className="h-2.5"
+      />
     </div>
   );
 };
@@ -202,7 +201,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
           {/* Recent Play Hours Filter */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="flex-1">Recent Hours Filter ({recentPlayHours}h)</Label>
+              <Label className="flex-1">Played daily</Label>
               <Switch
                 checked={value.recentPlayHours?.enabled ?? false}
                 onCheckedChange={handleRecentPlayHoursChange}
@@ -210,7 +209,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
             </div>
             {value.recentPlayHours?.enabled && (
               <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Played ≤</Label>
+                <Label className="whitespace-nowrap">Max</Label>
                 <Input
                   type="number"
                   min={0}
@@ -227,7 +226,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
                     })
                   }
                 />
-                <Label className="flex-1">times in last {recentPlayHours} hours</Label>
+                <Label className="flex-1">played in the last {recentPlayHours} hours</Label>
               </div>
             )}
           </div>
@@ -235,7 +234,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
           {/* Monthly Play Count Filter */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="flex-1">Monthly Filter ({monthlyPlayDays} days)</Label>
+              <Label className="flex-1">Played Monthly</Label>
               <Switch
                 checked={value.monthlyPlayCount?.enabled ?? false}
                 onCheckedChange={handleMonthlyPlayCountChange}
@@ -243,7 +242,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
             </div>
             {value.monthlyPlayCount?.enabled && (
               <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Played ≤</Label>
+                <Label className="whitespace-nowrap">Max </Label>
                 <Input
                   type="number"
                   min={0}
@@ -260,7 +259,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
                     })
                   }
                 />
-                <Label className="flex-1">times in last {monthlyPlayDays} days</Label>
+                <Label className="flex-1">played in the last {monthlyPlayDays} days</Label>
               </div>
             )}
           </div>
@@ -318,7 +317,7 @@ export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectPr
           {/* Rating */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Rating range</Label>
+              <Label>Min rating</Label>
               <Switch
                 checked={value.rating?.enabled ?? false}
                 onCheckedChange={handleRatingChange}
