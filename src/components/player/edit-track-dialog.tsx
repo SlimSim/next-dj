@@ -5,6 +5,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { InputWithDefault } from "@/components/ui/input-with-default";
@@ -107,8 +108,11 @@ export function EditTrackDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between flex-wrap">
           <DialogTitle>Edit Track Metadata</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground ml-4 truncate">
+            {track.title || 'Untitled Track'}
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="w-full">
