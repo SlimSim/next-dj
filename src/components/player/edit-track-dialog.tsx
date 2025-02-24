@@ -17,6 +17,7 @@ import { MusicMetadata } from "@/lib/types/types";
 import { useEffect } from "react";
 import { asCustomKey } from "@/lib/utils/metadata";
 import { useForm } from "react-hook-form";
+import { EQControls } from "./eq-controls";
 
 interface CustomField {
   id: string;
@@ -43,6 +44,8 @@ export function EditTrackDialog({
     triggerRefresh, 
     updateTrackMetadata, 
     customMetadata,
+    currentTrack,
+    setCurrentTrack,
   } = usePlayerStore();
 
   const { register, setValue } = useForm();
@@ -91,6 +94,11 @@ export function EditTrackDialog({
 
   const handleTrackChange = (changes: Partial<MusicMetadata>) => {
     if (!track) return;
+    
+    // Update the track in the store immediately to reflect changes everywhere
+    updateTrackMetadata(track.id, changes);
+    
+    // Also update the local state for the dialog
     onTrackChange({ ...track, ...changes });
   };
 
@@ -343,6 +351,7 @@ export function EditTrackDialog({
                     <span className="text-sm text-gray-500">seconds</span>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="endTimeOffset" className="text-right">
                     End Offset
@@ -411,6 +420,11 @@ export function EditTrackDialog({
                       seconds
                     </span>
                   </div>
+                </div>
+
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-lg font-medium mb-4">EQ Controls</h3>
+                  <EQControls track={track} onTrackChange={handleTrackChange} />
                 </div>
               </div>
             </TabsContent>

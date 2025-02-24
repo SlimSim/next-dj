@@ -4,6 +4,7 @@ import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
 import { PlayerLayout } from "./player-layout";
 import { usePlayerStore } from "@/lib/store";
 import { recordPlayEvent } from "@/db/metadata-operations";
+import { initializeEQ } from "@/features/audio/eq";
 
 export const AudioPlayer = () => {
   const {
@@ -64,6 +65,45 @@ export const AudioPlayer = () => {
       lastTrackRef.current = null;
     }
   }, [isPlaying, isLoading, setIsPlaying, currentTrack]);
+
+  useEffect(() => {
+    if (!audioRef.current || isLoading) return;
+
+    if (isPlaying && currentTrack) {
+      audioRef.current
+        .play()
+        .then(() => {
+          // Only record play event for main player, not pre-listen
+          // And only when the track changes (not when auto-playing next track)
+          if (currentTrack.id !== lastTrackRef.current) {
+            recordPlayEvent(currentTrack.id).catch((error) => {
+              console.error('Failed to record play event:', error);
+            });
+            lastTrackRef.current = currentTrack.id;
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to play:', error);
+          setIsPlaying(false);
+        });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, currentTrack, isLoading, setIsPlaying]);
+
+  // Initialize EQ as soon as audio element is available
+  useEffect(() => {
+    if (audioRef.current) {
+      initializeEQ(audioRef.current);
+    }
+  }, []);
+
+  // Update EQ when track changes
+  useEffect(() => {
+    if (audioRef.current && currentTrack) {
+      initializeEQ(audioRef.current);
+    }
+  }, [currentTrack]);
 
   return (
     <PlayerLayout

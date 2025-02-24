@@ -11,6 +11,7 @@ export interface SettingsState {
   recentPlayHours: number;
   monthlyPlayDays: number;
   standardMetadataFields: StandardMetadataField[];
+  practiceMode: boolean;
 }
 
 export interface SettingsActions {
@@ -20,7 +21,7 @@ export interface SettingsActions {
   toggleStandardMetadataVisibility: (fieldId: string) => void;
   toggleStandardMetadataSearch: (fieldId: string) => void;
   reorderStandardMetadataFields: (oldIndex: number, newIndex: number) => void;
+  setPracticeMode: (enabled: boolean) => void;
 }
 
-export type Settings = SettingsState & SettingsActions;
-export type SettingsStore = Settings;
+export type SettingsSlice = SettingsState & SettingsActions;

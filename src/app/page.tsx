@@ -41,6 +41,45 @@ export default function Home() {
   const toggleFilters = usePlayerStore((state) => state.toggleFilters);
   const showFilters = usePlayerStore((state) => state.showFilters);
   const toggleLists = usePlayerStore((state) => state.toggleLists);
+  const currentTrack = usePlayerStore((state) => state.currentTrack);
+  const volume = usePlayerStore((state) => state.volume);
+
+  const [playerCurrentVolume, setPlayerCurrentVolume] = useState<number>(0);
+
+  // Effect to update the current player volume
+  useEffect(() => {
+    const updateCurrentVolume = () => {
+      const audioElement = document.getElementById('main-audio') as HTMLAudioElement;
+      if (audioElement) {
+        setPlayerCurrentVolume(audioElement.volume);
+      }
+    };
+
+    // Update initially
+    updateCurrentVolume();
+
+    // Set up volume change listener
+    const audioElement = document.getElementById('main-audio') as HTMLAudioElement;
+    if (audioElement) {
+      audioElement.addEventListener('volumechange', updateCurrentVolume);
+      // Also listen for play events since volume might change when track starts
+      audioElement.addEventListener('play', updateCurrentVolume);
+      // And timeupdate for end fades
+      audioElement.addEventListener('timeupdate', updateCurrentVolume);
+    }
+
+    // Update every 20ms to match the fade update interval
+    const intervalId = setInterval(updateCurrentVolume, 20);
+
+    return () => {
+      if (audioElement) {
+        audioElement.removeEventListener('volumechange', updateCurrentVolume);
+        audioElement.removeEventListener('play', updateCurrentVolume);
+        audioElement.removeEventListener('timeupdate', updateCurrentVolume);
+      }
+      clearInterval(intervalId);
+    };
+  }, []);
 
   // Check for removed songs on initial load
   useEffect(() => {
@@ -66,6 +105,10 @@ export default function Home() {
       return filterValue?.values && filterValue.values.length > 0
     }
   );
+
+  const getNormalizedVolume = (globalVolume: number, songVolume: number) => {
+    return globalVolume * songVolume;
+  };
 
   return (
     <>

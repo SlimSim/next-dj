@@ -25,12 +25,9 @@ import { ThemeToggle } from "../common/theme-toggle";
 import { AudioDeviceSelector } from "../player/audio-device-selector";
 import { useSettings } from "@/lib/settings";
 import { usePlayerStore } from "@/lib/store";
-import type { Settings } from "@/lib/types/settings";
-import type { CustomMetadataField } from "@/lib/types/customMetadata";
 import { useCallback, useEffect, useState } from "react";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { Input } from "../ui/input";
-import { InputWithDefault } from "../ui/input-with-default";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   Tooltip,
@@ -298,6 +295,12 @@ export function SettingsContent({
   hasRemovedSongs,
   setHasRemovedSongs,
 }: SettingsContentProps) {
+  const [hasAudioPermission, setHasAudioPermission] = useState(false);
+  const practiceMode = usePlayerStore((state) => state.practiceMode);
+  const setPracticeMode = usePlayerStore((state) => state.setPracticeMode);
+  const eqMode = usePlayerStore((state) => state.eqMode);
+  const setEQMode = usePlayerStore((state) => state.setEQMode);
+
   const {
     selectedFolderNames,
     removeFolder,
@@ -330,7 +333,6 @@ export function SettingsContent({
   const [editingName, setEditingName] = useState("");
 
   const [showFolderList, setShowFolderList] = useState(false);
-  const [hasAudioPermission, setHasAudioPermission] = useState(false);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
 
   const checkForRemovedSongs = useCallback(async () => {
@@ -509,6 +511,22 @@ export function SettingsContent({
               <span className="text-sm">Theme</span>
               <ThemeToggle />
             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm"></span>
+            </div>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm">Practice Mode</span>
+                    <p className="text-xs text-muted-foreground">Keep play controls visible for song preparation and analysis</p>
+                  </div>
+                  <Switch
+                    checked={practiceMode}
+                    onCheckedChange={setPracticeMode}
+                  />
+                </div>
+              </div>
+
           </div>
 
           <div className="flex flex-col gap-2">
@@ -592,6 +610,19 @@ export function SettingsContent({
                 />
               </div>
             </div>
+          </div>
+
+          {/* EQ Mode Switch */}
+          <div className="border-t pt-4 mt-4">
+            <Label className="flex w-full items-center justify-between cursor-pointer">
+              <span>Use 5-band EQ:</span>
+              <Switch
+                checked={usePlayerStore((state) => state.eqMode === '5-band')}
+                onCheckedChange={(checked) =>
+                  usePlayerStore.getState().setEQMode(checked ? '5-band' : '3-band')
+                }
+              />
+            </Label>
           </div>
         </TabsContent>
 

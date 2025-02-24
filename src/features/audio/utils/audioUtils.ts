@@ -67,6 +67,16 @@ export const dbToLinear = (db: number): number => {
   return Math.min(1, Math.pow(10, db / 20));
 };
 
+// Constants for volume normalization
+export const MAX_GLOBAL_VOLUME = 1;
+export const MAX_TRACK_VOLUME = 1;
+
+export const getNormalizedVolume = (globalVolume: number, trackVolume: number = 0.75) => {
+  const normalizedGlobalVolume = globalVolume / MAX_GLOBAL_VOLUME;
+  const normalizedTrackVolume = trackVolume / MAX_TRACK_VOLUME;
+  return clampVolume(normalizedGlobalVolume * normalizedTrackVolume);
+};
+
 /**
  * Safely sets audio element source with proper cleanup
  */

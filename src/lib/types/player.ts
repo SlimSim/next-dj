@@ -15,6 +15,16 @@ export interface SongList {
   modified: number;
 }
 
+export type EQValues = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  e: number;
+}
+
+export type EQMode = '3-band' | '5-band';
+
 export interface PlayerState {
   currentTrack: MusicMetadata | null;
   queue: MusicMetadata[];
@@ -49,6 +59,9 @@ export interface PlayerState {
   metadata: MusicMetadata[];
   customMetadata: CustomMetadataState;
   standardMetadataFields: StandardMetadataField[];
+  eqValues: EQValues;
+  eqMode: EQMode;
+  practiceMode: boolean;
 }
 
 export interface PlayerActions {
@@ -111,6 +124,9 @@ export interface PlayerActions {
   reorderStandardMetadataFields: (oldIndex: number, newIndex: number) => void;
   toggleCustomMetadataSearch: (fieldId: string) => void;
   toggleStandardMetadataSearch: (fieldId: string) => void;
+  setEQValue: (key: keyof EQValues, value: number) => void;
+  setEQMode: (mode: EQMode) => void;
+  setPracticeMode: (enabled: boolean) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

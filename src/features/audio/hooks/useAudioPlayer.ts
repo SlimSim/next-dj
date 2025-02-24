@@ -5,7 +5,7 @@ import { useAudioControls } from "./useAudioControls";
 import { useAudioInitialization } from "./useAudioInitialization";
 import { useFadeEffects } from "./useFadeEffects";
 import { useTimeOffsets } from "./useTimeOffsets";
-import { clampVolume } from "../utils/audioUtils";
+import { clampVolume, getNormalizedVolume } from "../utils/audioUtils";
 import { PlayerState } from "@/lib/types/player";
 
 type TrackPropKey = keyof Pick<PlayerState, "currentTrack" | "prelistenTrack">;
@@ -39,7 +39,7 @@ export const useAudioPlayer = (trackProp: TrackPropKey = "currentTrack") => {
   useEffect(() => {
     if (audioRef.current && track) {
       const trackVolume = track.volume || 0.75;
-      audioRef.current.volume = clampVolume(volume * trackVolume);
+      audioRef.current.volume = getNormalizedVolume(volume, trackVolume);
     }
   }, [track?.volume, volume]);
 

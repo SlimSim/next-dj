@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Slider } from '../ui/slider'
 import { usePlayerStore } from '@/lib/store'
@@ -20,6 +20,9 @@ import { cn } from '@/lib/utils/common'
 import { formatTime } from '@/features/audio/utils/audioUtils';
 import { ConfirmButton } from '../ui/confirm-button'
 import ConfirmToggleButton from '../ui/confirm-toggle-button'
+import { EQControls } from './eq-controls'
+import { EQValues } from '@/lib/types/player'
+import { updateEQBand } from '@/features/audio/eq'
 
 interface PlayerControlsMenuProps {
   isOpen: boolean
@@ -54,13 +57,30 @@ export function PlayerControlsMenu({
     setShuffle,
     setRepeat,
     playNextTrack,
-    playPreviousTrack
+    playPreviousTrack,
+    eqValues,
   } = usePlayerStore()
+
+  const calculateFinalEQ = (songEQ: number, globalEQ: number): number => {
+    const clampedSongEQ = Math.max(0, Math.min(100, songEQ));
+    const clampedGlobalEQ = Math.max(0, Math.min(100, globalEQ));
+    return Math.round((clampedSongEQ * clampedGlobalEQ) / 100);
+  }
 
   const togglePlay = useCallback(() => {
     if (!audioRef.current || !currentTrack || isLoading) return
     setIsPlaying(!isPlaying)
   }, [currentTrack, isPlaying, isLoading, audioRef, setIsPlaying])
+
+  useEffect(() => {
+    const bands = ['a', 'b', 'c', 'd', 'e'] as const;
+    bands.forEach((band, index) => {
+      const songValue = currentTrack?.eq?.[band] ?? 70;
+      const globalValue = eqValues[band];
+      const finalValue = calculateFinalEQ(songValue, globalValue);
+      updateEQBand(index, finalValue);
+    });
+  }, [currentTrack?.eq, eqValues]);
 
   if (!isOpen) return null
 
@@ -178,26 +198,58 @@ export function PlayerControlsMenu({
             </div>
 
             {/* Volume controls */}
-            <div className="flex items-center gap-4 px-4">
-              <ConfirmToggleButton
-                variant="ghost"
-                size="icon"
-                toggledIcon={<><Volume2 className="h-5 w-5" />
-                <span className="sr-only">Turn volume on</span></>}
-                isToggled={!(isMuted || volume === 0)}
-                onToggle={toggleMute}
-              >
-                <VolumeX className="h-5 w-5" />
-                <span className="sr-only">Unmute</span>
-              </ConfirmToggleButton>
-              <Slider
-                value={[volume]}
-                min={0}
-                max={1}
-                step={0.01}
-                onValueChange={([value]) => handleVolumeChange(value)}
-                className="w-full"
-              />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMute}
+                  className="shrink-0"
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-5 w-5" />
+                  ) : (
+                    <Volume2 className="h-5 w-5" />
+                  )}
+                  <span className="sr-only">Toggle mute</span>
+                </Button>
+                <div className="w-full space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[isMuted ? 0 : volume * 100]}
+                      min={0}
+                      max={100}
+                      step={1}
+                      onValueChange={([value]) => handleVolumeChange(value / 100)}
+                      className="w-full"
+                    />
+                    <span className="text-sm text-muted-foreground min-w-[3ch] text-right">
+                      {Math.round((isMuted ? 0 : volume * 100))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* EQ Controls */}
+            <EQControls />
+
+            {/* Track-EQ Values Display */}
+            <div className="flex justify-between px-4 text-sm">
+              <span>A: {currentTrack?.eq?.a ?? 70}</span>
+              <span>B: {currentTrack?.eq?.b ?? 70}</span>
+              <span>C: {currentTrack?.eq?.c ?? 70}</span>
+              <span>D: {currentTrack?.eq?.d ?? 70}</span>
+              <span>E: {currentTrack?.eq?.e ?? 70}</span>
+            </div>
+            
+            {/* Agregated EQ Values Display */}
+            <div className="flex justify-between px-4 text-sm">
+              <span>A: {calculateFinalEQ(currentTrack?.eq?.a ?? 70, eqValues.a)}</span>
+              <span>B: {calculateFinalEQ(currentTrack?.eq?.b ?? 70, eqValues.b)}</span>
+              <span>C: {calculateFinalEQ(currentTrack?.eq?.c ?? 70, eqValues.c)}</span>
+              <span>D: {calculateFinalEQ(currentTrack?.eq?.d ?? 70, eqValues.d)}</span>
+              <span>E: {calculateFinalEQ(currentTrack?.eq?.e ?? 70, eqValues.e)}</span>
             </div>
           </div>
         </div>

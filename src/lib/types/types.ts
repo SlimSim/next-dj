@@ -22,7 +22,17 @@ export interface MusicMetadata extends AudioPlaybackOptions {
   bpm?: number;
   year?: number;
   genre?: string[];
-  customMetadata?: { [key: `custom_${string}`]: string };
+  endTimeOffset?: number;
+  fadeDuration?: number;
+  endTimeFadeDuration?: number;
+  customMetadata?: { [key: string]: string };
+  eq?: {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    e: number;
+  };
 }
 
 export interface PlayHistoryEvent {

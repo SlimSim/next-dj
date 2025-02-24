@@ -13,8 +13,9 @@ export const defaultStandardMetadataFields: StandardMetadataField[] = [
 ];
 
 const initialState: SettingsState = {
-  recentPlayHours: 24,
-  monthlyPlayDays: 30,
+  recentPlayHours: 0,
+  monthlyPlayDays: 0,
+  practiceMode: false,
   standardMetadataFields: defaultStandardMetadataFields,
 };
 
@@ -24,6 +25,7 @@ export const useSettings = create<SettingsStore>()(
       ...initialState,
       setRecentPlayHours: (hours: number) => set({ recentPlayHours: hours }),
       setMonthlyPlayDays: (days: number) => set({ monthlyPlayDays: days }),
+      setPracticeMode: (enabled: boolean) => set({ practiceMode: enabled }),
       toggleStandardMetadataFilter: (fieldId: string) =>
         set((state) => ({
           standardMetadataFields: state.standardMetadataFields.map((field) =>

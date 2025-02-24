@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Play, Pause } from "lucide-react";
+import { usePlayerStore } from "@/lib/store";
 
 interface PlayButtonProps {
   isPlaying: boolean;
@@ -13,23 +14,24 @@ export const PlayButton = ({
   onClick,
   disabled = false,
 }: PlayButtonProps) => {
+  const practiceMode = usePlayerStore((state) => state.practiceMode);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(true);
 
   // Add new useEffect to handle external play state changes
   useEffect(() => {
-    if (isPlaying && isButtonVisible) {
+    if (!practiceMode && isPlaying && isButtonVisible) {
       setIsAnimating(true);
       setTimeout(() => {
         setIsAnimating(false);
         setIsButtonVisible(false);
       }, 1000);
     }
-  }, [isPlaying]);
+  }, [isPlaying, practiceMode]);
 
   // Keep existing useEffect for handling visibility when stopping
   useEffect(() => {
-    if (!isPlaying && !isButtonVisible) {
+    if (!practiceMode && !isPlaying && !isButtonVisible) {
       const visibilityTimeout = setTimeout(() => {
         setIsButtonVisible(true);
         // Add a small delay before removing animation class
@@ -42,18 +44,19 @@ export const PlayButton = ({
 
       return () => clearTimeout(visibilityTimeout);
     }
-  }, [isPlaying, isButtonVisible]);
+  }, [isPlaying, isButtonVisible, practiceMode]);
 
   const handleClick = () => {
     onClick();
-    setIsAnimating(true);
-    setTimeout(() => {
-      setIsAnimating(false);
-      setIsButtonVisible(false);
-    }, 1000);
+    if (!practiceMode) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 1000);
+    }
   };
 
-  if (!isButtonVisible) return null;
+  if (!practiceMode && !isButtonVisible) return null;
 
   return (
     <Button

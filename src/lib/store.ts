@@ -24,6 +24,14 @@ const initialState: PlayerState = {
   repeat: "none",
   duration: 0,
   currentTime: 0,
+  eqValues: {
+    a: 70,
+    b: 70,
+    c: 70,
+    d: 70,
+    e: 70,
+  },
+  eqMode: '5-band',
   isQueueVisible: false,
   refreshTrigger: 0,
   audioDevices: [],
@@ -99,6 +107,7 @@ const initialState: PlayerState = {
       showInSearch: false,
     },
   ],
+  practiceMode: false,
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -154,6 +163,14 @@ export const usePlayerStore = create<PlayerStore>()(
         setRepeat: (repeat) => set({ repeat }),
         setDuration: (duration) => set({ duration }),
         setCurrentTime: (currentTime) => set({ currentTime }),
+        setEQValue: (key: 'a' | 'b' | 'c' | 'd' | 'e', value: number) =>
+          set((state) => ({
+            eqValues: {
+              ...state.eqValues,
+              [key]: value,
+            },
+          })),
+        setEQMode: (mode) => set({ eqMode: mode }),
         setQueueVisible: (isQueueVisible) => set({ isQueueVisible }),
         triggerRefresh: () =>
           set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
@@ -328,48 +345,29 @@ export const usePlayerStore = create<PlayerStore>()(
           set({ selectedFolderNames: [] });
         },
 
-        updateTrackMetadata: (
-          trackId: string,
-          updates: Partial<MusicMetadata> & { __volumeOnly?: boolean; __preserveRef?: boolean }
-        ) => {
+        updateTrackMetadata: (trackId, updates) => {
           set((state) => {
-            const trackIndex = state.metadata.findIndex((t) => t.id === trackId);
-            if (trackIndex === -1) return state;
+            const updateTrack = (track: MusicMetadata): MusicMetadata => {
+              if (track.id === trackId) {
+                return { ...track, ...updates };
+              }
+              return track;
+            };
 
-            const updatedMetadata = [...state.metadata];
-            if (updates.__volumeOnly) {
-              // Only update volume
-              updatedMetadata[trackIndex] = {
-                ...updatedMetadata[trackIndex],
-                volume: updates.volume,
-              };
-            } else if (updates.__preserveRef) {
-              // Preserve the reference but update fields
-              Object.assign(updatedMetadata[trackIndex], updates);
-            } else {
-              // Create new reference with all updates
-              updatedMetadata[trackIndex] = {
-                ...updatedMetadata[trackIndex],
-                ...updates,
-              };
-            }
+            const newMetadata = state.metadata.map(updateTrack);
 
-            // Update current track if it's the same
-            const currentTrack =
-              state.currentTrack?.id === trackId
-                ? { ...state.currentTrack, ...updates }
-                : state.currentTrack;
+            const newQueue = state.queue.map(updateTrack);
+            const newHistory = state.history.map(updateTrack);
 
-            // Update prelisten track if it's the same
-            const prelistenTrack =
-              state.prelistenTrack?.id === trackId
-                ? { ...state.prelistenTrack, ...updates }
-                : state.prelistenTrack;
+            const newCurrentTrack = state.currentTrack?.id === trackId
+              ? updateTrack(state.currentTrack)
+              : state.currentTrack;
 
             return {
-              metadata: updatedMetadata,
-              currentTrack,
-              prelistenTrack,
+              metadata: newMetadata,
+              queue: newQueue,
+              history: newHistory,
+              currentTrack: newCurrentTrack,
             };
           });
         },
@@ -505,6 +503,7 @@ export const usePlayerStore = create<PlayerStore>()(
               standardMetadataFields: fields,
             };
           }),
+        setPracticeMode: (mode: boolean) => set({ practiceMode: mode }),
       };
     },
     {
@@ -527,6 +526,7 @@ export const usePlayerStore = create<PlayerStore>()(
         metadata: state.metadata,
         customMetadata: state.customMetadata,
         standardMetadataFields: state.standardMetadataFields,
+        practiceMode: state.practiceMode,
       }),
       onRehydrateStorage: () => (state) => {
         // Ensure all standard metadata fields exist with default values
