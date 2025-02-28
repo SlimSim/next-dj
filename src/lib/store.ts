@@ -108,6 +108,8 @@ const initialState: PlayerState = {
     },
   ],
   practiceMode: false,
+  // Track selection state
+  selectedTracks: [] as string[],
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -504,6 +506,30 @@ export const usePlayerStore = create<PlayerStore>()(
             };
           }),
         setPracticeMode: (mode: boolean) => set({ practiceMode: mode }),
+        setSelectedTracks: (tracks: string[] | Set<string>) => {
+          const trackArray = Array.isArray(tracks) ? tracks : Array.from(tracks);
+          set((state) => ({ ...state, selectedTracks: trackArray }));
+        },
+        handleSelectAll: (trackIds: string[]) => {
+          console.log('handleSelectAll called with trackIds:', trackIds);
+          
+          const currentSelected = get().selectedTracks || [];
+          console.log('Current selected tracks:', currentSelected);
+          
+          const allSelected = trackIds.length > 0 && trackIds.every(id => currentSelected.includes(id));
+          console.log('All tracks already selected?', allSelected);
+          
+          if (allSelected) {
+            console.log('Clearing selection');
+            set({ selectedTracks: [] });
+          } else {
+            console.log('Setting new selection');
+            const hiddenSelected = currentSelected.filter(id => !trackIds.includes(id));
+            const newSelection = [...hiddenSelected, ...trackIds];
+            console.log('New selection:', newSelection);
+            set({ selectedTracks: newSelection });
+          }
+        },
       };
     },
     {
@@ -527,6 +553,7 @@ export const usePlayerStore = create<PlayerStore>()(
         customMetadata: state.customMetadata,
         standardMetadataFields: state.standardMetadataFields,
         practiceMode: state.practiceMode,
+        selectedTracks: state.selectedTracks,
       }),
       onRehydrateStorage: () => (state) => {
         // Ensure all standard metadata fields exist with default values

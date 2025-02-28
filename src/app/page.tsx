@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Playlist } from "@/components/player/playlist";
 import { AudioPlayer } from "@/components/player/audio-player";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
@@ -21,7 +21,7 @@ import {
 } from "@/components/player/playlist-controls";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { usePlayerStore } from "@/lib/store";
-import { FilterIcon } from "lucide-react";
+import { FilterIcon, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ListMusic } from "lucide-react";
 import { ListsPanel } from "@/components/player/lists-panel";
@@ -29,6 +29,7 @@ import { ListsPanel } from "@/components/player/lists-panel";
 export default function Home() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const prelistenRef = useRef<PrelistenAudioRef>(null);
+  const playlistRef = useRef<{ handleSelectAll: () => void }>(null);
   const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
   const searchQuery = usePlayerStore((state) => state.searchQuery);
   const setSearchQuery = usePlayerStore((state) => state.setSearchQuery);
@@ -43,8 +44,34 @@ export default function Home() {
   const toggleLists = usePlayerStore((state) => state.toggleLists);
   const currentTrack = usePlayerStore((state) => state.currentTrack);
   const volume = usePlayerStore((state) => state.volume);
+  const tracks = usePlayerStore((state) => state.tracks);
+  const selectedListId = usePlayerStore((state) => state.selectedListId);
+  const songLists = usePlayerStore((state) => state.songLists);
 
   const [playerCurrentVolume, setPlayerCurrentVolume] = useState<number>(0);
+
+  const filteredAndSortedTracks = useMemo(() => {
+    // First filter by selected song list
+    let tracksToFilter = tracks || [];
+    if (selectedListId) {
+      const selectedList = songLists.find(list => list.id === selectedListId);
+      if (selectedList) {
+        tracksToFilter = tracksToFilter.filter(track => track.path && selectedList.songs.includes(track.path));
+      }
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      tracksToFilter = tracksToFilter.filter(track => 
+        track.title?.toLowerCase().includes(query) ||
+        track.artist?.toLowerCase().includes(query) ||
+        track.album?.toLowerCase().includes(query)
+      );
+    }
+
+    return tracksToFilter;
+  }, [tracks, selectedListId, songLists, searchQuery]);
 
   // Effect to update the current player volume
   useEffect(() => {
@@ -121,10 +148,19 @@ export default function Home() {
               <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 flex justify-between items-center">
                 <div
                   className={cn(
-                    "transition-all duration-200",
-                    isSearchFocused ? "hidden sm:block" : "block"
+                    "transition-all duration-200 flex items-center gap-2",
+                    isSearchFocused ? "hidden sm:flex" : "flex"
                   )}
                 >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => playlistRef.current?.handleSelectAll()}
+                    title={`Select all`}
+                    className="h-8 w-8 -ml-4"
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                  </Button>
                   <h1 className="text-xl sm:text-2xl font-bold text-red-500">
                     Next DJ
                   </h1>
@@ -193,6 +229,8 @@ export default function Home() {
                 <div className="flex-1 container mx-auto p-0">
                   <FolderScanner />
                   <Playlist
+                    ref={playlistRef}
+                    data-testid="playlist-component"
                     searchQuery={searchQuery}
                     prelistenRef={prelistenRef}
                     sortField={sortField}

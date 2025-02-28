@@ -110,3 +110,14 @@
 .progress-bar-fill {
   @apply h-full bg-neutral-900 dark:bg-neutral-100 transition-all duration-200;
 }
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

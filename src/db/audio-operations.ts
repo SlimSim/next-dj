@@ -178,7 +178,42 @@ export async function getUniqueValues(): Promise<{
 }
 
 export async function updateAudioMetadata(metadata: MusicMetadata): Promise<void> {
+  console.log('Updating metadata for track:', metadata.id); // Debug log
+  
+  if (!metadata?.id) {
+    console.error('Invalid metadata: missing id', metadata); // Debug log
+    throw new Error('Invalid metadata: missing id');
+  }
+
   const db = await initMusicDB();
   const tx = db.transaction("metadata", "readwrite");
-  await tx.store.put(metadata);
+  
+  try {
+    // Check if track exists
+    const existingTrack = await tx.store.get(metadata.id);
+    if (!existingTrack) {
+      console.error('Track not found:', metadata.id); // Debug log
+      throw new Error(`Track not found: ${metadata.id}`);
+    }
+
+    const updatedTrack = {
+      ...existingTrack,
+      ...metadata,
+      // Preserve these fields from the existing track
+      playCount: existingTrack.playCount,
+      playHistory: existingTrack.playHistory,
+      isReference: existingTrack.isReference,
+      path: existingTrack.path,
+      removed: existingTrack.removed,
+    };
+
+    console.log('Updating track with data:', updatedTrack); // Debug log
+    await tx.store.put(updatedTrack);
+    await tx.done; // Wait for transaction to complete
+    console.log('Successfully updated track:', metadata.id); // Debug log
+  } catch (error) {
+    console.error('Error updating track:', metadata.id, error); // Debug log
+    await tx.abort(); // Abort transaction on error
+    throw error;
+  }
 }

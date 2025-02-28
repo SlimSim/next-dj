@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, RefObject, useMemo } from "react";
+import { useEffect, useState, RefObject, useMemo, forwardRef, useImperativeHandle } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { useSettings } from "../settings/settings-context";
 import { MusicMetadata } from "@/lib/types/types";
@@ -9,11 +9,19 @@ import { TrackItem } from "./track-item";
 import { EditTrackDialog } from "./edit-track-dialog";
 import { usePlaylistActions } from "./use-playlist-actions";
 import { useTrackList } from "./use-track-list";
-import { FileUpload } from "../common/file-upload";
-import { GearIcon } from "@radix-ui/react-icons";
 import { SortField, SortOrder, FilterCriteria, FilterValue } from "./playlist-controls";
 import { createErrorHandler } from "@/features/audio/utils/errorUtils";
-import { asCustomKey } from "@/lib/utils/metadata";
+import { Button } from "../ui/button";
+import {
+  MoreVertical,
+  Play,
+  Pause,
+  Pencil,
+  Trash,
+  MessageSquare,
+  ListMusic,
+  CheckSquare,
+} from "lucide-react";
 
 const handleError = createErrorHandler('Playlist');
 
@@ -25,24 +33,20 @@ interface PlaylistProps {
   filters: FilterCriteria;
 }
 
-export function Playlist({
-  searchQuery,
-  prelistenRef,
-  sortField,
-  sortOrder,
-  filters,
-}: PlaylistProps) {
+export const Playlist = forwardRef((props: PlaylistProps, ref) => {
   const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [prelistenCurrentTime, setPrelistenCurrentTime] = useState(0);
   const selectedListId = usePlayerStore((state) => state.selectedListId);
   const songLists = usePlayerStore((state) => state.songLists);
+  const selectedTracks = usePlayerStore((state) => state.selectedTracks || []);
+  const setSelectedTracks = usePlayerStore((state) => state.setSelectedTracks);
 
   const { currentTrack, prelistenTrack, isPrelistening, queue, history, customMetadata } =
     usePlayerStore();
 
   const { showPreListenButtons } = useSettings();
-  const { tracks, loadTracks } = useTrackList(searchQuery);
+  const { tracks, loadTracks } = useTrackList(props.searchQuery);
 
   // Filter tracks based on filter criteria
   const filteredTracks = useMemo(() => {
@@ -57,20 +61,20 @@ export function Playlist({
 
     return tracksToFilter.filter((track) => {
       // Check advanced filters first
-      if (filters.advanced) {
-        const { recentPlayHours, monthlyPlayCount, totalPlayCount, rating, tempo } = filters.advanced;
+      if (props.filters.advanced) {
+        const { recentPlayHours, monthlyPlayCount, totalPlayCount, rating, tempo } = props.filters.advanced;
 
         // Check recent play hours
-        if (filters.advanced?.recentPlayHours?.enabled) {
+        if (props.filters.advanced?.recentPlayHours?.enabled) {
           const hoursAgo = new Date();
-          hoursAgo.setHours(hoursAgo.getHours() - filters.advanced.recentPlayHours.withinHours);
+          hoursAgo.setHours(hoursAgo.getHours() - props.filters.advanced.recentPlayHours.withinHours);
           
           const playsInPeriod = track.playHistory?.filter(play => {
             const playDate = new Date(play.timestamp);
             return playDate > hoursAgo;
           }).length ?? 0;
 
-          if (playsInPeriod > filters.advanced.recentPlayHours.maxPlays) {
+          if (playsInPeriod > props.filters.advanced.recentPlayHours.maxPlays) {
             return false;
           }
         }
@@ -125,7 +129,7 @@ export function Playlist({
       }
 
       // Check each filter criteria
-      for (const [key, filter] of Object.entries(filters)) {
+      for (const [key, filter] of Object.entries(props.filters)) {
         if (key === 'advanced') continue;
         
         const filterValue = filter as FilterValue | undefined;
@@ -167,33 +171,33 @@ export function Playlist({
     });
   }, [
     tracks,
-    filters,
+    props.filters,
     selectedListId,
     songLists,
   ]);
 
   // Apply sorting
-  const processedTracks = useMemo(() => {
+  const filteredAndSortedTracks = useMemo(() => {
     return filteredTracks.sort((a, b) => {
-      const aValue = a[sortField as keyof MusicMetadata];
-      const bValue = b[sortField as keyof MusicMetadata];
+      const aValue = a[props.sortField as keyof MusicMetadata];
+      const bValue = b[props.sortField as keyof MusicMetadata];
 
       if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortOrder === "asc"
+        return props.sortOrder === "asc"
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
 
       if (typeof aValue === "number" && typeof bValue === "number") {
-        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+        return props.sortOrder === "asc" ? aValue - bValue : bValue - aValue;
       }
 
       return 0;
     });
   }, [
     filteredTracks,
-    sortField,
-    sortOrder,
+    props.sortField,
+    props.sortOrder,
   ]);
 
   const {
@@ -203,84 +207,190 @@ export function Playlist({
     handlePrelistenTimelineClick,
     handlePrelistenToggle,
     addToQueue,
-  } = usePlaylistActions(prelistenRef);
+  } = usePlaylistActions(props.prelistenRef);
 
   useEffect(() => {
     const updateTime = () => {
-      if (prelistenRef.current) {
-        setPrelistenCurrentTime(prelistenRef.current.getCurrentTime());
+      if (props.prelistenRef.current) {
+        setPrelistenCurrentTime(props.prelistenRef.current.getCurrentTime());
       }
     };
 
     const interval = setInterval(updateTime, 100);
     return () => clearInterval(interval);
-  }, [prelistenRef]);
+  }, [props.prelistenRef]);
+
+  useEffect(() => {
+    const playlistElement = document.querySelector('[data-testid="playlist-component"]');
+    if (!playlistElement) return;
+
+    const handleSelectAllEvent = () => {
+      const trackIds = filteredAndSortedTracks.map(track => track.id);
+      setSelectedTracks(trackIds);
+    };
+
+    playlistElement.addEventListener('selectAll', handleSelectAllEvent);
+    return () => {
+      playlistElement.removeEventListener('selectAll', handleSelectAllEvent);
+    };
+  }, [filteredAndSortedTracks, setSelectedTracks]);
 
   const handleEditTrack = (track: MusicMetadata) => {
     setEditingTrack(track);
     setIsEditing(true);
   };
 
-  const handleSaveTrackAndRefresh = async (track: MusicMetadata) => {
+  const handleSaveTrackAndRefresh = async (tracks: MusicMetadata | MusicMetadata[]) => {
     try {
-      const success = await handleSaveTrack(track);
-      if (success) {
+      const tracksToSave = Array.isArray(tracks) ? tracks : [tracks];
+
+      const results = await Promise.all(
+        tracksToSave.map(async (track) => {
+          return await handleSaveTrack(track);
+        })
+      );
+
+      const allSuccessful = results.every(success => success);
+      if (allSuccessful) {
         setIsEditing(false);
         setEditingTrack(null);
+        setSelectedTracks([]);
         await loadTracks();
       }
     } catch (error) {
+      console.error('Error saving tracks:', error); // Debug log
       handleError(error);
     }
   };
 
+  const handleEditSelectedTracks = () => {
+    const tracksToEdit = filteredAndSortedTracks.filter(track => selectedTracks.includes(track.id));
+    if (tracksToEdit.length > 0) {
+      setEditingTrack(tracksToEdit[0]); // Set first track for backward compatibility
+      setIsEditing(true);
+    }
+  };
+
+  const handleAddSelectedToQueue = () => {
+    const tracksToAdd = filteredAndSortedTracks.filter(track => selectedTracks.includes(track.id));
+    tracksToAdd.forEach(track => addToQueue(track));
+    setSelectedTracks([]);
+  };
+
+  const handleTrackSelect = (track: MusicMetadata) => {
+    const currentSelected = selectedTracks || [];
+    const isSelected = currentSelected.includes(track.id);
+    
+    if (isSelected) {
+      setSelectedTracks(currentSelected.filter(id => id !== track.id));
+    } else {
+      setSelectedTracks([...currentSelected, track.id]);
+    }
+  };
+
+  // const handleSelectAll = () => {
+  //   const trackIds = filteredAndSortedTracks.map(track => track.id);
+  //   setSelectedTracks(trackIds);
+  // };
+
+  useImperativeHandle(ref, () => ({
+    handleSelectAll: () => {
+      const trackIds = filteredAndSortedTracks.map(track => track.id);
+      setSelectedTracks(trackIds);
+    }
+  }));
+
   return (
-    <div className="h-full flex-1 flex flex-col container mx-auto p-0">
-      <div className="w-full h-full">
-        {processedTracks.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-8 text-muted-foreground">
-            <p>No tracks found</p>
-            <p>
-              Add tracks in the settings (<GearIcon className="inline-block" />
-              ) or with this button:
-            </p>
-            <FileUpload onlyFolderUpload />
-          </div>
-        ) : (
-          processedTracks.map((track) => (
-            <TrackItem
-              key={track.id}
-              track={track}
-              currentTrack={currentTrack}
-              prelistenTrack={prelistenTrack}
-              isPrelistening={isPrelistening}
-              prelistenCurrentTime={prelistenCurrentTime}
-              showPreListenButtons={showPreListenButtons}
-              isInQueue={
-                currentTrack?.id === track.id ||
-                queue?.some((t) => t.id === track.id) ||
-                history?.some((t) => t.id === track.id)
-              }
-              onPrelistenTimelineClick={handlePrelistenTimelineClick}
-              onPrelistenToggle={handlePrelistenToggle}
-              onAddToQueue={addToQueue}
-              onEditTrack={handleEditTrack}
-              onDeleteTrack={handleDelete}
-            />
-          ))
-        )}
+    <div className="relative" data-testid="playlist-component">
+      {/* Track List */}
+      <div className="pb-0">
+        {filteredAndSortedTracks.map((track) => (
+          <TrackItem
+            key={track.id}
+            track={track}
+            data-track-id={track.id}
+            currentTrack={currentTrack}
+            prelistenTrack={prelistenTrack}
+            isPrelistening={isPrelistening}
+            prelistenCurrentTime={prelistenCurrentTime}
+            showPreListenButtons={showPreListenButtons}
+            isInQueue={
+              currentTrack?.id === track.id ||
+              queue?.some((t) => t.id === track.id) ||
+              history?.some((t) => t.id === track.id)
+            }
+            onPrelistenTimelineClick={handlePrelistenTimelineClick}
+            onPrelistenToggle={handlePrelistenToggle}
+            onAddToQueue={addToQueue}
+            onEditTrack={handleEditTrack}
+            onDeleteTrack={handleDelete}
+            isSelected={Array.isArray(selectedTracks) && selectedTracks.includes(track.id)}
+            onSelect={() => handleTrackSelect(track)}
+          />
+        ))}
       </div>
+
+      {/* Selection Controls - Only show when tracks are selected */}
+      {selectedTracks.length > 0 && (
+        <div className="sticky bottom-[-2px] z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t">
+          <div className="flex items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedTracks([]);
+                }}
+              >
+                Clear Selection
+              </Button>
+              <span className="text-sm font-medium">
+                {selectedTracks.length} selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleEditSelectedTracks}
+                disabled={selectedTracks.length === 0}
+              >
+                Edit {selectedTracks.length} Track{selectedTracks.length !== 1 && 's'}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleAddSelectedToQueue}
+              >
+                Add to Queue
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <EditTrackDialog
         isOpen={isEditing}
-        onOpenChange={(open) => !open && setIsEditing(false)}
+        onOpenChange={(open) => {
+          setIsEditing(open);
+          if (!open) {
+            setEditingTrack(null);
+            setSelectedTracks([]);
+          }
+        }}
         track={editingTrack}
-        onTrackChange={setEditingTrack}
+        tracks={selectedTracks.length > 0 ? filteredAndSortedTracks.filter(track => selectedTracks.includes(track.id)) : undefined}
+        onTrackChange={(updatedTracks) => {
+          // Update the first track in the editing state for backward compatibility
+          if (updatedTracks.length > 0) {
+            setEditingTrack(updatedTracks[0]);
+          }
+        }}
         onSave={handleSaveTrackAndRefresh}
       />
     </div>
   );
-}
+});
 
 function getHoursSinceLastPlay(track: MusicMetadata) {
   const lastPlayed = track.lastPlayed ? new Date(track.lastPlayed) : null;

@@ -1,13 +1,6 @@
-import { Button } from "../ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { MusicMetadata } from "@/lib/types/types";
 import { cn } from "@/lib/utils/common";
 import {
@@ -27,7 +20,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "@/components/ui/tooltip";
 import { useState } from "react";
 import {
   getPlaysInLastHours,
@@ -51,6 +44,8 @@ interface TrackItemProps {
   prelistenCurrentTime: number;
   showPreListenButtons: boolean;
   isInQueue?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
   onPrelistenTimelineClick: (e: React.MouseEvent<Element>, track: MusicMetadata) => void;
   onPrelistenToggle: (track: MusicMetadata) => void;
   onAddToQueue: (track: MusicMetadata) => void;
@@ -66,11 +61,14 @@ export function TrackItem({
   prelistenCurrentTime,
   showPreListenButtons,
   isInQueue,
+  isSelected,
+  onSelect,
   onPrelistenTimelineClick,
   onPrelistenToggle,
   onAddToQueue,
   onEditTrack,
   onDeleteTrack,
+  ...props
 }: TrackItemProps) {
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
   const [showPreListenDialog, setShowPreListenDialog] = useState(false);
@@ -133,9 +131,22 @@ export function TrackItem({
     <div
       className={cn(
         "p-1 -mb-2 group flex items-stretch rounded-lg hover:bg-accent/50 w-full overflow-hidden",
-        currentTrack?.id === track.id && "bg-accent"
+        currentTrack?.id === track.id && "bg-accent",
+        isSelected && "bg-accent"
       )}
+      data-track-id={track.id}
+      {...props}
     >
+      {/* Selection Checkbox */}
+      <div className="w-5 flex flex-col items-center pt-4 gap-1">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => {
+            if (onSelect) onSelect();
+          }}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      </div>
       <div className="w-5 flex flex-col items-center pt-1 gap-1">
         <div className="h-3">
           <TooltipProvider>
