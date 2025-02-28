@@ -62,6 +62,7 @@ export interface PlayerState {
   eqValues: EQValues;
   eqMode: EQMode;
   practiceMode: boolean;
+  selectedTracks: string[];
 }
 
 export interface PlayerActions {
@@ -127,6 +128,8 @@ export interface PlayerActions {
   setEQValue: (key: keyof EQValues, value: number) => void;
   setEQMode: (mode: EQMode) => void;
   setPracticeMode: (enabled: boolean) => void;
+  setSelectedTracks: (tracks: string[] | Set<string>) => void;
+  handleSelectAll: (trackIds: string[]) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
-import { clampVolume, getNormalizedVolume } from "../utils/audioUtils";
+import { getNormalizedVolume } from "../utils/audioUtils";
 
 // Helper function to clamp volume between 0 and 1
 const clampVolume = (value: number) => Math.max(0, Math.min(1, value));

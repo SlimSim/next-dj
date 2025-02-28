@@ -82,7 +82,7 @@ export function EQControls({ track, onTrackChange }: EQControlsProps) {
   )
 
   return (
-    <div className="grid grid-cols-6 gap-4 items-center">
+    <div className="grid grid-cols-5 gap-1 items-center">
       {visibleSliders.map((slider) => (
         <div key={slider.id} className={cn(
           eqMode === '3-band' ? 'col-span-2' : 'col-span-1',

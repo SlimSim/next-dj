@@ -25,6 +25,7 @@ import { FilterIcon, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ListMusic } from "lucide-react";
 import { ListsPanel } from "@/components/player/lists-panel";
+import { MusicMetadata } from "@/lib/types/types";
 
 export default function Home() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -44,7 +45,7 @@ export default function Home() {
   const toggleLists = usePlayerStore((state) => state.toggleLists);
   const currentTrack = usePlayerStore((state) => state.currentTrack);
   const volume = usePlayerStore((state) => state.volume);
-  const tracks = usePlayerStore((state) => state.tracks);
+  const metadata = usePlayerStore((state) => state.metadata);
   const selectedListId = usePlayerStore((state) => state.selectedListId);
   const songLists = usePlayerStore((state) => state.songLists);
 
@@ -52,26 +53,26 @@ export default function Home() {
 
   const filteredAndSortedTracks = useMemo(() => {
     // First filter by selected song list
-    let tracksToFilter = tracks || [];
+    let tracksToFilter = metadata || [];
     if (selectedListId) {
       const selectedList = songLists.find(list => list.id === selectedListId);
       if (selectedList) {
-        tracksToFilter = tracksToFilter.filter(track => track.path && selectedList.songs.includes(track.path));
+        tracksToFilter = tracksToFilter.filter((track: MusicMetadata) => track.path && selectedList.songs.includes(track.path));
       }
     }
 
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      tracksToFilter = tracksToFilter.filter(track => 
-        track.title?.toLowerCase().includes(query) ||
-        track.artist?.toLowerCase().includes(query) ||
-        track.album?.toLowerCase().includes(query)
+      tracksToFilter = tracksToFilter.filter((track: MusicMetadata) => 
+        (track.title?.toLowerCase() || '').includes(query) ||
+        (track.artist?.toLowerCase() || '').includes(query) ||
+        (track.album?.toLowerCase() || '').includes(query)
       );
     }
 
     return tracksToFilter;
-  }, [tracks, selectedListId, songLists, searchQuery]);
+  }, [metadata, selectedListId, songLists, searchQuery]);
 
   // Effect to update the current player volume
   useEffect(() => {

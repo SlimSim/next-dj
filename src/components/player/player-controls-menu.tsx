@@ -235,22 +235,22 @@ export function PlayerControlsMenu({
             <EQControls />
 
             {/* Track-EQ Values Display */}
-            <div className="flex justify-between px-4 text-sm">
+            {/* <div className="flex justify-between px-4 text-sm">
               <span>A: {currentTrack?.eq?.a ?? 70}</span>
               <span>B: {currentTrack?.eq?.b ?? 70}</span>
               <span>C: {currentTrack?.eq?.c ?? 70}</span>
               <span>D: {currentTrack?.eq?.d ?? 70}</span>
               <span>E: {currentTrack?.eq?.e ?? 70}</span>
-            </div>
+            </div> */}
             
             {/* Agregated EQ Values Display */}
-            <div className="flex justify-between px-4 text-sm">
+            {/* <div className="flex justify-between px-4 text-sm">
               <span>A: {calculateFinalEQ(currentTrack?.eq?.a ?? 70, eqValues.a)}</span>
               <span>B: {calculateFinalEQ(currentTrack?.eq?.b ?? 70, eqValues.b)}</span>
               <span>C: {calculateFinalEQ(currentTrack?.eq?.c ?? 70, eqValues.c)}</span>
               <span>D: {calculateFinalEQ(currentTrack?.eq?.d ?? 70, eqValues.d)}</span>
               <span>E: {calculateFinalEQ(currentTrack?.eq?.e ?? 70, eqValues.e)}</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

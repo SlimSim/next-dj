@@ -52,8 +52,12 @@ export function EditTrackDialog({
     return [];
   }, [propTracks, singleTrack]);
 
+  interface EditedValues extends Partial<MusicMetadata> {
+    genreInput?: string;
+  }
+
   // Track the edited values separately from the original tracks
-  const [editedValues, setEditedValues] = useState<Partial<MusicMetadata>>({});
+  const [editedValues, setEditedValues] = useState<EditedValues>({});
   
   const { register, setValue } = useForm();
   const isMultipleEdit = tracks.length > 1;
@@ -65,10 +69,10 @@ export function EditTrackDialog({
         // If we have an edited value, use that instead
         const effectiveValue = editedValues[key as keyof MusicMetadata] ?? value;
         
-        if (acc[key] === undefined) {
-          acc[key] = effectiveValue;
-        } else if (acc[key] !== effectiveValue) {
-          acc[key] = null; // null indicates different values
+        if (acc[key as keyof MusicMetadata] === undefined) {
+          acc[key as keyof MusicMetadata] = effectiveValue;
+        } else if (acc[key as keyof MusicMetadata] !== effectiveValue) {
+          acc[key as keyof MusicMetadata] = null; // null indicates different values
         }
       });
       return acc;
@@ -499,7 +503,7 @@ export function EditTrackDialog({
                       </Label>
                       <Input
                         id={customKey}
-                        value={value}
+                        value={value?.toString() ?? ""}
                         onChange={(e) => handleTrackChange({
                           customMetadata: {
                             ...tracks[0].customMetadata,

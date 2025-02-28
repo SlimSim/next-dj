@@ -150,15 +150,19 @@ export const useAudioInitialization = (
           audioRef.current.onended = null;
 
           // Set up the ended handler based on end offset
-          audioRef.current.onended = () => {
-            console.log(`Track ended at: ${new Date().toISOString()}, Seek Time: ${audioRef.current.currentTime.toFixed(2)}s`);
-            cleanupCurrentTrack();
-            if (trackProp === "currentTrack") {
-              playNextTrack();
-            }
-          };
+          if (audioRef.current) {
+            audioRef.current.onended = () => {
+              if (audioRef.current) {
+                console.log(`Track ended at: ${new Date().toISOString()}, Seek Time: ${audioRef.current.currentTime.toFixed(2)}s`);
+              }
+              cleanupCurrentTrack();
+              if (trackProp === "currentTrack") {
+                playNextTrack();
+              }
+            };
 
-          audioRef.current.removeEventListener('error', handleAudioError);
+            audioRef.current.removeEventListener('error', handleAudioError);
+          }
           resolve();
         };
 
