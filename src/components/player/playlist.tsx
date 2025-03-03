@@ -291,7 +291,14 @@ export const Playlist = forwardRef((props: PlaylistProps, ref) => {
   useImperativeHandle(ref, () => ({
     handleSelectAll: () => {
       const trackIds = filteredAndSortedTracks.map(track => track.id);
-      setSelectedTracks(trackIds);
+      // If all tracks are already selected, clear the selection
+      if (selectedTracks.length === trackIds.length && 
+          trackIds.every(id => selectedTracks.includes(id))) {
+        setSelectedTracks([]);
+      } else {
+        // Otherwise select all tracks
+        setSelectedTracks(trackIds);
+      }
     }
   }));
 
