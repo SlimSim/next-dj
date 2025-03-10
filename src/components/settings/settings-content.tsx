@@ -224,7 +224,7 @@ export function SettingsContent({
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <AudioDeviceSelector />
+                  <AudioDeviceSelector isMainOutput={true} />
                 </div>
               </div>
             )}

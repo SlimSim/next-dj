@@ -15,6 +15,8 @@ export const useTimeOffsets = (
     const currentTime = audioRef.current.currentTime;
     const duration = audioRef.current.duration;
     const timeRemaining = duration - currentTime;
+    const endTimeOffset = track.endTimeOffset || 0;
+    const endTimeFadeDuration = track.endTimeFadeDuration || 0;
 
     // Always update the current time for the seeker
     if (trackProp === "currentTrack") {
@@ -23,11 +25,9 @@ export const useTimeOffsets = (
 
     // If track has an end offset and we've reached it, play next track
     if (
-      track.endTimeOffset !== undefined &&
-      track.endTimeOffset > 0 &&
-      timeRemaining <= track.endTimeOffset
-    ) {
-      console.log('TimeOffsets: Reached end offset for track:', track.title);
+      endTimeOffset > 0 &&
+      timeRemaining <= endTimeOffset  // Switch exactly at endTimeOffset
+    ) {      
       if (trackProp === "currentTrack") {
         // Stop current track before playing next
         if (audioRef.current) {
@@ -42,13 +42,10 @@ export const useTimeOffsets = (
   useEffect(() => {
     if (!track || !audioRef.current) return;
 
-    console.log('TimeOffsets: Starting playback of track:', track.title);
-
     audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
 
     return () => {
       if (audioRef.current) {
-        console.log('TimeOffsets: Ending playback of track:', track.title);
         audioRef.current.removeEventListener("timeupdate", handleTimeUpdate);
       }
     };

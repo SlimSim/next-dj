@@ -564,7 +564,7 @@ export function SettingsContent({
                 Activate Audio Output
               </Button>
             ) : (
-              <AudioDeviceSelector />
+              <AudioDeviceSelector isMainOutput={true} />
             )}
           </div>
         </TabsContent>

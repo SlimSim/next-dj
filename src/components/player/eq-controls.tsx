@@ -82,11 +82,9 @@ export function EQControls({ track, onTrackChange }: EQControlsProps) {
   )
 
   return (
-    <div className="grid grid-cols-5 gap-1 items-center">
+    <div className={cn("grid gap-1 items-center", eqMode === '3-band' ? 'grid-cols-3' : 'grid-cols-5',)}>
       {visibleSliders.map((slider) => (
-        <div key={slider.id} className={cn(
-          eqMode === '3-band' ? 'col-span-2' : 'col-span-1',
-         'flex-col flex items-center')}>
+        <div key={slider.id} className='flex-col flex items-center'>
           <div className="text-center mb-2 flex items-center gap-2">
             {getValue(slider.id)}
             <Button

@@ -11,7 +11,11 @@ import {
 } from "../ui/select";
 import { Switch } from "../ui/switch";
 
-export const AudioDeviceSelector = () => {
+interface AudioDeviceSelectorProps {
+  isMainOutput: boolean;
+}
+
+export const AudioDeviceSelector = ({ isMainOutput }: AudioDeviceSelectorProps) => {
   const {
     audioDevices,
     selectedDeviceId,
@@ -131,13 +135,15 @@ export const AudioDeviceSelector = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-sm font-medium">Main Audio Output</label>
+      <label className="text-sm font-medium">
+        {isMainOutput ? "Main Audio Output" : "Pre-listen Audio Output"}
+      </label>
       <Select
-        value={selectedDeviceId || "default"}
-        onValueChange={handleDeviceChange}
+        value={isMainOutput ? (selectedDeviceId || "default") : (prelistenDeviceId || "default")}
+        onValueChange={isMainOutput ? handleDeviceChange : handlePrelistenDeviceChange}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select main audio output" />
+          <SelectValue placeholder={isMainOutput ? "Select main audio output" : "Select prelisten audio output"} />
         </SelectTrigger>
         <SelectContent>
           {audioDevices.map((device) => (
@@ -147,33 +153,16 @@ export const AudioDeviceSelector = () => {
           ))}
         </SelectContent>
       </Select>
-      <label className="cursor-pointer text-sm font-medium mt-4">
-        <div className="flex items-center justify-between w-full">
-          <span>Pre-listen Audio Output</span>
-          <Switch
-            checked={showPreListenButtons}
-            onCheckedChange={setShowPreListenButtons}
-          />
-        </div>
-      </label>
-      {showPreListenButtons && (
-        <>
-          <Select
-            value={prelistenDeviceId || "default"}
-            onValueChange={handlePrelistenDeviceChange}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select prelisten audio output" />
-            </SelectTrigger>
-            <SelectContent>
-              {audioDevices.map((device) => (
-                <SelectItem key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Unnamed device"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </>
+      {!isMainOutput && (
+        <label className="cursor-pointer text-sm font-medium mt-4">
+          <div className="flex items-center justify-between w-full">
+            <span>Pre-listen Audio Output</span>
+            <Switch
+              checked={showPreListenButtons}
+              onCheckedChange={setShowPreListenButtons}
+            />
+          </div>
+        </label>
       )}
     </div>
   );

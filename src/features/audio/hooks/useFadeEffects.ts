@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { PlayerState } from "@/lib/types/player";
-import { getNormalizedVolume } from "../utils/audioUtils";
+import { getNormalizedVolume, calculateFadeProgress, calculateEndFadeProgress, calculateTargetVolume } from "../utils/fadeUtils";
 
 // Update interval in milliseconds (20ms = 50 updates per second, smooth enough for volume changes)
 const FADE_UPDATE_INTERVAL = 20;
@@ -18,14 +18,12 @@ export const useFadeEffects = (
     const trackVolume = track.volume || 0.75;
     const normalizedBaseVolume = getNormalizedVolume(volume, trackVolume);
     
-    // Set initial volume to 0 if we have a fade duration
-    if (fadeDuration > 0) {
-      audioRef.current.volume = 0;
-    }
+    // Immediately set initial volume before any playback can occur
+    audioRef.current.volume = fadeDuration > 0 ? 0 : normalizedBaseVolume;
 
     if (fadeDuration > 0) {
       let startTime = Date.now() / 1000;
-      let fadeInterval: NodeJS.Timeout | null = null;
+      let fadeInterval: NodeJS.Timeout | undefined = undefined;
       let isFading = false;
       let hasStartTimeBeenSet = false;
       let hasReachedStartTime = false;
@@ -34,23 +32,20 @@ export const useFadeEffects = (
       const fadeIn = () => {
         if (!audioRef.current || !isFading) return;
 
-        const currentTime = Date.now() / 1000;
-        const elapsed = currentTime - startTime;
-        const fadeProgress = Math.min(Math.max(elapsed / fadeDuration, 0), 1);
-        const targetVolume = normalizedBaseVolume * fadeProgress;
-        const safeVolume = Math.min(Math.max(targetVolume, 0), 1);
+        const fadeProgress = calculateFadeProgress(startTime, fadeDuration);
+        const targetVolume = calculateTargetVolume(fadeProgress, normalizedBaseVolume);
 
         // Only set volume if it has changed significantly
-        if (Math.abs(audioRef.current.volume - safeVolume) > 0.01) {
-          audioRef.current.volume = safeVolume;
+        if (Math.abs(audioRef.current.volume - targetVolume) > 0.01) {
+          audioRef.current.volume = targetVolume;
         }
 
         if (fadeProgress >= 1) {
           audioRef.current.volume = normalizedBaseVolume;
           isFading = false;
-          if (fadeInterval) {
+          if (fadeInterval !== undefined) {
             clearInterval(fadeInterval);
-            fadeInterval = null;
+            fadeInterval = undefined;
           }
         }
       };
@@ -70,7 +65,7 @@ export const useFadeEffects = (
         hasFadeStarted = true;
         
         // Clear any existing interval
-        if (fadeInterval) {
+        if (fadeInterval !== undefined) {
           clearInterval(fadeInterval);
         }
         // Start the fade interval
@@ -80,14 +75,14 @@ export const useFadeEffects = (
       const handleTimeUpdate = () => {
         if (!audioRef.current || isFading || hasFadeStarted) return;
 
+        // If startTime is 0 or undefined, we should have already started the fade in handleCanPlay
+        if (!track.startTime) return;
+
         // Check if we've reached or passed the startTime
-        if (track.startTime && track.startTime > 0) {
-          const currentTime = audioRef.current.currentTime;
-          // Changed to check if we're at or past the startTime
-          if (currentTime >= track.startTime) {
-            hasReachedStartTime = true;
-            startFade();
-          }
+        const currentTime = audioRef.current.currentTime;
+        if (currentTime >= track.startTime) {
+          hasReachedStartTime = true;
+          startFade();
         }
       };
 
@@ -99,8 +94,8 @@ export const useFadeEffects = (
         // Mark that startTime has been set
         hasStartTimeBeenSet = true;
 
-        // If we're already at or past the correct time, mark it
-        if (track.startTime && currentTime >= track.startTime) {
+        // If startTime is 0 or we're already at/past the startTime, start fade immediately
+        if (!track.startTime || currentTime >= track.startTime) {
           hasReachedStartTime = true;
           startFade();
         }
@@ -127,7 +122,7 @@ export const useFadeEffects = (
           audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
           audioRef.current.removeEventListener('play', handlePlay);
         }
-        if (fadeInterval) {
+        if (fadeInterval !== undefined) {
           clearInterval(fadeInterval);
         }
       };
@@ -136,9 +131,11 @@ export const useFadeEffects = (
 
   // Handle end fade
   useEffect(() => {
-    if (!audioRef.current || !track || !track.endTimeFadeDuration) return;
+    if (!audioRef.current || !track || !track.endTimeFadeDuration) {
+      return;
+    }
 
-    let fadeInterval: NodeJS.Timeout | null = null;
+    let fadeInterval: NodeJS.Timeout | undefined = undefined;
     let isFading = false;
 
     const handleTimeUpdate = () => {
@@ -151,28 +148,31 @@ export const useFadeEffects = (
       const trackVolume = track.volume || 0.75;
       const normalizedBaseVolume = getNormalizedVolume(volume, trackVolume);
 
-      // Calculate when to start fading out
-      const fadeStartTime = duration - endOffset - endFadeDuration;
-      
+      // Calculate when to start fading out - we start fading BEFORE reaching endTimeOffset
+      const fadeStartTime = duration - (endOffset + endFadeDuration);
+
       // If we're in the fade out period and not already fading
-      if (currentTime >= fadeStartTime && currentTime <= (duration - endOffset) && !isFading) {
+      if (currentTime >= fadeStartTime && !isFading) {
+
         // Start new fade interval
         isFading = true;
         fadeInterval = setInterval(() => {
           if (!audioRef.current) return;
           
           const currentTime = audioRef.current.currentTime;
-          const fadeProgress = Math.max(0, 1 - ((currentTime - fadeStartTime) / endFadeDuration));
-          const targetVolume = normalizedBaseVolume * fadeProgress;
+          const fadeProgress = calculateEndFadeProgress(fadeStartTime, endFadeDuration, currentTime);
+          const targetVolume = calculateTargetVolume(fadeProgress, normalizedBaseVolume);
           
           // Ensure volume is within valid range
           const safeVolume = Math.min(Math.max(targetVolume, 0), 1);
           audioRef.current.volume = safeVolume;
 
-          // Clear interval when fade is complete
-          if (fadeProgress <= 0 && fadeInterval) {
-            clearInterval(fadeInterval);
-            fadeInterval = null;
+          // Clear interval when fade is complete or we've reached endTimeOffset
+          if (fadeProgress <= 0 || currentTime >= (duration - endOffset)) {
+            if (fadeInterval !== undefined) {
+              clearInterval(fadeInterval);
+              fadeInterval = undefined;
+            }
             isFading = false;
           }
         }, FADE_UPDATE_INTERVAL);
@@ -183,7 +183,7 @@ export const useFadeEffects = (
 
     return () => {
       audioRef.current?.removeEventListener('timeupdate', handleTimeUpdate);
-      if (fadeInterval) {
+      if (fadeInterval !== undefined) {
         clearInterval(fadeInterval);
       }
     };

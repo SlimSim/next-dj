@@ -61,6 +61,7 @@ export interface PlayerState {
   standardMetadataFields: StandardMetadataField[];
   eqValues: EQValues;
   eqMode: EQMode;
+  use5BandEQ: boolean;
   practiceMode: boolean;
   selectedTracks: string[];
 }
@@ -127,6 +128,7 @@ export interface PlayerActions {
   toggleStandardMetadataSearch: (fieldId: string) => void;
   setEQValue: (key: keyof EQValues, value: number) => void;
   setEQMode: (mode: EQMode) => void;
+  setUse5BandEQ: (enabled: boolean) => void;
   setPracticeMode: (enabled: boolean) => void;
   setSelectedTracks: (tracks: string[] | Set<string>) => void;
   handleSelectAll: (trackIds: string[]) => void;

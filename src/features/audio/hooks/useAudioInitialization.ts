@@ -37,7 +37,6 @@ export const useAudioInitialization = (
 
   const handleLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
-      console.log(`Loaded metadata at: ${new Date().toISOString()}, Seek Time: ${audioRef.current.currentTime.toFixed(2)}s`);
       if (trackProp === "currentTrack") {
         setDuration(audioRef.current.duration);
         // Resume playback if it was playing before
@@ -54,7 +53,6 @@ export const useAudioInitialization = (
 
   const cleanupCurrentTrack = useCallback(() => {
     if (audioRef.current) {
-      console.log(`Cleaning up track at: ${new Date().toISOString()}, Seek Time: ${audioRef.current.currentTime.toFixed(2)}s`);
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       if (audioRef.current.src) {
@@ -78,8 +76,6 @@ export const useAudioInitialization = (
     try {
       // Clean up previous track first
       cleanupCurrentTrack();
-
-      console.log(`Switching song at: ${new Date().toISOString()}, Target Volume: ${audioRef.current?.volume}, Current Volume: ${audioRef.current?.volume}, State: ${audioRef.current?.paused ? 'Paused' : 'Playing'}, Seek Time: ${audioRef.current?.currentTime.toFixed(2)}s`);
 
       if (track.removed) {
         throw new AudioError(`Track ${track.title} has been removed`, AudioErrorCode.TRACK_NOT_FOUND);
@@ -109,6 +105,14 @@ export const useAudioInitialization = (
         );
       }
 
+      // Set preload attribute to prevent auto-seeking
+      audioRef.current.preload = "none";
+
+      // Set initial start time before setting the source
+      if (track.startTime && track.startTime > 0) {
+        audioRef.current.currentTime = track.startTime;
+      }
+
       const cleanup = setAudioSource(audioRef.current, audioFile.file);
       currentUrlRef.current = audioRef.current.src;
 
@@ -119,7 +123,7 @@ export const useAudioInitialization = (
         }
 
         const handleAudioError = (e: ErrorEvent) => {
-          console.log(`Audio error at: ${new Date().toISOString()}, Error: ${e.message}, Seek Time: ${audioRef.current?.currentTime.toFixed(2)}s`);
+          console.info(`Audio error at: ${new Date().toISOString()}, Error: ${e.message}, Seek Time: ${audioRef.current?.currentTime.toFixed(2)}s`);
           reject(new AudioError(
             `Failed to load audio: ${e.message}`,
             AudioErrorCode.INVALID_AUDIO
@@ -129,11 +133,17 @@ export const useAudioInitialization = (
         const handleCanPlay = () => {
           if (!mountedRef.current || !audioRef.current) return;
 
-          console.log(`Audio can play at: ${new Date().toISOString()}, Seek Time: ${audioRef.current.currentTime.toFixed(2)}s`);
           setIsLoading(false);
+          
           if (trackProp === "currentTrack") {
             setDuration(audioRef.current.duration || 0);
-            // Resume playback if it was playing before
+            
+            // Double check start time is correct
+            if (track.startTime && track.startTime > 0 && Math.abs(audioRef.current.currentTime - track.startTime) > 0.1) {
+              audioRef.current.currentTime = track.startTime;
+            }
+
+            // Now that everything is set up, start playback if needed
             if (isPlaying) {
               audioRef.current.play().catch(() => 
                 handleError(new AudioError('Failed to start playback', AudioErrorCode.PLAYBACK_FAILED))
@@ -141,9 +151,10 @@ export const useAudioInitialization = (
             }
           } else {
             setPrelistenDuration(audioRef.current.duration || 0);
-          }
-          if (track.startTime && track.startTime > 0 && audioRef.current) {
-            audioRef.current.currentTime = track.startTime;
+            // For prelisten, verify start time
+            if (track.startTime && track.startTime > 0 && Math.abs(audioRef.current.currentTime - track.startTime) > 0.1) {
+              audioRef.current.currentTime = track.startTime;
+            }
           }
 
           // Remove any existing ended handler
@@ -152,9 +163,6 @@ export const useAudioInitialization = (
           // Set up the ended handler based on end offset
           if (audioRef.current) {
             audioRef.current.onended = () => {
-              if (audioRef.current) {
-                console.log(`Track ended at: ${new Date().toISOString()}, Seek Time: ${audioRef.current.currentTime.toFixed(2)}s`);
-              }
               cleanupCurrentTrack();
               if (trackProp === "currentTrack") {
                 playNextTrack();

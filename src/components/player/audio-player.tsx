@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useAudioPlayer } from "../../features/audio/hooks/useAudioPlayer";
 import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
+import { usePlaybackControl } from "@/features/audio/playback/usePlaybackControl";
 import { PlayerLayout } from "./player-layout";
 import { usePlayerStore } from "@/lib/store";
 import { recordPlayEvent } from "@/db/metadata-operations";
@@ -18,6 +19,8 @@ export const AudioPlayer = () => {
   const { isMuted, handleVolumeChange, toggleMute, handleSeek, togglePlay } =
     useAudioControls(audioRef, isLoading);
 
+  const { playNextTrack } = usePlaybackControl();
+
   const {
     currentTrack,
     isPlaying,
@@ -28,7 +31,6 @@ export const AudioPlayer = () => {
     queue,
     setIsPlaying,
     setQueueVisible,
-    playNextTrack,
   } = usePlayerStore();
 
   const lastTrackRef = useRef<string | null>(null);

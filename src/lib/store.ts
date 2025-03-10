@@ -32,6 +32,7 @@ const initialState: PlayerState = {
     e: 70,
   },
   eqMode: '5-band',
+  use5BandEQ: true,
   isQueueVisible: false,
   refreshTrigger: 0,
   audioDevices: [],
@@ -173,6 +174,13 @@ export const usePlayerStore = create<PlayerStore>()(
             },
           })),
         setEQMode: (mode) => set({ eqMode: mode }),
+        setUse5BandEQ: (enabled) => {
+          set((state) => ({
+            use5BandEQ: enabled,
+            // When enabling 5-band EQ, set the mode to '5-band'
+            eqMode: enabled ? '5-band' : state.eqMode
+          }));
+        },
         setQueueVisible: (isQueueVisible) => set({ isQueueVisible }),
         triggerRefresh: () =>
           set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
@@ -535,10 +543,32 @@ export const usePlayerStore = create<PlayerStore>()(
     {
       name: "player-storage",
       partialize: (state) => ({
-        selectedFolderNames: state.selectedFolderNames,
+        // EQ settings
+        eqValues: state.eqValues,
+        eqMode: state.eqMode,
+        use5BandEQ: state.use5BandEQ,
+        
+        // Queue and playback state
+        queue: state.queue,
+        history: state.history,
+        currentTrack: state.currentTrack,
+        isQueueVisible: state.isQueueVisible,
+        isPlaying: state.isPlaying,
+        volume: state.volume,
+        shuffle: state.shuffle,
+        repeat: state.repeat,
+        
+        // Device settings
         selectedDeviceId: state.selectedDeviceId,
         prelistenDeviceId: state.prelistenDeviceId,
         showPreListenButtons: state.showPreListenButtons,
+        
+        // Library settings
+        selectedFolderNames: state.selectedFolderNames,
+        songLists: state.songLists,
+        metadata: state.metadata,
+        
+        // UI settings
         recentPlayHours: state.recentPlayHours,
         monthlyPlayDays: state.monthlyPlayDays,
         hasShownPreListenWarning: state.hasShownPreListenWarning,
@@ -546,10 +576,8 @@ export const usePlayerStore = create<PlayerStore>()(
         sortOrder: state.sortOrder,
         filters: state.filters,
         showFilters: state.showFilters,
-        songLists: state.songLists,
         showLists: state.showLists,
         selectedListId: state.selectedListId,
-        metadata: state.metadata,
         customMetadata: state.customMetadata,
         standardMetadataFields: state.standardMetadataFields,
         practiceMode: state.practiceMode,
