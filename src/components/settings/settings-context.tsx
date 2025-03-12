@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from "react";
 import { usePlayerStore } from "@/lib/store";
+import { useSettings as useSettingsStore } from "@/lib/settings";
 import { StandardMetadataField } from "@/lib/types/settings";
 
 interface SettingsContextType {
@@ -23,10 +24,10 @@ export const SettingsProvider = ({
 }) => {
   const showPreListenButtons = usePlayerStore((state) => state.showPreListenButtons);
   const setShowPreListenButtons = usePlayerStore((state) => state.setShowPreListenButtons);
-  const recentPlayHours = usePlayerStore((state) => state.recentPlayHours);
-  const setRecentPlayHours = usePlayerStore((state) => state.setRecentPlayHours);
-  const monthlyPlayDays = usePlayerStore((state) => state.monthlyPlayDays);
-  const setMonthlyPlayDays = usePlayerStore((state) => state.setMonthlyPlayDays);
+  const recentPlayHours = useSettingsStore((state) => state.recentPlayHours);
+  const setRecentPlayHours = useSettingsStore((state) => state.setRecentPlayHours);
+  const monthlyPlayDays = useSettingsStore((state) => state.monthlyPlayDays);
+  const setMonthlyPlayDays = useSettingsStore((state) => state.setMonthlyPlayDays);
   const standardMetadataFields = usePlayerStore((state) => state.standardMetadataFields);
 
   return (

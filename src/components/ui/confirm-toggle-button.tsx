@@ -15,7 +15,8 @@ const ConfirmToggleButton: React.FC<ConfirmToggleButtonProps> = ({
   disabled,
   className,
   variant,
-  children
+  children,
+  disableConfirm
 }) => {
   return (
     <>
@@ -25,6 +26,7 @@ const ConfirmToggleButton: React.FC<ConfirmToggleButtonProps> = ({
           className={className}
           variant={variant}
           disabled={disabled}
+          disableConfirm={disableConfirm}
         >
           {toggledIcon}
         </ConfirmButton>

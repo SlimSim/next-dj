@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { usePlayerStore } from "@/lib/store";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { SortableField } from "../components/sortable-field";
+import { PlusIcon } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -20,13 +19,20 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { PlusIcon } from "lucide-react";
+import { usePlayerStore } from "@/lib/store";
+import { SortableField } from "../components/sortable-field";
+
+interface CustomField {
+  id: string;
+  name: string;
+  type: 'text';
+}
+
+interface CustomMetadata {
+  fields: CustomField[];
+}
 
 export function MetadataTab() {
-  const [newFieldName, setNewFieldName] = useState("");
-  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
-
   const customMetadata = usePlayerStore((state) => state.customMetadata);
   const addCustomMetadataField = usePlayerStore((state) => state.addCustomMetadataField);
   const removeField = usePlayerStore((state) => state.removeCustomMetadataField);
@@ -42,6 +48,10 @@ export function MetadataTab() {
   const toggleStandardMetadataSearch = usePlayerStore((state) => state.toggleStandardMetadataSearch);
   const reorderStandardMetadataFields = usePlayerStore((state) => state.reorderStandardMetadataFields);
 
+  const [newFieldName, setNewFieldName] = useState("");
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+
   const handleAddCustomField = () => {
     if (!newFieldName.trim()) return;
     const name = newFieldName.trim();
@@ -54,6 +64,10 @@ export function MetadataTab() {
       showInSearch: true,
     });
     setNewFieldName('');
+  };
+
+  const removeCustomMetadataField = (id: string) => {
+    removeField(id);
   };
 
   const sensors = useSensors(
@@ -98,116 +112,113 @@ export function MetadataTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-medium mb-4">Standard Metadata Fields</h3>
-        <div className="hidden sm:grid grid-cols-[1fr_60px_60px_60px] gap-4 mb-2 px-14">
-          <div>Field Name</div>
-          <div className="text-center">Filter</div>
-          <div className="text-center">List</div>
-          <div className="text-center">Search</div>
-        </div>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleStandardDragEnd}
-        >
-          <SortableContext
-            items={standardMetadataFields.map((field) => field.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {standardMetadataFields.map((field) => (
-                <SortableField
-                  key={field.id}
-                  id={field.id}
-                  name={field.name}
-                  showInFilter={field.showInFilter}
-                  showInList={field.showInList}
-                  showInSearch={field.showInSearch}
-                  toggleFilter={toggleStandardMetadataFilter}
-                  toggleVisibility={toggleStandardMetadataVisibility}
-                  toggleSearch={toggleStandardMetadataSearch}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+    <div className="space-y-6 h-[calc(100vh-12rem)]">
+      {/* Header - Only visible on larger screens */}
+      <div className="hidden sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-4 items-center px-2 sticky top-0 bg-background z-10">
+        <div className="font-medium">Field</div>
+        <div className="text-center font-medium">List</div>
+        <div className="text-center font-medium">Filter</div>
+        <div className="text-center font-medium">Search</div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-medium mb-4">Custom Metadata Fields</h3>
-        <div className="hidden sm:grid grid-cols-[1fr_60px_60px_60px] gap-4 mb-2 px-14">
-          <div>Field Name</div>
-          <div className="text-center">Filter</div>
-          <div className="text-center">List</div>
-          <div className="text-center">Search</div>
-        </div>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={customMetadata.fields.map((field) => field.id)}
-            strategy={verticalListSortingStrategy}
+      <div className="flex flex-col gap-4 max-h-[calc(100vh-16rem)] overflow-y-auto">
+        {/* Standard Metadata Fields */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium sticky top-0 bg-background py-2 z-10">Standard Metadata Fields</h4>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleStandardDragEnd}
           >
-            <div className="space-y-2">
-              {customMetadata.fields.map((field) => (
-                <SortableField
-                  key={field.id}
-                  id={field.id}
-                  name={field.name}
-                  showInFilter={field.showInFilter}
-                  showInList={field.showInList}
-                  showInSearch={field.showInSearch}
-                  isEditing={editingFieldId === field.id}
-                  editingName={editingName}
-                  onEditStart={() => {
-                    setEditingFieldId(field.id);
-                    setEditingName(field.name);
-                  }}
-                  onEditChange={setEditingName}
-                  onEditSubmit={() => {
-                    if (editingName.trim() && editingFieldId) {
-                      renameCustomMetadataField(editingFieldId, editingName.trim());
+            <SortableContext
+              items={standardMetadataFields.map(field => field.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {standardMetadataFields.map((field) => (
+                  <SortableField
+                    key={field.id}
+                    id={field.id}
+                    name={field.name}
+                    showInFilter={field.showInFilter}
+                    showInList={field.showInList}
+                    showInSearch={field.showInSearch}
+                    toggleFilter={() => toggleStandardMetadataFilter(field.id)}
+                    toggleVisibility={() => toggleStandardMetadataVisibility(field.id)}
+                    toggleSearch={() => toggleStandardMetadataSearch(field.id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+
+        {/* Custom Metadata Fields */}
+        <div className="space-y-4">
+          <div className="flex items-center flex-wrap justify-between sticky top-0 bg-background py-2 z-20">
+            <h4 className="text-sm font-medium pb-2 pr-2">Custom Metadata Fields</h4>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="New field name"
+                value={newFieldName}
+                onChange={(e) => setNewFieldName(e.target.value)}
+                className="h-8"
+              />
+              <Button
+                size="sm"
+                onClick={handleAddCustomField}
+                disabled={!newFieldName.trim()}
+              >
+                <PlusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={customMetadata.fields.map(field => field.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {customMetadata.fields.map((field) => (
+                  <SortableField
+                    key={field.id}
+                    id={field.id}
+                    name={field.name}
+                    showInFilter={field.showInFilter}
+                    showInList={field.showInList}
+                    showInSearch={field.showInSearch}
+                    isEditing={editingFieldId === field.id}
+                    editingName={editingName}
+                    onEditStart={() => {
+                      setEditingFieldId(field.id);
+                      setEditingName(field.name);
+                    }}
+                    onEditChange={setEditingName}
+                    onEditSubmit={() => {
+                      if (editingName.trim() && editingName !== field.name) {
+                        renameCustomMetadataField(field.id, editingName.trim());
+                      }
                       setEditingFieldId(null);
                       setEditingName("");
-                    }
-                  }}
-                  onEditCancel={() => {
-                    setEditingFieldId(null);
-                    setEditingName("");
-                  }}
-                  toggleFilter={toggleCustomMetadataFilter}
-                  toggleVisibility={toggleCustomMetadataVisibility}
-                  toggleSearch={toggleCustomMetadataSearch}
-                  removeField={removeField}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        <div className="flex gap-2 mt-4">
-          <Input
-            placeholder="New field name"
-            value={newFieldName}
-            onChange={(e) => setNewFieldName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleAddCustomField();
-              }
-            }}
-          />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleAddCustomField}
-            disabled={!newFieldName.trim()}
-          >
-            <PlusIcon className="h-4 w-4" />
-          </Button>
+                    }}
+                    onEditCancel={() => {
+                      setEditingFieldId(null);
+                      setEditingName("");
+                    }}
+                    toggleFilter={() => toggleCustomMetadataFilter(field.id)}
+                    toggleVisibility={() => toggleCustomMetadataVisibility(field.id)}
+                    toggleSearch={() => toggleCustomMetadataSearch(field.id)}
+                    removeField={removeCustomMetadataField}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
     </div>

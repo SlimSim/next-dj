@@ -5,8 +5,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { ChevronDown, GripVertical, PencilIcon } from "lucide-react";
+import { ChevronDown, GripVertical, PencilIcon, TrashIcon } from "lucide-react";
 import { Switch } from '@/components/ui/switch';
+import { ConfirmButton } from '@/components/ui/confirm-button';
 
 interface SortableFieldProps {
   id: string;
@@ -104,6 +105,18 @@ export function SortableField({
                 >
                   <PencilIcon className="h-3 w-3" />
                 </Button>
+              )}
+              <div className="flex-1"></div>
+              {removeField && (
+                <ConfirmButton
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-destructive self-end "
+                  onClick={() => removeField(id)}
+                >
+                  <TrashIcon className="h-3 w-3" />
+                  <span className="sr-only">Remove field</span>
+                </ConfirmButton>
               )}
             </div>
 

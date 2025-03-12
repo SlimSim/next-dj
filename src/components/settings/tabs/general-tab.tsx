@@ -1,69 +1,41 @@
 "use client";
 
-import { useState, useCallback, useEffect } from 'react';
-import { Button } from "../../ui/button";
-import { FileUpload } from "../../common/file-upload";
-import { ThemeToggle } from "../../common/theme-toggle";
-import { AudioDeviceSelector } from "../../player/audio-device-selector";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { ChevronDown, ChevronUp, Folder, Music2, X } from "lucide-react";
+import { FileUpload } from "@/components/common/file-upload";
+import { AudioDeviceSelector } from "@/components/player/audio-device-selector";
+import { ThemeToggle } from "@/components/common/theme-toggle";
 import { usePlayerStore } from "@/lib/store";
-import { getRemovedSongs } from "@/db/audio-operations";
-import { Folder, ChevronUp, ChevronDown, X, Music2 } from "lucide-react";
 
 interface GeneralTabProps {
   hasRemovedSongs: boolean;
-  setHasRemovedSongs: (value: boolean) => void;
+  selectedFolderNames: string[];
+  showFolderList: boolean;
+  setShowFolderList: (show: boolean) => void;
+  removeFolder: (folderName: string) => void;
+  removeRemovedSongs: () => void;
+  checkForRemovedSongs: () => void;
+  practiceMode: boolean;
+  setPracticeMode: (enabled: boolean) => void;
+  hasAudioPermission: boolean;
+  setHasAudioPermission: (hasPermission: boolean) => void;
 }
 
-export function GeneralTab({ hasRemovedSongs, setHasRemovedSongs }: GeneralTabProps) {
-  const [hasAudioPermission, setHasAudioPermission] = useState(false);
-  const [showFolderList, setShowFolderList] = useState(false);
-
-  const {
-    selectedFolderNames,
-    removeFolder,
-    clearSelectedFolders,
-    removeRemovedSongs,
-    triggerRefresh,
-  } = usePlayerStore();
-
-  const checkForRemovedSongs = useCallback(async () => {
-    const removedSongs = await getRemovedSongs();
-    setHasRemovedSongs(removedSongs.length > 0);
-  }, [setHasRemovedSongs]);
-
-  useEffect(() => {
-    checkForRemovedSongs();
-  }, [checkForRemovedSongs]);
-
-  useEffect(() => {
-    const checkAudioPermission = async () => {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioOutputDevices = devices.filter(
-          (device) => device.kind === "audiooutput"
-        );
-        const hasAccess = audioOutputDevices.some(
-          (device) => device.label !== ""
-        );
-        setHasAudioPermission(hasAccess);
-
-        navigator.mediaDevices.addEventListener("devicechange", async () => {
-          const updatedDevices = await navigator.mediaDevices.enumerateDevices();
-          const updatedOutputDevices = updatedDevices.filter(
-            (device) => device.kind === "audiooutput"
-          );
-          const hasUpdatedAccess = updatedOutputDevices.some(
-            (device) => device.label !== ""
-          );
-          setHasAudioPermission(hasUpdatedAccess);
-        });
-      } catch (error) {
-        setHasAudioPermission(false);
-      }
-    };
-
-    checkAudioPermission();
-  }, []);
+export function GeneralTab({ 
+  hasRemovedSongs,
+  selectedFolderNames,
+  showFolderList,
+  setShowFolderList,
+  removeFolder,
+  removeRemovedSongs,
+  checkForRemovedSongs,
+  practiceMode,
+  setPracticeMode,
+  hasAudioPermission,
+  setHasAudioPermission
+}: GeneralTabProps) {
+  const { showPreListenButtons, setShowPreListenButtons } = usePlayerStore();
 
   return (
     <div className="space-y-4">
@@ -108,47 +80,92 @@ export function GeneralTab({ hasRemovedSongs, setHasRemovedSongs }: GeneralTabPr
         )}
         {hasRemovedSongs && (
           <div className="flex items-center gap-2">
-            <Music2 className="h-4 w-4" />
-            <span className="text-sm">
+            <Music2 className="h-4 w-4 " />
+            <span className="text-sm ">
               Some songs were removed from your library
             </span>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={async () => {
-                await removeRemovedSongs();
+              onClick={() => {
+                removeRemovedSongs();
                 checkForRemovedSongs();
-                triggerRefresh();
               }}
             >
-              Clear
+              Clean up
             </Button>
           </div>
         )}
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium">Audio Devices</h3>
-        {!hasAudioPermission && (
-          <div className="text-sm text-yellow-500">
-            Please grant permission to access audio devices
-          </div>
-        )}
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm">Main Output</label>
-            <AudioDeviceSelector isMainOutput={true} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm">Pre-listen Output</label>
-            <AudioDeviceSelector isMainOutput={false} />
+        <h3 className="text-sm font-medium">Appearance</h3>
+        <div className="flex items-center justify-between">
+          <span className="text-sm">Theme</span>
+          <ThemeToggle />
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm"></span>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm">Practice Mode</span>
+              <p className="text-xs text-muted-foreground">Keep play controls visible for song preparation and analysis</p>
+            </div>
+            <Switch
+              checked={practiceMode}
+              onCheckedChange={setPracticeMode}
+            />
           </div>
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium">Theme</h3>
-        <ThemeToggle />
+        <h3 className="text-sm font-medium">Playback Settings</h3>
+        {!hasAudioPermission ? (
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                  audio: true,
+                });
+                stream.getTracks().forEach((track) => track.stop());
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioOutputDevices = devices.filter(
+                  (device) => device.kind === "audiooutput"
+                );
+                const hasAccess = audioOutputDevices.some(
+                  (device) => device.label !== ""
+                );
+                setHasAudioPermission(hasAccess);
+              } catch (error) {
+                console.error("Error accessing audio devices:", error);
+              }
+            }}
+          >
+            Activate Audio Output
+          </Button>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <AudioDeviceSelector isMainOutput={true} />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">Show Pre-listen Controls</label>
+                <Switch
+                  checked={showPreListenButtons}
+                  onCheckedChange={setShowPreListenButtons}
+                />
+              </div>
+              {showPreListenButtons && (
+                <AudioDeviceSelector isMainOutput={false} />
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

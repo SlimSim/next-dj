@@ -11,7 +11,6 @@ import {
   SkipForward,
   Repeat,
   Repeat1,
-  Shuffle,
   Volume2,
   VolumeX,
   X,
@@ -49,16 +48,15 @@ export function PlayerControlsMenu({
     currentTrack,
     isPlaying,
     volume,
-    shuffle,
     repeat,
     duration,
     currentTime,
     setIsPlaying,
-    setShuffle,
     setRepeat,
     playNextTrack,
     playPreviousTrack,
     eqValues,
+    practiceMode,
   } = usePlayerStore()
 
   const calculateFinalEQ = (songEQ: number, globalEQ: number): number => {
@@ -132,17 +130,9 @@ export function PlayerControlsMenu({
 
             {/* Main controls */}
             <div className="flex justify-center items-center gap-8">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('h-12 w-12', shuffle && 'text-primary')}
-                onClick={() => setShuffle(!shuffle)}
-              >
-                <Shuffle className="h-6 w-6" />
-                <span className="sr-only">Toggle shuffle</span>
-              </Button>
               <ConfirmButton
                 variant="ghost"
+                disableConfirm={practiceMode}
                 // confirmText={<HelpCircle className="h-6 w-6" />}
                 size="icon"
                 className="h-12 w-12"
@@ -156,6 +146,7 @@ export function PlayerControlsMenu({
               <ConfirmToggleButton
                 isToggled={isPlaying}
                 onToggle={togglePlay}
+                disableConfirm={practiceMode}
                 disabled={!currentTrack || isLoading}
                 className="h-16 w-16"
                 variant="default"
@@ -167,6 +158,7 @@ export function PlayerControlsMenu({
               <ConfirmButton
                 variant="ghost"
                 size="icon"
+                disableConfirm={practiceMode}
                 className="h-12 w-12"
                 disabled={!currentTrack}
                 onClick={playNextTrack}
@@ -174,33 +166,13 @@ export function PlayerControlsMenu({
                 <SkipForward className="h-6 w-6" />
                 <span className="sr-only">Next track</span>
               </ConfirmButton>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('h-12 w-12', repeat !== 'none' && 'text-primary')}
-                onClick={() => {
-                  setRepeat(
-                    repeat === 'none'
-                      ? 'all'
-                      : repeat === 'all'
-                      ? 'one'
-                      : 'none'
-                  )
-                }}
-              >
-                {repeat === 'one' ? (
-                  <Repeat1 className="h-6 w-6" />
-                ) : (
-                  <Repeat className="h-6 w-6" />
-                )}
-                <span className="sr-only">Toggle repeat</span>
-              </Button>
             </div>
 
             {/* Volume controls */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Button
+                <ConfirmButton
+                  disableConfirm={practiceMode}
                   variant="ghost"
                   size="icon"
                   onClick={toggleMute}
@@ -212,7 +184,7 @@ export function PlayerControlsMenu({
                     <Volume2 className="h-5 w-5" />
                   )}
                   <span className="sr-only">Toggle mute</span>
-                </Button>
+                </ConfirmButton>
                 <div className="w-full space-y-1">
                   <div className="flex items-center gap-2">
                     <Slider

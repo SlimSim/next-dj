@@ -27,7 +27,7 @@ import {
   getPlaysInCurrentMonth,
   getTotalPlays,
 } from "@/lib/utils/play-history";
-import { useSettings } from "../settings/settings-context";
+import { useSettings } from "@/lib/settings";
 import { PreListenDialog } from "./pre-listen-dialog";
 import { usePlayerStore } from "@/lib/store";
 import { Dialog, DialogContent } from "../ui/dialog";
@@ -73,7 +73,8 @@ export function TrackItem({
   const [isCommentExpanded, setIsCommentExpanded] = useState(false);
   const [showPreListenDialog, setShowPreListenDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const { recentPlayHours, monthlyPlayDays } = useSettings();
+  const recentPlayHours = useSettings((state) => state.recentPlayHours);
+  const monthlyPlayDays = useSettings((state) => state.monthlyPlayDays);
   const selectedDeviceId = usePlayerStore((state) => state.selectedDeviceId);
   const prelistenDeviceId = usePlayerStore((state) => state.prelistenDeviceId);
   const setShowPreListenButtons = usePlayerStore(

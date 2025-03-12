@@ -13,8 +13,8 @@ export const defaultStandardMetadataFields: StandardMetadataField[] = [
 ];
 
 const initialState: SettingsState = {
-  recentPlayHours: 0,
-  monthlyPlayDays: 0,
+  recentPlayHours: 18,
+  monthlyPlayDays: 42,
   practiceMode: false,
   standardMetadataFields: defaultStandardMetadataFields,
 };

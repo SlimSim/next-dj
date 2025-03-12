@@ -5,6 +5,7 @@ import { HelpCircle } from "lucide-react";
 export interface ConfirmButtonProps extends ButtonProps {
   confirmText?: React.ReactNode;
   children: React.ReactNode;
+  disableConfirm?: boolean;
 }
 
 const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
@@ -12,6 +13,7 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
     {
       onClick,
       children,
+      disableConfirm = false,
       confirmText = (
         <div
           className="flex items-center text-center w-fit flex-col gap-2"
@@ -32,7 +34,7 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
     const [showTooltip, setShowTooltip] = useState(false);
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (isConfirmed) {
+      if (disableConfirm || isConfirmed) {
         setIsConfirmed(false);
         setShowTooltip(false);
         onClick?.(event);

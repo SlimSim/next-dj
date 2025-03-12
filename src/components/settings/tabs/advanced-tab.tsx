@@ -1,70 +1,79 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { usePlayerStore } from "@/lib/store";
-import { useSettings } from "@/lib/settings";
-import { Label } from "../../ui/label";
-import { Switch } from "../../ui/switch";
-import { Input } from "../../ui/input";
 
-export function AdvancedTab() {
-  const practiceMode = usePlayerStore((state) => state.practiceMode);
-  const setPracticeMode = usePlayerStore((state) => state.setPracticeMode);
-  const use5BandEQ = usePlayerStore((state) => state.use5BandEQ);
-  const setUse5BandEQ = usePlayerStore((state) => state.setUse5BandEQ);
 
-  const recentPlayHours = useSettings((state) => state.recentPlayHours);
-  const setRecentPlayHours = useSettings((state) => state.setRecentPlayHours);
-  const monthlyPlayDays = useSettings((state) => state.monthlyPlayDays);
-  const setMonthlyPlayDays = useSettings((state) => state.setMonthlyPlayDays);
+interface AdvancedTabProps {
+  recentPlayHours: number;
+  setRecentPlayHours: (value: number) => void;
+  monthlyPlayDays: number;
+  setMonthlyPlayDays: (value: number) => void;
+}
 
+export function AdvancedTab({
+  recentPlayHours,
+  setRecentPlayHours,
+  monthlyPlayDays,
+  setMonthlyPlayDays,
+}: AdvancedTabProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="practice-mode"
-            checked={practiceMode}
-            onCheckedChange={setPracticeMode}
-          />
-          <Label htmlFor="practice-mode">Practice Mode</Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="use-5-band-eq"
-            checked={use5BandEQ}
-            onCheckedChange={(enabled) => {
-              setUse5BandEQ(enabled);
-            }}
-          />
-          <Label htmlFor="use-5-band-eq">Use 5-band EQ</Label>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium">Play counter cutoff</h3>
+        <p className="text-sm text-muted-foreground">
+          Set the time window for the first 2 play counters at the left of
+          the song name in the songlist
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <label className="text-sm" htmlFor="recentPlayHours">Played daily hours</label>
+            <Input
+              type="number"
+              id="recentPlayHours"
+              value={recentPlayHours.toString()}
+              onChange={(e) => {
+                const value = parseInt(e.target.value, 10);
+                if (!isNaN(value)) {
+                  setRecentPlayHours(value);
+                }
+              }}
+              min={0}
+              max={240}
+            />
+          </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <label className="text-sm" htmlFor="monthlyPlayDays">Played monthly days</label>
+            <Input
+              type="number"
+              id="monthlyPlayDays"
+              value={monthlyPlayDays.toString()}
+              onChange={(e) => {
+                const value = parseInt(e.target.value, 10);
+                if (!isNaN(value)) {
+                  setMonthlyPlayDays(value);
+                }
+              }}
+              min={0}
+              max={101}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="recent-play-hours">Recent Play Hours</Label>
-          <Input
-            id="recent-play-hours"
-            type="number"
-            value={recentPlayHours}
-            onChange={(e) => setRecentPlayHours(Number(e.target.value))}
-            min={1}
-            max={168}
+      {/* EQ Mode Switch */}
+      <div className="border-t pt-4 mt-4">
+        <Label className="flex w-full items-center justify-between cursor-pointer">
+          <span>Use 5-band EQ:</span>
+          <Switch
+            checked={usePlayerStore((state) => state.eqMode === '5-band')}
+            onCheckedChange={(checked) =>
+              usePlayerStore.getState().setEQMode(checked ? '5-band' : '3-band')
+            }
           />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="monthly-play-days">Monthly Play Days</Label>
-          <Input
-            id="monthly-play-days"
-            type="number"
-            value={monthlyPlayDays}
-            onChange={(e) => setMonthlyPlayDays(Number(e.target.value))}
-            min={1}
-            max={31}
-          />
-        </div>
+        </Label>
       </div>
     </div>
   );

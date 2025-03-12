@@ -20,7 +20,7 @@ import { StarRating } from "@/components/ui/star-rating";
 import { NumberBadge } from "@/components/ui/number-badge";
 // import { cn } from "@/lib/utils";
 import { AdvancedFilter } from "./playlist-controls";
-import { usePlayerStore } from "@/lib/store";
+import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils/common";
 
 interface AdvancedFilterSelectProps {
@@ -98,8 +98,8 @@ const FilterIcon = ({
 };
 
 export function AdvancedFilterSelect({ value, onChange }: AdvancedFilterSelectProps) {
-  const recentPlayHours = usePlayerStore((state) => state.recentPlayHours);
-  const monthlyPlayDays = usePlayerStore((state) => state.monthlyPlayDays);
+  const recentPlayHours = useSettings((state) => state.recentPlayHours);
+  const monthlyPlayDays = useSettings((state) => state.monthlyPlayDays);
   const [isOpen, setIsOpen] = useState(false);
 
   const hasActiveFilters = Object.values(value).some(
