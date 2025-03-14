@@ -6,15 +6,13 @@ import OpenPlayingQueueButton from "./open-playing-queue-button";
 import OpenPlayerControlsButton from "./open-player-controls-button";
 import ProgressIndicator from "../common/progress-indicator";
 import CurrentSongInfo from "./current-song-info";
-import { useState } from "react";
 import { PlayButton } from "./play-button";
+import { usePlayerStore } from "@/lib/store";
 
 interface PlayerLayoutProps {
   audioRef: React.RefObject<HTMLAudioElement>;
   queue: MusicMetadata[];
   currentTrack: MusicMetadata | null;
-  isQueueVisible: boolean;
-  setQueueVisible: (visible: boolean) => void;
   currentTime: number;
   duration: number;
   isPlaying: boolean;
@@ -31,8 +29,6 @@ export const PlayerLayout = ({
   audioRef,
   queue,
   currentTrack,
-  isQueueVisible,
-  setQueueVisible,
   currentTime,
   duration,
   isPlaying,
@@ -44,7 +40,7 @@ export const PlayerLayout = ({
   isMuted,
   children,
 }: PlayerLayoutProps) => {
-  const [isControlsMenuOpen, setIsControlsMenuOpen] = useState(false);
+  const { isQueueVisible, setQueueVisible, isControlsMenuVisible, setControlsMenuVisible } = usePlayerStore();
 
   return (
     <div
@@ -62,12 +58,18 @@ export const PlayerLayout = ({
             "border-red-500/70 dark:border-red-400/70"
         )}
       >
-        <ProgressIndicator value={currentTime} max={duration} />
+        <ProgressIndicator 
+          value={currentTime} 
+          max={duration} 
+          isInteractive={isControlsMenuVisible}
+          onValueChange={handleSeek}
+        />
         <div className="container flex gap-4 py-4 px-1">
           <div className="flex items-center gap-4 w-full">
             <OpenPlayingQueueButton
               number={queue.length}
               onClick={() => setQueueVisible(!isQueueVisible)}
+              isOpen={isQueueVisible}
             />
             <div className="flex flex-row flex-wrap gap-1 justify-between w-full">
               <CurrentSongInfo
@@ -92,22 +94,23 @@ export const PlayerLayout = ({
               disabled={!currentTrack || isLoading}
             />
             <OpenPlayerControlsButton
-              onClick={() => setIsControlsMenuOpen(!isControlsMenuOpen)}
+              onClick={() => setControlsMenuVisible(!isControlsMenuVisible)}
+              isOpen={isControlsMenuVisible}
             />
           </div>
         </div>
       </div>
 
-      <PlayerControlsMenu
-        isOpen={isControlsMenuOpen}
-        onClose={() => setIsControlsMenuOpen(false)}
-        audioRef={audioRef}
-        isLoading={isLoading}
-        isMuted={isMuted}
-        toggleMute={toggleMute}
-        handleVolumeChange={handleVolumeChange}
-        handleSeek={handleSeek}
-      />
+      {isControlsMenuVisible && (
+        <PlayerControlsMenu
+          audioRef={audioRef}
+          isLoading={isLoading}
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          handleVolumeChange={handleVolumeChange}
+          handleSeek={handleSeek}
+        />
+      )}
 
       {children}
       {isQueueVisible && <PlayingQueue />}

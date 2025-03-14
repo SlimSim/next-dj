@@ -243,7 +243,7 @@ export default function Home() {
               <PrelistenAudioPlayer ref={prelistenRef} />
             </div>
 
-            <footer className="flex-none border-t bg-white/95 dark:bg-neutral-950/95 w-full">
+            <footer className="flex-none border-t bg-white/95 dark:bg-neutral-950/95 w-full relative">
               <AudioPlayer />
             </footer>
           </div>

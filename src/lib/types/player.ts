@@ -36,6 +36,7 @@ export interface PlayerState {
   duration: number;
   currentTime: number;
   isQueueVisible: boolean;
+  isControlsMenuVisible: boolean;
   refreshTrigger: number;
   audioDevices: MediaDeviceInfo[];
   selectedDeviceId: string;
@@ -87,6 +88,7 @@ export interface PlayerActions {
   setDuration: (duration: number) => void;
   setCurrentTime: (currentTime: number) => void;
   setQueueVisible: (isQueueVisible: boolean) => void;
+  setControlsMenuVisible: (isControlsMenuVisible: boolean) => void;
   triggerRefresh: () => void;
   clearAll: () => void;
   setAudioDevices: (devices: MediaDeviceInfo[]) => void;

@@ -15,8 +15,10 @@ const ConfirmToggleButton: React.FC<ConfirmToggleButtonProps> = ({
   disabled,
   className,
   variant,
+  size,
   children,
-  disableConfirm
+  disableConfirm,
+  ...props
 }) => {
   return (
     <>
@@ -25,8 +27,10 @@ const ConfirmToggleButton: React.FC<ConfirmToggleButtonProps> = ({
           onClick={onToggle} 
           className={className}
           variant={variant}
+          size={size}
           disabled={disabled}
           disableConfirm={disableConfirm}
+          {...props}
         >
           {toggledIcon}
         </ConfirmButton>
@@ -35,7 +39,9 @@ const ConfirmToggleButton: React.FC<ConfirmToggleButtonProps> = ({
           onClick={onToggle} 
           className={className}
           variant={variant}
+          size={size}
           disabled={disabled}
+          {...props}
         >
           {children}
         </Button>

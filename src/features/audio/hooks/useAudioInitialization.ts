@@ -6,6 +6,7 @@ import { usePlayerStore } from "@/lib/store";
 import { createAudioUrl, revokeAudioUrl, setAudioSource } from "../utils/audioUtils";
 import { AudioError, AudioErrorCode } from "../types";
 import { createErrorHandler, withErrorHandler } from "../utils/errorUtils";
+import { initializeEQ } from '../eq';
 
 const handleError = createErrorHandler('AudioInitialization');
 
@@ -130,8 +131,12 @@ export const useAudioInitialization = (
           ));
         };
 
-        const handleCanPlay = () => {
+        const handleCanPlay = async () => {
           if (!mountedRef.current || !audioRef.current) return;
+
+          // Remove event listeners first
+          audioRef.current.removeEventListener('error', handleAudioError);
+          audioRef.current.removeEventListener('canplay', handleCanPlay);
 
           setIsLoading(false);
           
@@ -145,13 +150,20 @@ export const useAudioInitialization = (
 
             // Now that everything is set up, start playback if needed
             if (isPlaying) {
-              audioRef.current.play().catch(() => 
-                handleError(new AudioError('Failed to start playback', AudioErrorCode.PLAYBACK_FAILED))
-              );
+              console.log('AudioInit: Starting playback after canplay event');
+              try {
+                // First try to initialize EQ
+                await initializeEQ(audioRef.current);
+                console.log('AudioInit: EQ initialized, starting playback');
+                await audioRef.current.play();
+                console.log('AudioInit: Playback started successfully');
+              } catch (error) {
+                console.error('AudioInit: Failed to start playback:', error);
+                handleError(new AudioError('Failed to start playback', AudioErrorCode.PLAYBACK_FAILED));
+              }
             }
           } else {
             setPrelistenDuration(audioRef.current.duration || 0);
-            // For prelisten, verify start time
             if (track.startTime && track.startTime > 0 && Math.abs(audioRef.current.currentTime - track.startTime) > 0.1) {
               audioRef.current.currentTime = track.startTime;
             }
@@ -168,14 +180,12 @@ export const useAudioInitialization = (
                 playNextTrack();
               }
             };
-
-            audioRef.current.removeEventListener('error', handleAudioError);
           }
           resolve();
         };
 
         audioRef.current.addEventListener('error', handleAudioError);
-        audioRef.current.addEventListener("canplay", handleCanPlay, { once: true });
+        audioRef.current.addEventListener("canplay", handleCanPlay);
       });
 
     } catch (error) {

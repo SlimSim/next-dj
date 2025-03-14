@@ -126,7 +126,7 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={moveToTop}>Move to Top</DropdownMenuItem>
           <DropdownMenuItem onClick={moveToBottom}>
-            Move to Bottom
+            Move to Bottom 2
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleRemove}>
             Remove from {isHistory ? "History" : "Queue"}

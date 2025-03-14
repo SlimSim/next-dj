@@ -27,10 +27,8 @@ export const AudioPlayer = () => {
     repeat,
     duration,
     currentTime,
-    isQueueVisible,
     queue,
     setIsPlaying,
-    setQueueVisible,
   } = usePlayerStore();
 
   const lastTrackRef = useRef<string | null>(null);
@@ -42,14 +40,25 @@ export const AudioPlayer = () => {
   }, []);
 
   useEffect(() => {
-    if (!audioRef.current || isLoading) return;
+    if (!audioRef.current || isLoading) {
+      console.log('AudioPlayer: Skip play/pause - audio not ready:', { 
+        hasAudioRef: !!audioRef.current, 
+        isLoading 
+      });
+      return;
+    }
 
     if (isPlaying && currentTrack) {
+      console.log('AudioPlayer: Attempting to play:', { 
+        trackId: currentTrack.id,
+        trackTitle: currentTrack.title,
+        audioSrc: audioRef.current.src
+      });
+      
       audioRef.current
         .play()
         .then(() => {
-          // Only record play event for main player, not pre-listen
-          // And only when the track changes (not when auto-playing next track)
+          console.log('AudioPlayer: Playback started successfully');
           if (currentTrack.id !== lastTrackRef.current) {
             recordPlayEvent(currentTrack.id).catch((error) => {
               console.error("Error recording play event:", error);
@@ -59,51 +68,41 @@ export const AudioPlayer = () => {
         })
         .catch((error) => {
           console.error("Error playing audio:", error);
+          console.log('AudioPlayer: Play error details:', { 
+            errorName: error.name,
+            errorMessage: error.message,
+            trackId: currentTrack.id
+          });
           setIsPlaying(false);
         });
     } else {
+      console.log('AudioPlayer: Pausing playback:', { 
+        isPlaying, 
+        hasCurrentTrack: !!currentTrack 
+      });
       audioRef.current.pause();
-      // Reset lastTrackRef when paused so next play will record
       lastTrackRef.current = null;
     }
   }, [isPlaying, isLoading, setIsPlaying, currentTrack]);
 
-  useEffect(() => {
-    if (!audioRef.current || isLoading) return;
-
-    if (isPlaying && currentTrack) {
-      audioRef.current
-        .play()
-        .then(() => {
-          // Only record play event for main player, not pre-listen
-          // And only when the track changes (not when auto-playing next track)
-          if (currentTrack.id !== lastTrackRef.current) {
-            recordPlayEvent(currentTrack.id).catch((error) => {
-              console.error('Failed to record play event:', error);
-            });
-            lastTrackRef.current = currentTrack.id;
-          }
-        })
-        .catch((error) => {
-          console.error('Failed to play:', error);
-          setIsPlaying(false);
-        });
-    } else {
-      audioRef.current.pause();
-    }
-  }, [isPlaying, currentTrack, isLoading, setIsPlaying]);
-
   // Initialize EQ as soon as audio element is available
   useEffect(() => {
     if (audioRef.current) {
-      initializeEQ(audioRef.current);
+      // Only initialize EQ when we have a track loaded and playing
+      if (currentTrack && isPlaying) {
+        initializeEQ(audioRef.current).catch(error => {
+          console.error('Failed to initialize EQ:', error);
+        });
+      }
     }
-  }, []);
+  }, [currentTrack, isPlaying]);
 
   // Update EQ when track changes
   useEffect(() => {
     if (audioRef.current && currentTrack) {
-      initializeEQ(audioRef.current);
+      initializeEQ(audioRef.current).catch(error => {
+        console.error('Failed to initialize EQ:', error);
+      });
     }
   }, [currentTrack]);
 
@@ -112,8 +111,6 @@ export const AudioPlayer = () => {
       audioRef={audioRef}
       queue={queue}
       currentTrack={currentTrack}
-      isQueueVisible={isQueueVisible}
-      setQueueVisible={setQueueVisible}
       currentTime={currentTime}
       duration={duration}
       isPlaying={isPlaying}

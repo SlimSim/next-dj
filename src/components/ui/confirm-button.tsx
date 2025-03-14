@@ -68,7 +68,7 @@ const ConfirmButton = React.forwardRef<HTMLButtonElement, ConfirmButtonProps>(
           {children}
         </Button>
         {showTooltip && (
-          <div className="tooltip flex flex-col absolute bottom-full left-1/2 transform -translate-x-1/2 z-10 bg-black bg-opacity-70 text-white rounded-md p-2 gap-2">
+          <div className="tooltip flex flex-col absolute bottom-full left-1/2 transform -translate-x-1/2 z-100 bg-black bg-opacity-70 text-white rounded-md p-2 gap-2">
             {confirmText}
           </div>
         )}

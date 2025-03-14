@@ -59,7 +59,19 @@ export const useAudioControls = (
   );
 
   const togglePlay = useCallback(() => {
-    if (!audioRef.current || !currentTrack || isLoading) return;
+    if (!audioRef.current || !currentTrack || isLoading) {
+      console.log('AudioControls: Cannot toggle play:', {
+        hasAudioRef: !!audioRef.current,
+        hasCurrentTrack: !!currentTrack,
+        isLoading
+      });
+      return;
+    }
+    console.log('AudioControls: Toggling play state:', {
+      currentState: isPlaying,
+      newState: !isPlaying,
+      trackId: currentTrack.id
+    });
     setIsPlaying(!isPlaying);
   }, [currentTrack, isPlaying, isLoading, setIsPlaying]);
 

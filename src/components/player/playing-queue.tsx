@@ -121,7 +121,9 @@ function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
       >
         <GripVertical className="h-4 w-4" />
       </Button>
-      <div className="flex-1 min-w-0">
+      <div 
+        className="flex-1 min-w-0" 
+      >
         <div className="font-medium truncate">{track.title}</div>
         <div className="flex items-center flex-wrap text-sm text-muted-foreground">
           <span className="truncate">{track.artist}</span>
@@ -166,7 +168,6 @@ export function PlayingQueue() {
     setQueueVisible,
     clearAll,
     setQueue,
-    setCurrentTrack,
     setHistory,
   } = usePlayerStore();
 
@@ -297,7 +298,7 @@ export function PlayingQueue() {
   if (!isQueueVisible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 bg-background/80 backdrop-blur-sm border-t transform transition-transform duration-300 ease-in-out">
+    <div className="absolute bottom-full w-full bg-background/80 backdrop-blur-sm border-t transform transition-transform duration-300 ease-in-out">
       <div className="container max-w-2xl mx-auto">
         <div
           className="h-8 flex items-center justify-center cursor-grab touch-pan-y"

@@ -34,6 +34,7 @@ const initialState: PlayerState = {
   eqMode: '5-band',
   use5BandEQ: true,
   isQueueVisible: false,
+  isControlsMenuVisible: false,
   refreshTrigger: 0,
   audioDevices: [],
   selectedDeviceId: "",
@@ -181,7 +182,14 @@ export const usePlayerStore = create<PlayerStore>()(
             eqMode: enabled ? '5-band' : state.eqMode
           }));
         },
-        setQueueVisible: (isQueueVisible) => set({ isQueueVisible }),
+        setQueueVisible: (isQueueVisible) => set((state) => ({ 
+          isQueueVisible,
+          isControlsMenuVisible: isQueueVisible ? false : state.isControlsMenuVisible 
+        })),
+        setControlsMenuVisible: (isControlsMenuVisible) => set((state) => ({ 
+          isControlsMenuVisible,
+          isQueueVisible: isControlsMenuVisible ? false : state.isQueueVisible 
+        })),
         triggerRefresh: () =>
           set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
 
@@ -543,60 +551,36 @@ export const usePlayerStore = create<PlayerStore>()(
     {
       name: "player-storage",
       partialize: (state) => ({
-        // EQ settings
-        eqValues: state.eqValues,
-        eqMode: state.eqMode,
-        use5BandEQ: state.use5BandEQ,
-        
-        // Queue and playback state
+        ...state,
+        isPlaying: false, // Always reset isPlaying to false when rehydrating
+        currentTime: 0,
         queue: state.queue,
         history: state.history,
         currentTrack: state.currentTrack,
-        isQueueVisible: state.isQueueVisible,
-        isPlaying: state.isPlaying,
         volume: state.volume,
         shuffle: state.shuffle,
         repeat: state.repeat,
-        
-        // Device settings
+        eqValues: state.eqValues,
+        eqMode: state.eqMode,
+        use5BandEQ: state.use5BandEQ,
         selectedDeviceId: state.selectedDeviceId,
         prelistenDeviceId: state.prelistenDeviceId,
         showPreListenButtons: state.showPreListenButtons,
-        
-        // Library settings
-        selectedFolderNames: state.selectedFolderNames,
-        songLists: state.songLists,
-        metadata: state.metadata,
-        
-        // UI settings
         recentPlayHours: state.recentPlayHours,
         monthlyPlayDays: state.monthlyPlayDays,
         hasShownPreListenWarning: state.hasShownPreListenWarning,
-        sortField: state.sortField,
-        sortOrder: state.sortOrder,
-        filters: state.filters,
-        showFilters: state.showFilters,
-        showLists: state.showLists,
+        songLists: state.songLists,
         selectedListId: state.selectedListId,
+        metadata: state.metadata,
         customMetadata: state.customMetadata,
         standardMetadataFields: state.standardMetadataFields,
         practiceMode: state.practiceMode,
-        selectedTracks: state.selectedTracks,
+        selectedFolderNames: state.selectedFolderNames
       }),
       onRehydrateStorage: () => (state) => {
-        // Ensure all standard metadata fields exist with default values
-        if (state) {
-          const existingFields = state.standardMetadataFields || [];
-          const existingFieldKeys = new Set(existingFields.map(f => f.key));
-          
-          // Add any missing fields from initialState
-          const missingFields = initialState.standardMetadataFields.filter(
-            field => !existingFieldKeys.has(field.key)
-          );
-          
-          if (missingFields.length > 0) {
-            state.standardMetadataFields = [...existingFields, ...missingFields];
-          }
+        // Initialize DB after store is rehydrated
+        if (typeof window !== 'undefined') {
+          initMusicDB().catch(console.error);
         }
       },
     }

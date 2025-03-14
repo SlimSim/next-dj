@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
+import ConfirmToggleButton from "../ui/confirm-toggle-button";
 import { Play, Pause } from "lucide-react";
 import { usePlayerStore } from "@/lib/store";
 
@@ -15,23 +15,24 @@ export const PlayButton = ({
   disabled = false,
 }: PlayButtonProps) => {
   const practiceMode = usePlayerStore((state) => state.practiceMode);
+  const isControlsMenuVisible = usePlayerStore((state) => state.isControlsMenuVisible);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(true);
 
   // Add new useEffect to handle external play state changes
   useEffect(() => {
-    if (!practiceMode && isPlaying && isButtonVisible) {
+    if (!practiceMode && !isControlsMenuVisible && isPlaying && isButtonVisible) {
       setIsAnimating(true);
       setTimeout(() => {
         setIsAnimating(false);
         setIsButtonVisible(false);
       }, 1000);
     }
-  }, [isPlaying, practiceMode]);
+  }, [isPlaying, practiceMode, isControlsMenuVisible]);
 
   // Keep existing useEffect for handling visibility when stopping
   useEffect(() => {
-    if (!practiceMode && !isPlaying && !isButtonVisible) {
+    if (!practiceMode && !isControlsMenuVisible && !isPlaying && !isButtonVisible) {
       const visibilityTimeout = setTimeout(() => {
         setIsButtonVisible(true);
         // Add a small delay before removing animation class
@@ -44,11 +45,11 @@ export const PlayButton = ({
 
       return () => clearTimeout(visibilityTimeout);
     }
-  }, [isPlaying, isButtonVisible, practiceMode]);
+  }, [isPlaying, isButtonVisible, practiceMode, isControlsMenuVisible]);
 
   const handleClick = () => {
     onClick();
-    if (!practiceMode) {
+    if (!practiceMode && !isControlsMenuVisible) {
       setIsAnimating(true);
       setTimeout(() => {
         setIsAnimating(false);
@@ -56,26 +57,28 @@ export const PlayButton = ({
     }
   };
 
-  if (!practiceMode && !isButtonVisible) return null;
+  if (!practiceMode && !isControlsMenuVisible && !isButtonVisible) return null;
 
   return (
-    <Button
-      variant="default"
-      size="icon"
-      onClick={handleClick}
-      disabled={disabled}
+    <div
       className={`transition-transform duration-1000 ease-in-out ${
         isAnimating
           ? "transform scale-0 translate-x-11"
           : "transform scale-100 translate-x-0"
       }`}
     >
-      {!isPlaying ? (
+      <ConfirmToggleButton
+        isToggled={isPlaying}
+        onToggle={handleClick}
+        disableConfirm={practiceMode}
+        disabled={disabled}
+        variant="default"
+        size="icon"
+        toggledIcon={<><Pause className="h-5 w-5" /><span className="sr-only">Pause</span></>}
+      >
         <Play className="h-5 w-5" />
-      ) : (
-        <Pause className="h-5 w-5" />
-      )}
-      <span className="sr-only">Play / Pause</span>
-    </Button>
+        <span className="sr-only">Play</span>
+      </ConfirmToggleButton>
+    </div>
   );
 };

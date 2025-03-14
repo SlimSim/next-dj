@@ -4,7 +4,7 @@ const filters: BiquadFilterNode[] = [];
 
 const frequencies = [60, 250, 1000, 4000, 12000];
 
-export function initializeEQ(audioElement: HTMLAudioElement) {
+export async function initializeEQ(audioElement: HTMLAudioElement) {
   try {
     console.log('Initializing EQ...', {
       hasAudioContext: !!audioContext,
@@ -19,17 +19,14 @@ export function initializeEQ(audioElement: HTMLAudioElement) {
       console.log('Created new AudioContext');
     }
 
-    // Resume the AudioContext if it's in suspended state
-    if (audioContext.state === 'suspended') {
-      console.log('Resuming AudioContext...');
-      audioContext.resume().catch(err => {
-        console.error('Failed to resume AudioContext:', err);
-      });
-    }
-
     // If we already have a source node connected to this audio element, no need to recreate
     if (sourceNode?.mediaElement === audioElement) {
-      console.log('Source node already exists for this audio element');
+      // Only try to resume if we're keeping the existing setup
+      if (audioContext.state === 'suspended') {
+        console.log('Resuming existing AudioContext...');
+        await audioContext.resume();
+        console.log('AudioContext resumed successfully');
+      }
       return;
     }
 
@@ -40,16 +37,16 @@ export function initializeEQ(audioElement: HTMLAudioElement) {
       sourceNode = null;
     }
 
-    // Create a new source node
-    console.log('Creating new MediaElementSourceNode');
-    sourceNode = audioContext.createMediaElementSource(audioElement);
-
     // Clean up existing filters
     console.log('Cleaning up existing filters...');
     filters.forEach(filter => {
       filter.disconnect();
     });
     filters.length = 0;
+
+    // Create a new source node
+    console.log('Creating new MediaElementSourceNode');
+    sourceNode = audioContext.createMediaElementSource(audioElement);
 
     // Create filters for each frequency band
     console.log('Creating new filters...');
@@ -75,6 +72,14 @@ export function initializeEQ(audioElement: HTMLAudioElement) {
     // Connect last filter to destination
     if (filters.length > 0) {
       filters[filters.length - 1].connect(audioContext.destination);
+      
+      // Try to resume the context after setup is complete
+      if (audioContext.state === 'suspended') {
+        console.log('Resuming new AudioContext setup...');
+        await audioContext.resume();
+        console.log('AudioContext resumed successfully');
+      }
+      
       console.log('EQ initialization complete');
     }
   } catch (error) {

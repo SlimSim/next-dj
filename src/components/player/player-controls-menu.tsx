@@ -24,8 +24,6 @@ import { EQValues } from '@/lib/types/player'
 import { updateEQBand } from '@/features/audio/eq'
 
 interface PlayerControlsMenuProps {
-  isOpen: boolean
-  onClose: () => void
   audioRef: React.RefObject<HTMLAudioElement>
   isLoading: boolean
   isMuted: boolean
@@ -35,8 +33,6 @@ interface PlayerControlsMenuProps {
 }
 
 export function PlayerControlsMenu({
-  isOpen,
-  onClose,
   audioRef,
   isLoading,
   isMuted,
@@ -57,6 +53,8 @@ export function PlayerControlsMenu({
     playPreviousTrack,
     eqValues,
     practiceMode,
+    isControlsMenuVisible,
+    setControlsMenuVisible,
   } = usePlayerStore()
 
   const calculateFinalEQ = (songEQ: number, globalEQ: number): number => {
@@ -80,11 +78,11 @@ export function PlayerControlsMenu({
     });
   }, [currentTrack?.eq, eqValues]);
 
-  if (!isOpen) return null
+  if (!isControlsMenuVisible) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="fixed inset-x-0 bottom-0 bg-background border-t transform transition-transform duration-300 ease-in-out">
+    <div className="absolute bottom-full w-full bg-background/80 backdrop-blur-sm">
+      <div className="bg-background border-t transform transition-transform duration-300 ease-in-out">
         <div className="container max-w-2xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b">
@@ -92,7 +90,7 @@ export function PlayerControlsMenu({
             <Button
               variant="ghost"
               size="icon"
-              onClick={onClose}
+              onClick={() => setControlsMenuVisible(false)}
             >
               <X className="h-5 w-5" />
               <span className="sr-only">Close menu</span>
@@ -100,76 +98,12 @@ export function PlayerControlsMenu({
           </div>
 
           {/* Controls */}
-          <div className="p-4 space-y-6">
-            {/* Track info */}
-            <div className="text-center space-y-1">
-              <h3 className="font-medium">
-                {currentTrack?.title || 'No track playing'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {currentTrack?.artist || 'Unknown artist'}
-              </p>
-            </div>
-
-            {/* Progress bar */}
-            <div className="space-y-2">
-              <Slider
-                value={[currentTime]}
-                min={0}
-                max={duration}
-                step={1}
-                onValueChange={([value]) => handleSeek(value)}
-                className="w-full"
-                disabled={!currentTrack}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
-              </div>
-            </div>
-
-            {/* Main controls */}
-            <div className="flex justify-center items-center gap-8">
-              <ConfirmButton
-                variant="ghost"
-                disableConfirm={practiceMode}
-                // confirmText={<HelpCircle className="h-6 w-6" />}
-                size="icon"
-                className="h-12 w-12"
-                disabled={!currentTrack}
-                onClick={playPreviousTrack}
-              >
-                <SkipBack className="h-6 w-6" />
-                <span className="sr-only">Previous track</span>
-              </ConfirmButton>
-
-              <ConfirmToggleButton
-                isToggled={isPlaying}
-                onToggle={togglePlay}
-                disableConfirm={practiceMode}
-                disabled={!currentTrack || isLoading}
-                className="h-16 w-16"
-                variant="default"
-                toggledIcon={<><Pause className="h-8 w-8" /><span className="sr-only">Pause</span></>}
-              >
-                <Play className="h-8 w-8" />
-                <span className="sr-only">Play</span>
-              </ConfirmToggleButton>
-              <ConfirmButton
-                variant="ghost"
-                size="icon"
-                disableConfirm={practiceMode}
-                className="h-12 w-12"
-                disabled={!currentTrack}
-                onClick={playNextTrack}
-              >
-                <SkipForward className="h-6 w-6" />
-                <span className="sr-only">Next track</span>
-              </ConfirmButton>
-            </div>
+          <div className="p-4">
+            {/* EQ Controls */}
+            <EQControls />
 
             {/* Volume controls */}
-            <div className="space-y-2">
+            <div className="space-y-2 mt-6">
               <div className="flex items-center gap-2">
                 <ConfirmButton
                   disableConfirm={practiceMode}
@@ -203,26 +137,35 @@ export function PlayerControlsMenu({
               </div>
             </div>
 
-            {/* EQ Controls */}
-            <EQControls />
 
-            {/* Track-EQ Values Display */}
-            {/* <div className="flex justify-between px-4 text-sm">
-              <span>A: {currentTrack?.eq?.a ?? 70}</span>
-              <span>B: {currentTrack?.eq?.b ?? 70}</span>
-              <span>C: {currentTrack?.eq?.c ?? 70}</span>
-              <span>D: {currentTrack?.eq?.d ?? 70}</span>
-              <span>E: {currentTrack?.eq?.e ?? 70}</span>
-            </div> */}
             
-            {/* Agregated EQ Values Display */}
-            {/* <div className="flex justify-between px-4 text-sm">
-              <span>A: {calculateFinalEQ(currentTrack?.eq?.a ?? 70, eqValues.a)}</span>
-              <span>B: {calculateFinalEQ(currentTrack?.eq?.b ?? 70, eqValues.b)}</span>
-              <span>C: {calculateFinalEQ(currentTrack?.eq?.c ?? 70, eqValues.c)}</span>
-              <span>D: {calculateFinalEQ(currentTrack?.eq?.d ?? 70, eqValues.d)}</span>
-              <span>E: {calculateFinalEQ(currentTrack?.eq?.e ?? 70, eqValues.e)}</span>
-            </div> */}
+            {/* Main controls */}
+            <div className="flex justify-center items-center gap-8">
+              <ConfirmButton
+                variant="ghost"
+                disableConfirm={practiceMode}
+                // confirmText={<HelpCircle className="h-6 w-6" />}
+                size="icon"
+                className="h-12 w-12"
+                disabled={!currentTrack}
+                onClick={playPreviousTrack}
+              >
+                <SkipBack className="h-6 w-6" />
+                <span className="sr-only">Previous track</span>
+              </ConfirmButton>
+              <ConfirmButton
+                variant="ghost"
+                size="icon"
+                disableConfirm={practiceMode}
+                className="h-12 w-12"
+                disabled={!currentTrack}
+                onClick={playNextTrack}
+              >
+                <SkipForward className="h-6 w-6" />
+                <span className="sr-only">Next track</span>
+              </ConfirmButton>
+            </div>
+
           </div>
         </div>
       </div>
