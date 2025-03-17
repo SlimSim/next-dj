@@ -38,6 +38,64 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
   const removeFromHistory = usePlayerStore((state) => state.removeFromHistory);
   const moveInQueue = usePlayerStore((state) => state.moveInQueue);
   const queue = usePlayerStore((state) => state.queue);
+  const setCurrentTrack = usePlayerStore((state) => state.setCurrentTrack);
+  const setIsPlaying = usePlayerStore((state) => state.setIsPlaying);
+  const addToHistory = usePlayerStore((state) => state.addToHistory);
+  const currentTrack = usePlayerStore((state) => state.currentTrack);
+  const setQueue = usePlayerStore((state) => state.setQueue);
+  const history = usePlayerStore((state) => state.history);
+
+  const playNow = useCallback(() => {
+    try {
+      if (isHistory) {
+        // Playing from history
+        const historyIndex = history.findIndex((t) => t.queueId === track.queueId);
+        
+        if (historyIndex > -1) {
+          // Get all tracks that should move to queue (tracks after the selected one in history)
+          const tracksToQueue = history.slice(historyIndex + 1);
+          
+          // Remove all these tracks from history
+          tracksToQueue.forEach(t => removeFromHistory(t.queueId));
+          
+          // Remove the selected track from history
+          removeFromHistory(track.queueId);
+          
+          // If there's a current track, add it to the tracks that will go to queue
+          const newQueueTracks = currentTrack ? [...tracksToQueue, currentTrack] : tracksToQueue;
+          
+          // Update queue with the new tracks at the start
+          setQueue([...newQueueTracks, ...queue]);
+          
+          // Set as current track and play
+          setCurrentTrack(track);
+          setIsPlaying(true);
+        }
+      } else {
+        // Playing from queue (keep existing behavior)
+        const trackIndex = queue.findIndex((t) => t.queueId === track.queueId);
+        if (trackIndex > -1) {
+          // If we have a current track, move it to history
+          if (currentTrack) {
+            addToHistory(currentTrack);
+          }
+          
+          // Add all tracks before this one to history
+          queue.slice(0, trackIndex).forEach(t => addToHistory(t));
+          
+          // Update queue to only include tracks after the selected one
+          const newQueue = queue.slice(trackIndex + 1);
+          setQueue(newQueue);
+          
+          // Set this track as current and start playing
+          setCurrentTrack(track);
+          setIsPlaying(true);
+        }
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  }, [track, currentTrack, queue, history, isHistory, setCurrentTrack, setIsPlaying, addToHistory, setQueue, removeFromHistory]);
 
   const moveToTop = useCallback(() => {
     try {
@@ -124,9 +182,10 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={playNow}>Play Now</DropdownMenuItem>
           <DropdownMenuItem onClick={moveToTop}>Move to Top</DropdownMenuItem>
           <DropdownMenuItem onClick={moveToBottom}>
-            Move to Bottom 2
+            Move to Bottom
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleRemove}>
             Remove from {isHistory ? "History" : "Queue"}
