@@ -15,8 +15,12 @@ export const createQueueActions = (set: any, get: () => PlayerState) => ({
 
       const trackWithId = { ...track, queueId: track.queueId || uuidv4() };
       
+      // If there's no current track, set this as current and start playing
       if (!state.currentTrack) {
-        return { currentTrack: trackWithId };
+        return { 
+          currentTrack: trackWithId,
+          isPlaying: true // Auto-start playback when adding to empty queue
+        };
       }
       return { queue: [...state.queue, trackWithId] };
     }),
@@ -109,10 +113,11 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
     if (!currentQueue.length) {
       console.log('Playback: Queue is empty, handling repeat logic');
       if (repeat === "all" && currentTrack) {
-        const trackWithQueueId = { ...currentTrack, queueId: uuidv4() };
+        // When repeating, generate a new queueId to ensure uniqueness
+        const trackWithNewId = { ...currentTrack, queueId: uuidv4() };
         console.log('Playback: Repeating all - recycling current track:', currentTrack.title);
         set({ 
-          currentTrack: trackWithQueueId,
+          currentTrack: trackWithNewId,
           history: currentTrack ? [...get().history, currentTrack] : get().history 
         });
       } else {
@@ -130,7 +135,8 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
     let newQueue;
     if (shuffle) {
       const randomIndex = Math.floor(Math.random() * currentQueue.length);
-      nextTrack = currentQueue[randomIndex];
+      // Ensure the next track has a new unique queueId
+      nextTrack = { ...currentQueue[randomIndex], queueId: uuidv4() };
       newQueue = [...currentQueue];
       newQueue.splice(randomIndex, 1);
       console.log('Playback: Shuffle mode - selected random track:', {
@@ -139,7 +145,9 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
         remainingQueueLength: newQueue.length
       });
     } else {
+      // Ensure the next track has a new unique queueId
       [nextTrack, ...newQueue] = [...currentQueue];
+      nextTrack = { ...nextTrack, queueId: uuidv4() };
       console.log('Playback: Normal mode - taking next track in queue:', {
         nextTrack: nextTrack.title,
         remainingQueueLength: newQueue.length

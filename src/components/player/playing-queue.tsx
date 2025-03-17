@@ -218,9 +218,9 @@ export function PlayingQueue() {
                     )
                     .map((track, index) => (
                       <QueueItem
-                        key={`${track.id}-${index}`}
+                        key={`${track.queueId}-${index}`}
                         track={track}
-                        isPlaying={currentTrack?.id === track.id}
+                        isPlaying={currentTrack?.queueId === track.queueId}
                         isHistory={index < history.length}
                       />
                     ))}

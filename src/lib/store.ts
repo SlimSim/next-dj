@@ -5,6 +5,7 @@ import { PlayerStore, PlayerState, SongList } from "./types/player";
 import { MusicMetadata } from "./types/types";
 import { CustomMetadataState, CustomMetadataField } from './types/customMetadata';
 import { StandardMetadataField } from './types/settings';
+import { AudioError, AudioErrorCode } from "@/features/audio/types";
 import {
   createQueueActions,
   createPlaybackActions,
@@ -546,6 +547,46 @@ export const usePlayerStore = create<PlayerStore>()(
             set({ selectedTracks: newSelection });
           }
         },
+        addToQueue: (track: MusicMetadata) =>
+          set((state: PlayerState) => {
+            if (!track) {
+              throw new AudioError(
+                'Cannot add invalid track to queue',
+                AudioErrorCode.INVALID_AUDIO
+              );
+            }
+
+            const trackWithId = { ...track, queueId: track.queueId || uuidv4() };
+            
+            // If there's no current track, set this as current
+            if (!state.currentTrack) {
+              return { 
+                currentTrack: trackWithId,
+                isPlaying: true // Auto-start playback when adding to empty queue
+              };
+            }
+            return { queue: [...state.queue, trackWithId] };
+          }),
+
+        addTracksToQueue: (tracks: MusicMetadata[]) =>
+          set((state: PlayerState) => {
+            if (!Array.isArray(tracks) || tracks.length === 0) {
+              return state;
+            }
+
+            const tracksWithIds = tracks.map(track => ({ ...track, queueId: uuidv4() }));
+            
+            // If there's no current track, set the first track as current
+            if (!state.currentTrack) {
+              const [firstTrack, ...remainingTracks] = tracksWithIds;
+              return { 
+                currentTrack: firstTrack,
+                queue: remainingTracks,
+                isPlaying: true // Auto-start playback when adding to empty queue
+              };
+            }
+            return { queue: [...state.queue, ...tracksWithIds] };
+          }),
       };
     },
     {
