@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
-import { createErrorHandler } from "@/features/audio/utils/errorUtils";
+import { AudioError, AudioErrorCode, createErrorHandler } from "@/features/audio/utils/errorUtils";
 import {
   DndContext,
   DragEndEvent,
