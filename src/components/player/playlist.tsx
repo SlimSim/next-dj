@@ -305,7 +305,7 @@ export const Playlist = forwardRef((props: PlaylistProps, ref) => {
   return (
     <div className="relative" data-testid="playlist-component">
       {/* Track List */}
-      <div className="pb-0">
+      <div className="pb-0 mt-0">
         {filteredAndSortedTracks.map((track) => (
           <TrackItem
             key={track.id}

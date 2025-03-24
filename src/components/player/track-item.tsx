@@ -98,6 +98,7 @@ export function TrackItem({
         isPrelistening={isPrelistening}
         prelistenCurrentTime={prelistenCurrentTime}
         variant="track-list"
+        moreSpace={true}
         isPlaying={currentTrack?.id === track.id && isPlaying}
         isSelected={isSelected}
         showPlayHistory={true}
@@ -110,20 +111,6 @@ export function TrackItem({
         onRemove={onDeleteTrack}
         {...props}
       />
-      
-      {/* <PreListenDialog
-        isOpen={showPreListenDialog}
-        onClose={() => setShowPreListenDialog(false)}
-        onContinue={handleContinueAnyway}
-        onDisable={handleDisablePreListen}
-        onConfigureOutput={handleConfigureOutput}
-      /> */}
-      
-      {/* <SettingsDialog
-        triggerButton={false}
-        open={showSettings}
-        onOpenChange={setShowSettings}
-      /> */}
     </>
   );
 }

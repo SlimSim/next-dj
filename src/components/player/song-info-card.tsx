@@ -32,6 +32,7 @@ interface SongInfoCardProps extends React.HTMLAttributes<HTMLDivElement> {
   compact?: boolean;
   isPlaying?: boolean;
   isSelected?: boolean;
+  moreSpace?: boolean;
   showPreListenButtons?: boolean;
   showPlayHistory?: boolean;
   draggable?: boolean;
@@ -60,6 +61,7 @@ export function SongInfoCard({
   compact = false,
   isPlaying = false,
   isSelected = false,
+  moreSpace = false,
   draggable = false,
   dragAttributes,
   dragListeners,
@@ -356,323 +358,315 @@ export function SongInfoCard({
     );
   };
 
-  // Determine if we should render specific UI based on variant
-  switch (variant) {
-    case 'player':
-    case 'next':
-    case 'queue':
-    case 'history':
-    case 'track-list':
-      return (
-        <div
-          className={cn(
-            "p-1 -mb-2 group flex items-stretch rounded-lg hover:bg-accent/50 w-full overflow-hidden",
-            variant === 'track-list' && currentTrack?.id === track.id && "bg-accent",
-            isSelected && "bg-accent"
-          )}
-          data-track-id={track.id}
-          {...props}
-        >
-          {/* Selection Checkbox */}
-          {onSelect &&
-          <div className="w-6 flex flex-col items-center justify-start pt-4 gap-1">
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={() => {
-                onSelect();
-              }}
-              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-            />
-          </div>
-          }
-          
-          {/* Metadata badges column */}
-          {((['track-list', 'queue', 'history'].includes(variant || '') && showMetadataBadgesInLists) || 
-            ((variant === 'player' || variant === 'next') && showMetadataBadgesInFooter)) ? (
-            <div className="w-5 flex flex-col items-center pt-1 gap-1">
-              <div className="h-3">
-                <TooltipProvider>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-help">
-                        {track.rating !== undefined && (
-                          <StarRating
-                            fillLevel={track.rating}
-                            className="text-muted-foreground w-3 h-3"
-                          />
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center" className="text-xs">
-                      {track.rating !== undefined
-                        ? `Rating: ${Math.round(track.rating * 5)}/5`
-                        : "No rating"}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="h-3">
-                <TooltipProvider>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-1 cursor-help">
-                        <p className="text-[0.625rem] text-muted-foreground font-medium">
-                          {track.bpm || ""}
-                        </p>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center" className="text-xs">
-                      Tempo in Beats Per Minute
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="h-3">
-                <TooltipProvider>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger asChild>
-                      <p className="text-[0.625rem] text-muted-foreground font-medium">
-                        {formatTime(track.duration || 0)}
-                      </p>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center" className="text-xs">
-                      Duration: {formatTime(track.duration || 0)}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          ) : null}
-          
-          {/* Play history badges */}
-          {((['track-list', 'queue', 'history'].includes(variant || '') && showPlayHistoryInLists) || 
-            ((variant === 'player' || variant === 'next') && showPlayHistoryInFooter)) ? (
-            <div className="w-5 flex flex-col items-center pt-1 gap-1">
-              <NumberBadge
-                number={getPlaysInLastHours(track.playHistory || [], recentPlayHours)}
-                size="sm"
-                tooltip={`Plays in last ${recentPlayHours}h`}
-                variant={isInQueueOrHistory ? "primary" : "ghost"}
-              />
-              <NumberBadge
-                number={getPlaysInCurrentMonth(track.playHistory || [], monthlyPlayDays)}
-                size="sm"
-                tooltip={`Plays in last ${monthlyPlayDays}d`}
-                variant="muted"
-              />
-              <NumberBadge
-                number={getTotalPlays(track.playHistory || [])}
-                size="sm"
-                tooltip="Total plays"
-                variant="muted"
-              />
-            </div>
-          ) : null}
-          
-          {/* Main content area */}
-          <div className="flex-1 min-w-0 overflow pl-1">
-            <div className="font-medium text-sm sm:text-base flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                {track.removed ? (
-                  <span className="text-destructive">[REMOVED] </span>
-                ) : null}
-                {track?.title}
-              </div>
-              {/* Time display - only for player variant */}
-              {variant === 'player' && (
-                <div className="flex items-center gap-3 ml-auto pr-1">
-                  <span className="text-xs text-muted-foreground tabular-nums font-medium whitespace-nowrap">
-                    {formatTime(currentTime)} / -{formatTime((duration || 0) - (currentTime || 0))}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Conditionally show either metadata row or prelisten timeline */}
-            {(prelistenTrack?.id === track.id && isPrelistening && onPrelistenTimelineClick) ? (
-              /* Prelisten timeline */
-              <div className="px-0.5">
-                <div className="flex items-center">
-                  <span className="text-xs text-muted-foreground mr-2 tabular-nums">
-                    {formatTime(prelistenCurrentTime)}
-                  </span>
-                  <div
-                    className="relative flex-1 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
-                    onClick={(e) => onPrelistenTimelineClick(e, prelistenTrack)}
-                  >
-                    <div
-                      className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"
-                      style={{
-                        width: `${
-                          ((prelistenCurrentTime || 0) /
-                            (prelistenTrack.duration || 1)) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground ml-2 tabular-nums">
-                    -
-                    {formatTime(
-                      (prelistenTrack.duration || 0) - (prelistenCurrentTime || 0)
+  return (
+    <div
+      className={cn(
+        "group flex items-stretch hover:bg-accent/50 w-full overflow-hidden",
+        variant === 'track-list' && currentTrack?.id === track.id && "bg-accent",
+        isSelected && "bg-accent",
+        moreSpace ? "my-1" : "-mb-2"
+      )}
+      data-track-id={track.id}
+      {...props}
+    >
+      {/* Selection Checkbox */}
+      {onSelect &&
+      <div className="w-6 flex flex-col items-center justify-start pt-4 gap-1">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => {
+            onSelect();
+          }}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      </div>
+      }
+      
+      {/* Metadata badges column */}
+      {((['track-list', 'queue', 'history'].includes(variant || '') && showMetadataBadgesInLists) || 
+        ((variant === 'player' || variant === 'next') && showMetadataBadgesInFooter)) ? (
+        <div className="w-5 flex flex-col items-center pt-1 gap-1">
+          <div className="h-3">
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help">
+                    {track.rating !== undefined && (
+                      <StarRating
+                        fillLevel={track.rating}
+                        className="text-muted-foreground w-3 h-3"
+                      />
                     )}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              /* Metadata row */
-              <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
-                {visibleStandardFields.map((field, index) => {
-                  let value = track[field.key];
-                  
-                  // Handle special cases
-                  if (field.key === 'genre' && Array.isArray(value)) {
-                    value = value.join(', ');
-                  } else if (field.key === 'track' && typeof value === 'number') {
-                    value = value.toString().padStart(2, '0');
-                  }
-
-                  if (!value) return null;
-
-                  // Special handling for comment field
-                  if (field.key === 'comment') {
-                    const comment = value as string;
-                    const isLong = comment.length > 20;
-                    const displayText = isLong 
-                      ? comment.slice(0, 20) + '...' 
-                      : comment;
-
-                    return (
-                      <React.Fragment key={field.id}>
-                        {index > 0 && <span>•</span>}
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          <TooltipProvider>
-                            <Tooltip delayDuration={300}>
-                              <TooltipTrigger 
-                                className={cn(
-                                  "cursor-help",
-                                  isLong && "cursor-pointer hover:underline"
-                                )}
-                                onClick={isLong ? () => setIsCommentExpanded(!isCommentExpanded) : undefined}
-                              >
-                                <span className="truncate">{displayText}</span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                {isLong ? (isCommentExpanded ? 'Comment: Click to collapse' : 'Comment: Click to expand') : field.name}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </React.Fragment>
-                    );
-                  }
-
-                  return (
-                    <React.Fragment key={field.id}>
-                      {index > 0 && <span>•</span>}
-                      <div className="flex items-center gap-1">
-                        <TooltipProvider>
-                          <Tooltip delayDuration={300}>
-                            <TooltipTrigger className="cursor-help">
-                              <span className="truncate">{value}</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" align="start">
-                              {field.name}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-                {visibleCustomFields.map((field, index) => {
-                  const value = track.customMetadata?.[`custom_${field.id}`];
-                  if (!value) return null;
-                  return (
-                    <React.Fragment key={field.id}>
-                      {(visibleStandardFields.some(f => track[f.key]) || index > 0) && <span>•</span>}
-                      <div className="flex items-center gap-1">
-                        <TooltipProvider>
-                          <Tooltip delayDuration={300}>
-                            <TooltipTrigger className="cursor-help">
-                              <span className="truncate">{value}</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" align="start">
-                              {field.name}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            )}
-            
-            {/* Expanded comment section */}
-            {isCommentExpanded && track.comment && (
-              <div
-                className="mt-1 text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 p-1.5 rounded-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {track.comment}
-              </div>
-            )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center" className="text-xs">
+                  {track.rating !== undefined
+                    ? `Rating: ${Math.round(track.rating * 5)}/5`
+                    : "No rating"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-            
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0 mr-1">
-            {!track.removed && showPreListenButtons && onPrelistenToggle && (
-              // Only show the pre-listen button outside the menu in these cases:
-              // 1. It's not a current or next variant, OR
-              // 2. It's currently pre-listening (showing pause button)
-              (!(variant === 'player' || variant === 'next') || (prelistenTrack?.id === track.id && isPrelistening)) && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full hover:bg-accent"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePreListenClick(track);
-                  }}
-                >
-                  {prelistenTrack?.id === track.id && isPrelistening ? (
-                    <Pause className="h-4 w-4" />
-                  ) : (
-                    <Play className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {prelistenTrack?.id === track.id && isPrelistening
-                      ? "Pause"
-                      : "Play"}
-                  </span>
-                </Button>
-              )
-            )}
-            {renderDropdownMenu()}
+          <div className="h-3">
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 cursor-help">
+                    <p className="text-[0.625rem] text-muted-foreground font-medium">
+                      {track.bpm || ""}
+                    </p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center" className="text-xs">
+                  Tempo in Beats Per Minute
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          
-          {/* Dialogs */}
-          {onPrelistenToggle && (
-            <PreListenDialog
-              isOpen={showPreListenDialog}
-              onClose={() => setShowPreListenDialog(false)}
-              onContinue={handleContinueAnyway}
-              onDisable={handleDisablePreListen}
-              onConfigureOutput={handleConfigureOutput}
-            />
-          )}
-          
-          <SettingsDialog
-            triggerButton={false}
-            open={showSettings}
-            onOpenChange={setShowSettings}
+          <div className="h-3">
+            <TooltipProvider>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <p className="text-[0.625rem] text-muted-foreground font-medium">
+                    {formatTime(track.duration || 0)}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center" className="text-xs">
+                  Duration: {formatTime(track.duration || 0)}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      ) : null}
+      
+      {/* Play history badges */}
+      {((['track-list', 'queue', 'history'].includes(variant || '') && showPlayHistoryInLists) || 
+        ((variant === 'player' || variant === 'next') && showPlayHistoryInFooter)) ? (
+        <div className="w-5 flex flex-col items-center pt-1 gap-1">
+          <NumberBadge
+            number={getPlaysInLastHours(track.playHistory || [], recentPlayHours)}
+            size="sm"
+            tooltip={`Plays in last ${recentPlayHours}h`}
+            variant={isInQueueOrHistory ? "primary" : "ghost"}
+          />
+          <NumberBadge
+            number={getPlaysInCurrentMonth(track.playHistory || [], monthlyPlayDays)}
+            size="sm"
+            tooltip={`Plays in last ${monthlyPlayDays}d`}
+            variant="muted"
+          />
+          <NumberBadge
+            number={getTotalPlays(track.playHistory || [])}
+            size="sm"
+            tooltip="Total plays"
+            variant="muted"
           />
         </div>
-      );
+      ) : null}
       
-    default:
-      return null;
-  }
+      {/* Main content area */}
+      <div className="flex-1 min-w-0 overflow pl-1">
+        <div className="font-medium text-sm sm:text-base flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            {track.removed ? (
+              <span className="text-destructive">[REMOVED] </span>
+            ) : null}
+            {track?.title}
+          </div>
+          {/* Time display - only for player variant */}
+          {variant === 'player' && (
+            <div className="flex items-center gap-3 ml-auto pr-1">
+              <span className="text-xs text-muted-foreground tabular-nums font-medium whitespace-nowrap">
+                {formatTime(currentTime)} / -{formatTime((duration || 0) - (currentTime || 0))}
+              </span>
+            </div>
+          )}
+        </div>
+        
+        {/* Conditionally show either metadata row or prelisten timeline */}
+        {(prelistenTrack?.id === track.id && isPrelistening && onPrelistenTimelineClick) ? (
+          /* Prelisten timeline */
+          <div className="px-0.5">
+            <div className="flex items-center">
+              <span className="text-xs text-muted-foreground mr-2 tabular-nums">
+                {formatTime(prelistenCurrentTime)}
+              </span>
+              <div
+                className="relative flex-1 h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full cursor-pointer"
+                onClick={(e) => onPrelistenTimelineClick(e, prelistenTrack)}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 bg-neutral-500 dark:bg-neutral-300 rounded-full"
+                  style={{
+                    width: `${
+                      ((prelistenCurrentTime || 0) /
+                        (prelistenTrack.duration || 1)) *
+                      100
+                    }%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground ml-2 tabular-nums">
+                -
+                {formatTime(
+                  (prelistenTrack.duration || 0) - (prelistenCurrentTime || 0)
+                )}
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* Metadata row */
+          <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+            {visibleStandardFields.map((field, index) => {
+              let value = track[field.key];
+              
+              // Handle special cases
+              if (field.key === 'genre' && Array.isArray(value)) {
+                value = value.join(', ');
+              } else if (field.key === 'track' && typeof value === 'number') {
+                value = value.toString().padStart(2, '0');
+              }
+
+              if (!value) return null;
+
+              // Special handling for comment field
+              if (field.key === 'comment') {
+                const comment = value as string;
+                const isLong = comment.length > 20;
+                const displayText = isLong 
+                  ? comment.slice(0, 20) + '...' 
+                  : comment;
+
+                return (
+                  <React.Fragment key={field.id}>
+                    {index > 0 && <span>•</span>}
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      <TooltipProvider>
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger 
+                            className={cn(
+                              "cursor-help",
+                              isLong && "cursor-pointer hover:underline"
+                            )}
+                            onClick={isLong ? () => setIsCommentExpanded(!isCommentExpanded) : undefined}
+                          >
+                            <span className="truncate">{displayText}</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" align="start">
+                            {isLong ? (isCommentExpanded ? 'Comment: Click to collapse' : 'Comment: Click to expand') : field.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </React.Fragment>
+                );
+              }
+
+              return (
+                <React.Fragment key={field.id}>
+                  {index > 0 && <span>•</span>}
+                  <div className="flex items-center gap-1">
+                    <TooltipProvider>
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger className="cursor-help">
+                          <span className="truncate">{value}</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="start">
+                          {field.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+            {visibleCustomFields.map((field, index) => {
+              const value = track.customMetadata?.[`custom_${field.id}`];
+              if (!value) return null;
+              return (
+                <React.Fragment key={field.id}>
+                  {(visibleStandardFields.some(f => track[f.key]) || index > 0) && <span>•</span>}
+                  <div className="flex items-center gap-1">
+                    <TooltipProvider>
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger className="cursor-help">
+                          <span className="truncate">{value}</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="start">
+                          {field.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* Expanded comment section */}
+        {isCommentExpanded && track.comment && (
+          <div
+            className="mt-1 text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 p-1.5 rounded-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {track.comment}
+          </div>
+        )}
+      </div>
+        
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 flex-shrink-0 mr-1">
+        {!track.removed && showPreListenButtons && onPrelistenToggle && (
+          // Only show the pre-listen button outside the menu in these cases:
+          // 1. It's not a current or next variant, OR
+          // 2. It's currently pre-listening (showing pause button)
+          (!(variant === 'player' || variant === 'next') || (prelistenTrack?.id === track.id && isPrelistening)) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full hover:bg-accent"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePreListenClick(track);
+              }}
+            >
+              {prelistenTrack?.id === track.id && isPrelistening ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              <span className="sr-only">
+                {prelistenTrack?.id === track.id && isPrelistening
+                  ? "Pause"
+                  : "Play"}
+              </span>
+            </Button>
+          )
+        )}
+        {renderDropdownMenu()}
+      </div>
+      
+      {/* Dialogs */}
+      {onPrelistenToggle && (
+        <PreListenDialog
+          isOpen={showPreListenDialog}
+          onClose={() => setShowPreListenDialog(false)}
+          onContinue={handleContinueAnyway}
+          onDisable={handleDisablePreListen}
+          onConfigureOutput={handleConfigureOutput}
+        />
+      )}
+      
+      <SettingsDialog
+        triggerButton={false}
+        open={showSettings}
+        onOpenChange={setShowSettings}
+      />
+    </div>
+  );
+  
+   
 }
