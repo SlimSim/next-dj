@@ -5,6 +5,7 @@ export type StandardMetadataField = {
   showInFilter: boolean;
   showInList: boolean;
   showInSearch: boolean;
+  showInFooter: boolean;
 };
 
 export interface SettingsState {
@@ -20,6 +21,7 @@ export interface SettingsActions {
   toggleStandardMetadataFilter: (fieldId: string) => void;
   toggleStandardMetadataVisibility: (fieldId: string) => void;
   toggleStandardMetadataSearch: (fieldId: string) => void;
+  toggleStandardMetadataFooter: (fieldId: string) => void;
   reorderStandardMetadataFields: (oldIndex: number, newIndex: number) => void;
   setPracticeMode: (enabled: boolean) => void;
 }

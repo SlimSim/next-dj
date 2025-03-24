@@ -203,6 +203,36 @@ export function BasicInfoTab({
       </div>
 
       <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="bpm" className="text-right">
+          BPM
+        </Label>
+        <div className="col-span-3 flex gap-2">
+          <Input
+            id="bpm"
+            type="number"
+            value={editedValues.bpm ?? (commonValues.bpm === null ? "" : (commonValues.bpm?.toString() || ""))}
+            placeholder={commonValues.bpm === null ? "Multiple values" : ""}
+            onChange={(e) =>
+              handleTrackChange({
+                bpm: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
+            className="flex-1"
+          />
+          {commonValues.bpm === null && !editedValues.bpm && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleTrackChange({ bpm: tracks[0].bpm })}
+              className="whitespace-nowrap"
+            >
+              Apply to all
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="volume" className="text-right">
           Volume
         </Label>

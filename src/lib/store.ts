@@ -42,12 +42,17 @@ const initialState: PlayerState = {
   prelistenDeviceId: "",
   prelistenTrack: null,
   isPrelistening: false,
-  selectedFolderNames: [],
   prelistenDuration: 0,
+  prelistenCurrentTime: 0,
+  selectedFolderNames: [],
   showPreListenButtons: true,
   recentPlayHours: 0,
   monthlyPlayDays: 0,
   hasShownPreListenWarning: false,
+  showMetadataBadgesInLists: true,
+  showMetadataBadgesInFooter: true,
+  showPlayHistoryInLists: true,
+  showPlayHistoryInFooter: false,
   searchQuery: "",
   sortField: "title",
   sortOrder: "asc",
@@ -68,6 +73,7 @@ const initialState: PlayerState = {
       showInFilter: true,
       showInList: true,
       showInSearch: true,
+      showInFooter: true, // Only artist is shown in footer by default
     },
     {
       id: 'album',
@@ -76,6 +82,7 @@ const initialState: PlayerState = {
       showInFilter: true,
       showInList: true,
       showInSearch: true,
+      showInFooter: false, // Turn off by default
     },
     {
       id: 'genre',
@@ -84,6 +91,7 @@ const initialState: PlayerState = {
       showInFilter: true,
       showInList: true,
       showInSearch: false,
+      showInFooter: false,
     },
     {
       id: 'track',
@@ -92,6 +100,7 @@ const initialState: PlayerState = {
       showInFilter: false,
       showInList: true,
       showInSearch: false,
+      showInFooter: false,
     },
     {
       id: 'year',
@@ -100,6 +109,7 @@ const initialState: PlayerState = {
       showInFilter: false,
       showInList: true,
       showInSearch: false,
+      showInFooter: false,
     },
     {
       id: 'comment',
@@ -108,6 +118,7 @@ const initialState: PlayerState = {
       showInFilter: false,
       showInList: true,
       showInSearch: false,
+      showInFooter: false,
     },
   ],
   practiceMode: false,
@@ -140,6 +151,8 @@ export const usePlayerStore = create<PlayerStore>()(
 
         setPrelistenDuration: (duration) =>
           set({ prelistenDuration: duration }),
+        setPrelistenCurrentTime: (currentTime) =>
+          set({ prelistenCurrentTime: currentTime }),
         setCurrentTrack: (track: MusicMetadata | null) =>
           set({
             currentTrack: track
@@ -200,10 +213,12 @@ export const usePlayerStore = create<PlayerStore>()(
               return { queue: [], history: [] };
             } else {
               return {
+                currentTrack: null,
                 queue: [],
                 history: [],
-                currentTrack: null,
                 isPlaying: false,
+                currentTime: 0,
+                duration: 0,
               };
             }
           }),
@@ -223,6 +238,14 @@ export const usePlayerStore = create<PlayerStore>()(
         setMonthlyPlayDays: (days: number) => set({ monthlyPlayDays: days }),
         setHasShownPreListenWarning: (shown: boolean) =>
           set({ hasShownPreListenWarning: shown }),
+        setShowMetadataBadgesInLists: (show: boolean) =>
+          set({ showMetadataBadgesInLists: show }),
+        setShowMetadataBadgesInFooter: (show: boolean) =>
+          set({ showMetadataBadgesInFooter: show }),
+        setShowPlayHistoryInLists: (show: boolean) =>
+          set({ showPlayHistoryInLists: show }),
+        setShowPlayHistoryInFooter: (show: boolean) =>
+          set({ showPlayHistoryInFooter: show }),
         setSearchQuery: (query) => set({ searchQuery: query }),
         setSortField: (field) => set({ sortField: field }),
         setSortOrder: (order) => set({ sortOrder: order }),
@@ -401,6 +424,7 @@ export const usePlayerStore = create<PlayerStore>()(
                   showInFilter: true,   // Default to showing in filter
                   showInList: true,     // Default to showing in list
                   showInSearch: true,   // Default to showing in search
+                  showInFooter: true,   // Default to showing in footer
                 }
               ],
             },
@@ -431,6 +455,16 @@ export const usePlayerStore = create<PlayerStore>()(
               fields: state.customMetadata.fields.map(field =>
                 field.id === fieldId
                   ? { ...field, showInSearch: !field.showInSearch }
+                  : field
+              ),
+            },
+          })),
+        toggleCustomMetadataFooter: (fieldId: string) =>
+          set((state) => ({
+            customMetadata: {
+              fields: state.customMetadata.fields.map(field =>
+                field.id === fieldId
+                  ? { ...field, showInFooter: !field.showInFooter }
                   : field
               ),
             },
@@ -498,6 +532,14 @@ export const usePlayerStore = create<PlayerStore>()(
                 : field
             ),
           })),
+        toggleStandardMetadataFooter: (fieldId: string) =>
+          set((state) => ({
+            standardMetadataFields: state.standardMetadataFields.map(field =>
+              field.id === fieldId
+                ? { ...field, showInFooter: !field.showInFooter }
+                : field
+            ),
+          })),
         toggleSearch: (fieldId: string) =>
           set((state) => ({
             standardMetadataFields: state.standardMetadataFields.map((field) =>
@@ -524,9 +566,18 @@ export const usePlayerStore = create<PlayerStore>()(
           }),
         setPracticeMode: (mode: boolean) => set({ practiceMode: mode }),
         setSelectedTracks: (tracks: string[] | Set<string>) => {
-          const trackArray = Array.isArray(tracks) ? tracks : Array.from(tracks);
-          set((state) => ({ ...state, selectedTracks: trackArray }));
+          if (tracks instanceof Set) {
+            set({ selectedTracks: Array.from(tracks) });
+          } else {
+            set({ selectedTracks: tracks });
+          }
         },
+
+        setMetadata: (metadata: MusicMetadata[]) => {
+          console.log('Updating global store metadata:', metadata.length);
+          set({ metadata });
+        },
+
         handleSelectAll: (trackIds: string[]) => {
           console.log('handleSelectAll called with trackIds:', trackIds);
           

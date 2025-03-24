@@ -21,6 +21,8 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
       setIsPrelistening,
       setPrelistenTrack,
       prelistenDuration,
+      setPrelistenDuration,
+      setPrelistenCurrentTime,
     } = usePlayerStore();
 
     const {
@@ -45,6 +47,7 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
         const newDuration = prelistenDuration;
 
         setLocalCurrentTime(newCurrentTime);
+        setPrelistenCurrentTime(newCurrentTime);
 
         if (newDuration !== prelistenTrack.duration) {
           setPrelistenTrack({
@@ -64,12 +67,13 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
         audio.removeEventListener("timeupdate", updateTrackInfo);
         audio.removeEventListener("loadedmetadata", updateTrackInfo);
       };
-    }, [prelistenTrack, setPrelistenTrack, prelistenDuration]);
+    }, [prelistenTrack, setPrelistenTrack, prelistenDuration, setPrelistenCurrentTime]);
 
     useImperativeHandle(ref, () => ({
       seek: (time: number) => {
         if (audioRef.current) {
           audioRef.current.currentTime = time;
+          setPrelistenCurrentTime(time);
         }
       },
       getCurrentTime: () => {
@@ -120,3 +124,5 @@ export const PrelistenAudioPlayer = forwardRef<PrelistenAudioRef>(
     );
   }
 );
+
+PrelistenAudioPlayer.displayName = "PrelistenAudioPlayer";

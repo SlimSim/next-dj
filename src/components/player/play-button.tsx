@@ -70,6 +70,7 @@ export const PlayButton = ({
       <ConfirmToggleButton
         isToggled={isPlaying}
         onToggle={handleClick}
+        confirmPosition="left"
         disableConfirm={practiceMode}
         disabled={disabled}
         variant="default"

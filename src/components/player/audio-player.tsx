@@ -6,6 +6,8 @@ import { PlayerLayout } from "./player-layout";
 import { usePlayerStore } from "@/lib/store";
 import { recordPlayEvent } from "@/db/metadata-operations";
 import { initializeEQ } from "@/features/audio/eq";
+import { MusicMetadata } from "@/lib/types/types";
+import { getAllMetadata } from "@/db/metadata-operations";
 
 export const AudioPlayer = () => {
   const {
@@ -29,6 +31,10 @@ export const AudioPlayer = () => {
     currentTime,
     queue,
     setIsPlaying,
+    setCurrentTrack,
+    setQueue,
+    setHistory,
+    history,
   } = usePlayerStore();
 
   const lastTrackRef = useRef<string | null>(null);
@@ -60,9 +66,31 @@ export const AudioPlayer = () => {
         .then(() => {
           console.log('AudioPlayer: Playback started successfully');
           if (currentTrack.id !== lastTrackRef.current) {
-            recordPlayEvent(currentTrack.id).catch((error) => {
-              console.error("Error recording play event:", error);
-            });
+            recordPlayEvent(currentTrack.id)
+              .then(async () => {
+                // After recording the play event, refresh the track metadata
+                // to ensure play counts are updated
+                try {
+                  const allMetadata = await getAllMetadata();
+                  if (allMetadata) {
+                    // Find updated metadata for current track
+                    const updatedCurrentTrack = allMetadata.find(track => track.id === currentTrack.id);
+                    
+                    if (updatedCurrentTrack) {
+                      // Update current track with fresh metadata
+                      updateCurrentTrack(updatedCurrentTrack);
+                      
+                      // Also update any instances of this track in the queue or history
+                      updateTrackInLists(updatedCurrentTrack);
+                    }
+                  }
+                } catch (error) {
+                  console.error("Error refreshing metadata after play:", error);
+                }
+              })
+              .catch((error) => {
+                console.error("Error recording play event:", error);
+              });
             lastTrackRef.current = currentTrack.id;
           }
         })
@@ -105,6 +133,39 @@ export const AudioPlayer = () => {
       });
     }
   }, [currentTrack]);
+
+  // Function to update current track with fresh metadata
+  const updateCurrentTrack = (updatedTrack: MusicMetadata) => {
+    setCurrentTrack({
+      ...currentTrack!,
+      playCount: updatedTrack.playCount,
+      lastPlayed: updatedTrack.lastPlayed,
+      playHistory: updatedTrack.playHistory
+    });
+  };
+
+  // Function to update a track in queue and history
+  const updateTrackInLists = (updatedTrack: MusicMetadata) => {
+    // Update in queue if present
+    if (queue.some(track => track.id === updatedTrack.id)) {
+      const updatedQueue = queue.map(track => 
+        track.id === updatedTrack.id 
+          ? { ...track, playCount: updatedTrack.playCount, lastPlayed: updatedTrack.lastPlayed, playHistory: updatedTrack.playHistory }
+          : track
+      );
+      setQueue(updatedQueue);
+    }
+
+    // Update in history if present
+    if (history.some(track => track.id === updatedTrack.id)) {
+      const updatedHistory = history.map(track => 
+        track.id === updatedTrack.id 
+          ? { ...track, playCount: updatedTrack.playCount, lastPlayed: updatedTrack.lastPlayed, playHistory: updatedTrack.playHistory }
+          : track
+      );
+      setHistory(updatedHistory);
+    }
+  };
 
   return (
     <PlayerLayout

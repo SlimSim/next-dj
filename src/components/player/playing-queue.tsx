@@ -186,6 +186,7 @@ export function PlayingQueue() {
             </Button>
             <ConfirmButton
               variant="ghost"
+              confirmPosition="left"
               size="icon"
               className="h-8 w-8 sm:h-9 sm:w-9"
               onClick={() => clearAll()}

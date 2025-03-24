@@ -13,12 +13,18 @@ export function useTrackList(searchQuery: string) {
     usePlayerStore();
 
   useEffect(() => {
+    // Load tracks on component mount and when refresh is triggered
     loadTracks();
   }, [refreshTrigger]);
 
   const loadTracks = async () => {
     try {
+      console.log('Loading tracks from database');
+      
+      // Always get fresh metadata directly from the database, don't use cached data
       const metadata = await getAllMetadata();
+      
+      console.log('Loaded tracks:', metadata?.length || 0);
       
       // Don't throw an error for empty library, just set empty tracks
       if (!metadata || metadata.length === 0) {
@@ -26,7 +32,15 @@ export function useTrackList(searchQuery: string) {
         return;
       }
 
+      // Update the tracks in state to refresh the UI
       setTracks(metadata);
+      
+      // Update the global store's metadata array to ensure consistency
+      const { setMetadata } = usePlayerStore.getState();
+      if (typeof setMetadata === 'function') {
+        setMetadata(metadata);
+      }
+      
       // Set first track as prelistenTrack if there isn't one and there are tracks available
       if (!prelistenTrack && metadata.length > 0) {
         setPrelistenTrack(metadata[0]);

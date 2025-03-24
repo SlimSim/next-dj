@@ -1,15 +1,16 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
-import { formatTime } from "@/features/audio/utils/audioUtils";
-import { createErrorHandler } from "@/features/audio/utils/errorUtils";
 import { AudioError, AudioErrorCode } from "@/features/audio/types";
+import { createErrorHandler } from "@/features/audio/utils/errorUtils";
+import { SongInfoCard } from "./song-info-card";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "../ui/button";
 import { MoreVertical, GripVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { cn } from "@/lib/utils/common";
+import { EditTrackDialog } from "./edit-track-dialog";
 
 const handleError = createErrorHandler('QueueItem');
 
@@ -44,6 +45,11 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
   const currentTrack = usePlayerStore((state) => state.currentTrack);
   const setQueue = usePlayerStore((state) => state.setQueue);
   const history = usePlayerStore((state) => state.history);
+  const prelistenTrack = usePlayerStore((state) => state.prelistenTrack);
+  const isPrelistening = usePlayerStore((state) => state.isPrelistening);
+  const prelistenCurrentTime = usePlayerStore((state) => state.prelistenCurrentTime);
+  const setPrelistenTrack = usePlayerStore((state) => state.setPrelistenTrack);
+  const setIsPrelistening = usePlayerStore((state) => state.setIsPrelistening);
 
   const playNow = useCallback(() => {
     try {
@@ -139,6 +145,68 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
     }
   }, [isHistory, track.queueId, removeFromQueue, removeFromHistory]);
 
+  // Handle prelisten toggle
+  const handlePrelistenToggle = useCallback((track: MusicMetadata) => {
+    // If we're already prelistening to this track, toggle it off
+    if (prelistenTrack?.id === track.id && isPrelistening) {
+      setIsPrelistening(false);
+    } else {
+      // Otherwise, start prelistening to this track
+      setPrelistenTrack(track);
+      setIsPrelistening(true);
+    }
+  }, [prelistenTrack, isPrelistening, setPrelistenTrack, setIsPrelistening]);
+
+  // Handle prelisten timeline click
+  const handlePrelistenTimelineClick = useCallback((e: React.MouseEvent<Element>, track: MusicMetadata) => {
+    if (!track) return;
+    
+    const element = e.currentTarget;
+    const rect = element.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = x / rect.width;
+    const time = percent * (track.duration || 0);
+    
+    // Find the prelisten audio element and seek to the calculated time
+    const prelistenAudio = document.getElementById('prelisten-audio') as HTMLAudioElement;
+    if (prelistenAudio) {
+      prelistenAudio.currentTime = time;
+    }
+  }, []);
+
+  const [editingTrack, setEditingTrack] = useState<MusicMetadata | null>(null);
+  const updateTrackMetadata = usePlayerStore((state) => state.updateTrackMetadata);
+  const triggerRefresh = usePlayerStore((state) => state.triggerRefresh);
+  
+  const handleSaveTrack = useCallback(async (updatedTracks: MusicMetadata | MusicMetadata[]) => {
+    // Handle both single track and multiple tracks update
+    const tracksArray = Array.isArray(updatedTracks) ? updatedTracks : [updatedTracks];
+    
+    try {
+      // Update each track in the database first
+      for (const updatedTrack of tracksArray) {
+        if (updatedTrack && updatedTrack.id) {
+          console.log('Updating track in database:', updatedTrack.id);
+          
+          // Import on demand to avoid circular dependencies
+          const { updateAudioMetadata } = await import('@/db/audio-operations');
+          await updateAudioMetadata(updatedTrack);
+          
+          // Then update the global store
+          updateTrackMetadata(updatedTrack.id, updatedTrack);
+        }
+      }
+      
+      // Trigger a refresh to ensure all components reload data from DB
+      triggerRefresh();
+      
+      // Close dialog
+      setEditingTrack(null);
+    } catch (error) {
+      console.error('Error updating track metadata:', error);
+    }
+  }, [updateTrackMetadata, triggerRefresh]);
+
   return (
     <div
       ref={setNodeRef}
@@ -153,45 +221,49 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="cursor-grab"
+        className="cursor-grab flex-shrink-0"
         {...attributes}
         {...listeners}
       >
         <GripVertical className="h-4 w-4" />
       </Button>
       <div className="flex-1 min-w-0">
-        <div className="font-medium truncate">{track.title}</div>
-        <div className="flex items-center flex-wrap text-sm text-muted-foreground">
-          <span className="truncate">{track.artist}</span>
-          <span className="mx-2">•</span>
-          {track.bpm && (
-            <>
-              <span>
-                {Math.round(track.bpm)} <span className="text-[10px]">BPM</span>
-              </span>
-              <span className="mx-2">•</span>
-            </>
-          )}
-          <span>{formatTime(track.duration)}</span>
-        </div>
+        <SongInfoCard
+          track={track}
+          currentTrack={currentTrack}
+          prelistenTrack={prelistenTrack}
+          isPrelistening={isPrelistening}
+          prelistenCurrentTime={prelistenCurrentTime}
+          variant={isHistory ? 'history' : 'queue'}
+          isPlaying={isPlaying}
+          draggable={false}
+          showPreListenButtons={true}
+          onPrelistenToggle={handlePrelistenToggle}
+          onPrelistenTimelineClick={handlePrelistenTimelineClick}
+          onPlayNow={playNow}
+          onMoveToTop={!isHistory ? moveToTop : undefined}
+          onMoveToBottom={!isHistory ? moveToBottom : undefined}
+          onRemove={handleRemove}
+          onEditTrack={() => setEditingTrack(track)}
+        />
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={playNow}>Play Now</DropdownMenuItem>
-          <DropdownMenuItem onClick={moveToTop}>Move to Top</DropdownMenuItem>
-          <DropdownMenuItem onClick={moveToBottom}>
-            Move to Bottom
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleRemove}>
-            Remove from {isHistory ? "History" : "Queue"}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      
+      {/* Edit dialog for track */}
+      <EditTrackDialog
+        isOpen={editingTrack !== null}
+        onOpenChange={(open: boolean) => {
+          if (!open) setEditingTrack(null);
+        }}
+        track={editingTrack}
+        onTrackChange={(updatedTracks) => {
+          // This is called when tracks are modified in the dialog but not yet saved
+          if (Array.isArray(updatedTracks) && updatedTracks.length > 0) {
+            // Just use the first track for preview if multiple are selected
+            console.log('Track changed in dialog:', updatedTracks[0]);
+          }
+        }}
+        onSave={handleSaveTrack}
+      />
     </div>
   );
 }

@@ -21,11 +21,13 @@ import { MetadataTab } from './tabs/metadata-tab';
 interface SettingsContentProps {
   hasRemovedSongs: boolean;
   setHasRemovedSongs: (value: boolean) => void;
+  defaultTab?: string;
 }
 
 export function SettingsContent({
   hasRemovedSongs,
   setHasRemovedSongs,
+  defaultTab = "general",
 }: SettingsContentProps) {
   const [hasAudioPermission, setHasAudioPermission] = useState(false);
   const practiceMode = usePlayerStore((state) => state.practiceMode);
@@ -87,8 +89,8 @@ export function SettingsContent({
   }, []);
 
   return (
-    <div>
-      <Tabs defaultValue="general" className="w-full">
+    <div className="overflow-hidden h-full">
+      <Tabs defaultValue={defaultTab} className="h-full flex flex-col">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
@@ -132,10 +134,12 @@ export function SettingsDialog({
   triggerButton = true,
   open,
   onOpenChange,
+  defaultTab = "general",
 }: {
   triggerButton?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  defaultTab?: string;
 }) {
   const [hasRemovedSongs, setHasRemovedSongs] = useState(false);
 
@@ -157,6 +161,7 @@ export function SettingsDialog({
           <SettingsContent
             hasRemovedSongs={hasRemovedSongs}
             setHasRemovedSongs={setHasRemovedSongs}
+            defaultTab={defaultTab}
           />
         </div>
       </DialogContent>

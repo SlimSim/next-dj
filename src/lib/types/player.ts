@@ -44,11 +44,16 @@ export interface PlayerState {
   prelistenTrack: MusicMetadata | null;
   isPrelistening: boolean;
   prelistenDuration: number;
+  prelistenCurrentTime: number;
   selectedFolderNames: string[];
   showPreListenButtons: boolean;
   recentPlayHours: number;
   monthlyPlayDays: number;
   hasShownPreListenWarning: boolean;
+  showMetadataBadgesInLists: boolean;
+  showMetadataBadgesInFooter: boolean;
+  showPlayHistoryInLists: boolean;
+  showPlayHistoryInFooter: boolean;
   searchQuery: string;
   sortField: SortField;
   sortOrder: SortOrder;
@@ -69,6 +74,7 @@ export interface PlayerState {
 
 export interface PlayerActions {
   setPrelistenDuration: (duration: number) => void;
+  setPrelistenCurrentTime: (currentTime: number) => void;
   setCurrentTrack: (track: MusicMetadata | null) => void;
   addToQueue: (track: MusicMetadata) => void;
   removeFromQueue: (id: string) => void;
@@ -100,6 +106,10 @@ export interface PlayerActions {
   setRecentPlayHours: (hours: number) => void;
   setMonthlyPlayDays: (days: number) => void;
   setHasShownPreListenWarning: (shown: boolean) => void;
+  setShowMetadataBadgesInLists: (show: boolean) => void;
+  setShowMetadataBadgesInFooter: (show: boolean) => void;
+  setShowPlayHistoryInLists: (show: boolean) => void;
+  setShowPlayHistoryInFooter: (show: boolean) => void;
   setSearchQuery: (query: string) => void;
   setSortField: (field: SortField) => void;
   setSortOrder: (order: SortOrder) => void;
@@ -121,19 +131,22 @@ export interface PlayerActions {
   removeCustomMetadataField: (fieldId: string) => void;
   toggleCustomMetadataFilter: (fieldId: string) => void;
   toggleCustomMetadataVisibility: (fieldId: string) => void;
+  toggleCustomMetadataSearch: (fieldId: string) => void;
+  toggleCustomMetadataFooter: (fieldId: string) => void;
   renameCustomMetadataField: (fieldId: string, newName: string) => void;
   reorderCustomMetadataFields: (oldIndex: number, newIndex: number) => void;
   toggleStandardMetadataFilter: (fieldId: string) => void;
   toggleStandardMetadataVisibility: (fieldId: string) => void;
-  reorderStandardMetadataFields: (oldIndex: number, newIndex: number) => void;
-  toggleCustomMetadataSearch: (fieldId: string) => void;
   toggleStandardMetadataSearch: (fieldId: string) => void;
+  toggleStandardMetadataFooter: (fieldId: string) => void;
+  reorderStandardMetadataFields: (oldIndex: number, newIndex: number) => void;
   setEQValue: (key: keyof EQValues, value: number) => void;
   setEQMode: (mode: EQMode) => void;
   setUse5BandEQ: (enabled: boolean) => void;
   setPracticeMode: (enabled: boolean) => void;
   setSelectedTracks: (tracks: string[] | Set<string>) => void;
   handleSelectAll: (trackIds: string[]) => void;
+  setMetadata: (metadata: MusicMetadata[]) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

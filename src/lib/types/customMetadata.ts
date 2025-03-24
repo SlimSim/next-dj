@@ -5,6 +5,7 @@ export interface CustomMetadataField {
   showInFilter: boolean;
   showInList: boolean;
   showInSearch: boolean;
+  showInFooter: boolean;
 }
 
 export interface CustomMetadataValue {

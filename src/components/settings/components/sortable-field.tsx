@@ -15,15 +15,17 @@ interface SortableFieldProps {
   showInFilter: boolean;
   showInList: boolean;
   showInSearch: boolean;
+  showInFooter: boolean;
   isEditing?: boolean;
   editingName?: string;
   onEditStart?: () => void;
   onEditChange?: (value: string) => void;
   onEditSubmit?: () => void;
   onEditCancel?: () => void;
-  toggleFilter: (fieldId: string) => void;
-  toggleVisibility: (fieldId: string) => void;
-  toggleSearch: (fieldId: string) => void;
+  toggleFilter?: (fieldId: string) => void;
+  toggleList?: (fieldId: string) => void;
+  toggleSearch?: (fieldId: string) => void;
+  toggleFooter?: (fieldId: string) => void;
   removeField?: (fieldId: string) => void;
 }
 
@@ -33,6 +35,7 @@ export function SortableField({
   showInFilter,
   showInList,
   showInSearch,
+  showInFooter,
   isEditing,
   editingName,
   onEditStart,
@@ -40,8 +43,9 @@ export function SortableField({
   onEditSubmit,
   onEditCancel,
   toggleFilter,
-  toggleVisibility,
+  toggleList,
   toggleSearch,
+  toggleFooter,
   removeField,
 }: SortableFieldProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -64,7 +68,7 @@ export function SortableField({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col sm:flex-row sm:items-center sm:grid sm:grid-cols-[1fr_60px_60px_60px] gap-2 sm:gap-4 rounded-lg border p-2 ${
+      className={`flex flex-col sm:flex-row sm:items-center sm:grid sm:grid-cols-[1fr_60px_60px_60px_60px] gap-2 sm:gap-4 rounded-lg border p-2 ${
         isDragging ? 'bg-accent' : ''
       }`}
     >
@@ -134,27 +138,49 @@ export function SortableField({
       </div>
 
       <div className={`sm:contents ${isExpanded ? 'block' : 'hidden'}`}>
-        <div className="flex items-center justify-center">
-          <Switch
-            id={`filter-${id}`}
-            checked={showInFilter}
-            onCheckedChange={() => toggleFilter(id)}
-          />
-        </div>
-        <div className="flex items-center justify-center">
-          <Switch
-            id={`visibility-${id}`}
-            checked={showInList}
-            onCheckedChange={() => toggleVisibility(id)}
-          />
-        </div>
-        <div className="flex items-center justify-center">
-          <Switch
-            id={`search-${id}`}
-            checked={showInSearch}
-            onCheckedChange={() => toggleSearch(id)}
-          />
-        </div>
+        {toggleList && (
+          <div className="flex items-center justify-between sm:justify-center px-2 sm:px-0 mb-2 sm:mb-0">
+            <label htmlFor={`list-${id}`} className="text-sm sm:hidden">List</label>
+            <Switch
+              id={`list-${id}`}
+              checked={showInList}
+              onCheckedChange={() => toggleList?.(id)}
+            />
+          </div>
+        )}
+        
+        {toggleFooter && (
+          <div className="flex items-center justify-between sm:justify-center px-2 sm:px-0 mb-2 sm:mb-0">
+            <label htmlFor={`footer-${id}`} className="text-sm sm:hidden">Footer</label>
+            <Switch
+              id={`footer-${id}`}
+              checked={showInFooter}
+              onCheckedChange={() => toggleFooter?.(id)}
+            />
+          </div>
+        )}
+        
+        {toggleSearch && (
+          <div className="flex items-center justify-between sm:justify-center px-2 sm:px-0 mb-2 sm:mb-0">
+            <label htmlFor={`search-${id}`} className="text-sm sm:hidden">Search</label>
+            <Switch
+              id={`search-${id}`}
+              checked={showInSearch}
+              onCheckedChange={() => toggleSearch?.(id)}
+            />
+          </div>
+        )}
+
+        {toggleFilter && (
+          <div className="flex items-center justify-between sm:justify-center px-2 sm:px-0">
+            <label htmlFor={`filter-${id}`} className="text-sm sm:hidden">Filter</label>
+            <Switch
+              id={`filter-${id}`}
+              checked={showInFilter}
+              onCheckedChange={() => toggleFilter?.(id)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

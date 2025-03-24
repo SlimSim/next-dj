@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import { StoreProvider } from "@/components/common/store-provider";
 import { SettingsProvider } from "@/components/settings/settings-context";
+import { SettingsDialogProvider } from "@/components/settings/settings-dialog-context";
 import "./globals.css";
 import { cn } from "@/lib/utils/common";
 
@@ -48,8 +49,10 @@ export default function RootLayout({
         >
           <StoreProvider>
             <SettingsProvider>
-              {children}
-              <Toaster />
+              <SettingsDialogProvider>
+                {children}
+                <Toaster />
+              </SettingsDialogProvider>
             </SettingsProvider>
           </StoreProvider>
         </ThemeProvider>

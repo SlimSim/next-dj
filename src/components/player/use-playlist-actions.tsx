@@ -4,6 +4,7 @@ import { usePlayerStore } from "@/lib/store";
 import { deleteAudioFile, updateAudioMetadata } from "@/db/audio-operations";
 import { PrelistenAudioRef } from "./prelisten-audio-player";
 import { AudioError, AudioErrorCode, createErrorHandler } from "@/features/audio/utils/errorUtils";
+import { toast } from 'sonner'; 
 
 const handleError = createErrorHandler('PlaylistActions');
 
@@ -18,6 +19,8 @@ export function usePlaylistActions(prelistenRef: RefObject<PrelistenAudioRef>) {
     setPrelistenTrack,
     setIsPrelistening,
     isPrelistening,
+    updateTrackMetadata,
+    triggerRefresh,
   } = usePlayerStore();
 
   const handlePlay = (track: MusicMetadata) => {
@@ -83,16 +86,27 @@ export function usePlaylistActions(prelistenRef: RefObject<PrelistenAudioRef>) {
     }
   };
 
-  const handleSaveTrack = async (track: MusicMetadata): Promise<boolean> => {
+  const handleSaveTrack = async (updatedTrack: MusicMetadata) => {
     try {
-      await updateAudioMetadata(track);
-      return true;
+      console.log('Saving track in usePlaylistActions:', updatedTrack.title);
+      
+      // First update the track in the database
+      await updateAudioMetadata(updatedTrack);
+      
+      // Then update the store
+      updateTrackMetadata(updatedTrack.id, updatedTrack);
+      
+      // Trigger a refresh to ensure all UI components update
+      triggerRefresh();
+      
+      console.log('Track saved successfully');
     } catch (error) {
+      console.error('Failed to save track:', error);
       handleError(new AudioError(
-        `Failed to save track: ${track.title}`,
+        `Failed to save track: ${updatedTrack.title}`,
         AudioErrorCode.FILE_ACCESS_DENIED
       ));
-      return false;
+      toast.error('Failed to save track metadata');
     }
   };
 

@@ -99,22 +99,23 @@ export function EditTrackDialog({
       ...changes
     }));
 
-    // Update all tracks in the store immediately
-    tracks.forEach(track => {
-      const updatedTrack = {
-        ...track,
-        ...editedValues,
-        ...changes
-      };
-      updateTrackMetadata(track.id, changes);
-    });
-
-    // Update parent with the changes
+    // Apply changes to all tracks
     const updatedTracks = tracks.map(track => ({
       ...track,
       ...editedValues,
-      ...changes,
+      ...changes
     }));
+
+    // Immediately update all tracks in the store for UI consistency
+    tracks.forEach(track => {
+      const updates = {
+        ...editedValues,
+        ...changes
+      };
+      updateTrackMetadata(track.id, updates);
+    });
+
+    // Update parent with the changes
     onTrackChange(updatedTracks);
   };
 
@@ -149,9 +150,27 @@ export function EditTrackDialog({
         updatedTracks
       }); // Debug log
 
+      // Import the necessary database function
+      const { updateAudioMetadata } = await import('@/db/audio-operations');
+      
+      // First, save all tracks to database to ensure persistence
+      for (const track of updatedTracks) {
+        if (track && track.id) {
+          await updateAudioMetadata(track);
+          console.log(`Track ${track.id} (${track.title}) saved to database`);
+          
+          // Then update the global store
+          updateTrackMetadata(track.id, track);
+        }
+      }
+
+      // Then pass the updated tracks to the onSave callback
       onSave(updatedTracks);
       onOpenChange(false);
       setEditedValues({}); // Reset edited values
+      
+      // Trigger a refresh to ensure ALL UI components update properly
+      triggerRefresh();
     } catch (error) {
       console.error('Error saving metadata:', error);
     }
