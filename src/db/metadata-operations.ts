@@ -97,3 +97,34 @@ export async function recordPlayEvent(id: string): Promise<void> {
   // Trigger a refresh to update the UI
   usePlayerStore.getState().triggerRefresh();
 }
+
+/**
+ * Remove a specific play history event from a track
+ * @param id The ID of the track
+ * @param timestamp The timestamp of the play event to remove
+ */
+export async function removePlayHistoryEvent(id: string, timestamp: string): Promise<void> {
+  const db = await initMusicDB();
+  const tx = db.transaction("metadata", "readwrite");
+  const store = tx.objectStore("metadata");
+
+  const metadata = await store.get(id);
+  if (!metadata || !metadata.playHistory) return;
+
+  // Filter out the specific timestamp
+  const filteredHistory = metadata.playHistory.filter(event => 
+    event.timestamp !== timestamp
+  );
+
+  const updatedMetadata = {
+    ...metadata,
+    playCount: filteredHistory.length, // Update play count to match the new history length
+    playHistory: filteredHistory,
+  };
+
+  await store.put(updatedMetadata);
+  await tx.done;
+
+  // Trigger a refresh to update the UI
+  usePlayerStore.getState().triggerRefresh();
+}

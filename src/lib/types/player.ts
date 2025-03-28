@@ -70,6 +70,9 @@ export interface PlayerState {
   use5BandEQ: boolean;
   practiceMode: boolean;
   selectedTracks: string[];
+  showHistory: boolean;
+  historyTimeFilter: string;
+  historySortOrder: "asc" | "desc";
 }
 
 export interface PlayerActions {
@@ -84,7 +87,7 @@ export interface PlayerActions {
   playNextTrack: () => void;
   playPreviousTrack: () => void;
   addToHistory: (track: MusicMetadata) => void;
-  removeFromHistory: (id: string) => void;
+  removeFromHistory: (id: string, timestamp: string) => void;
   clearHistory: () => void;
   setHistory: (history: MusicMetadata[]) => void;
   setIsPlaying: (isPlaying: boolean) => void;
@@ -147,6 +150,7 @@ export interface PlayerActions {
   setSelectedTracks: (tracks: string[] | Set<string>) => void;
   handleSelectAll: (trackIds: string[]) => void;
   setMetadata: (metadata: MusicMetadata[]) => void;
+  setShowHistory: (show: boolean) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

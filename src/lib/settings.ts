@@ -3,13 +3,13 @@ import { persist } from 'zustand/middleware';
 import type { SettingsSlice, StandardMetadataField, SettingsState } from './types/settings';
 
 export const defaultStandardMetadataFields: StandardMetadataField[] = [
-  { id: 'title', name: 'Title', key: 'title', showInFilter: true, showInList: true, showInSearch: true },
-  { id: 'artist', name: 'Artist', key: 'artist', showInFilter: true, showInList: true, showInSearch: true },
-  { id: 'album', name: 'Album', key: 'album', showInFilter: true, showInList: true, showInSearch: true },
-  { id: 'genre', name: 'Genre', key: 'genre', showInFilter: true, showInList: true, showInSearch: true },
-  { id: 'track', name: 'Track', key: 'track', showInFilter: true, showInList: true, showInSearch: true },
-  { id: 'year', name: 'Year', key: 'year', showInFilter: true, showInList: true, showInSearch: true },
-  { id: 'comment', name: 'Comment', key: 'comment', showInFilter: true, showInList: true, showInSearch: true },
+  { id: 'title', name: 'Title', key: 'title', showInFilter: true, showInList: true, showInSearch: true, showInFooter: true },
+  { id: 'artist', name: 'Artist', key: 'artist', showInFilter: true, showInList: true, showInSearch: true, showInFooter: true },
+  { id: 'album', name: 'Album', key: 'album', showInFilter: true, showInList: true, showInSearch: true, showInFooter: false },
+  { id: 'genre', name: 'Genre', key: 'genre', showInFilter: true, showInList: true, showInSearch: true, showInFooter: false },
+  { id: 'track', name: 'Track', key: 'track', showInFilter: true, showInList: true, showInSearch: true, showInFooter: false },
+  { id: 'year', name: 'Year', key: 'year', showInFilter: true, showInList: true, showInSearch: true, showInFooter: false },
+  { id: 'comment', name: 'Comment', key: 'comment', showInFilter: true, showInList: true, showInSearch: true, showInFooter: false },
 ];
 
 const initialState: SettingsState = {
@@ -47,6 +47,14 @@ export const useSettings = create<SettingsSlice>()(
           standardMetadataFields: state.standardMetadataFields.map((field: StandardMetadataField) =>
             field.id === fieldId
               ? { ...field, showInSearch: !field.showInSearch }
+              : field
+          ),
+        })),
+      toggleStandardMetadataFooter: (fieldId: string) =>
+        set((state: SettingsState) => ({
+          standardMetadataFields: state.standardMetadataFields.map((field: StandardMetadataField) =>
+            field.id === fieldId
+              ? { ...field, showInFooter: !field.showInFooter }
               : field
           ),
         })),

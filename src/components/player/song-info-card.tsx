@@ -38,6 +38,7 @@ interface SongInfoCardProps extends React.HTMLAttributes<HTMLDivElement> {
   draggable?: boolean;
   dragAttributes?: any; // For drag and drop functionality
   dragListeners?: any; // For drag and drop functionality
+  extraInfo?: React.ReactNode; // Extra information to display after the song title
   onSelect?: () => void;
   onPrelistenTimelineClick?: (e: React.MouseEvent<Element>, track: MusicMetadata) => void;
   onPrelistenToggle?: (track: MusicMetadata) => void;
@@ -67,6 +68,7 @@ export function SongInfoCard({
   dragListeners,
   showPlayHistory = false,
   showPreListenButtons: propShowPreListenButtons,
+  extraInfo,
   onSelect,
   onPrelistenTimelineClick,
   onPrelistenToggle,
@@ -239,7 +241,7 @@ export function SongInfoCard({
         : 'Delete';
         
     const showPlayNowOption = isNext || isQueue || isHistory || (isTrackList && onPlayNow);
-    const showAddToQueueOption = isTrackList && onAddToQueue;
+    const showAddToQueueOption = (isTrackList || isHistory) && onAddToQueue;
     const showMoveToTopOption = isQueue && onMoveToTop;
     const showMoveToBottomOption = isQueue && onMoveToBottom;
     const showRemoveOption = (isQueue || isHistory || isTrackList) && onRemove;
@@ -472,7 +474,17 @@ export function SongInfoCard({
             {track.removed ? (
               <span className="text-destructive">[REMOVED] </span>
             ) : null}
-            {track?.title}
+            <div className="flex flex-wrap items-center">
+              <span className="mr-0">{track?.title}</span>
+              {extraInfo && (
+                <>
+                  <span className="mx-1">•</span>
+                  <span className="text-xs text-muted-foreground">
+                    {extraInfo}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           {/* Time display - only for player variant */}
           {variant === 'player' && (

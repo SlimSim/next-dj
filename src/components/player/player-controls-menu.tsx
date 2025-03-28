@@ -81,7 +81,7 @@ export function PlayerControlsMenu({
   if (!isControlsMenuVisible) return null
 
   return (
-    <div className="absolute bottom-full w-full bg-background/80 backdrop-blur-sm">
+    <div className="absolute bottom-full w-full bg-background/80 backdrop-blur-sm z-50">
       <div className="bg-background border-t transform transition-transform duration-300 ease-in-out">
         <div className="container max-w-2xl mx-auto">
           {/* Header */}

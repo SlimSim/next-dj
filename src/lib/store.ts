@@ -124,6 +124,9 @@ const initialState: PlayerState = {
   practiceMode: false,
   // Track selection state
   selectedTracks: [] as string[],
+  showHistory: false,
+  historyTimeFilter: "all",
+  historySortOrder: "desc",
 };
 
 export const usePlayerStore = create<PlayerStore>()(
@@ -168,10 +171,56 @@ export const usePlayerStore = create<PlayerStore>()(
             ],
           })),
 
-        removeFromHistory: (id) =>
-          set((state) => ({
-            history: state.history.filter((track) => track.queueId !== id),
-          })),
+        removeFromHistory: (id: string, timestamp: string) => {
+          // Update local state first for immediate UI feedback
+          set((state) => {
+            // Find the track with the matching id
+            let updatedMetadata = [...state.metadata]; // Create a copy of the metadata array
+            
+            // Find the track index
+            const trackIndex = updatedMetadata.findIndex(track => track.queueId === id);
+            
+            // If track found, update its playHistory by filtering out the specific timestamp
+            if (trackIndex !== -1) {
+              const track = updatedMetadata[trackIndex];
+              
+              // Make sure playHistory exists
+              if (track.playHistory) {
+                // Create a new filtered playHistory
+                const newPlayHistory = track.playHistory.filter(
+                  event => event.timestamp !== timestamp
+                );
+                
+                // Create a new track object with the updated playHistory and playCount
+                updatedMetadata[trackIndex] = {
+                  ...track,
+                  playHistory: newPlayHistory,
+                  playCount: newPlayHistory.length
+                };
+              }
+            }
+            
+            // Return a new state object to ensure the update is detected
+            return {
+              metadata: updatedMetadata,
+              refreshTrigger: state.refreshTrigger + 1 // Force a refresh to ensure persistence
+            };
+          });
+          
+          // Then update the database for persistence
+          import('@/db/metadata-operations').then(({ removePlayHistoryEvent }) => {
+            // Find the actual track ID (not queueId) for the database operation
+            const trackId = usePlayerStore.getState().metadata.find(
+              track => track.queueId === id
+            )?.id;
+            
+            if (trackId) {
+              removePlayHistoryEvent(trackId, timestamp).catch(error => {
+                console.error('Failed to remove play history event:', error);
+              });
+            }
+          });
+        },
 
         clearHistory: () => set({ history: [] }),
         setHistory: (history) => set({ history }),
@@ -638,6 +687,7 @@ export const usePlayerStore = create<PlayerStore>()(
             }
             return { queue: [...state.queue, ...tracksWithIds] };
           }),
+        setShowHistory: (show: boolean) => set({ showHistory: show }),
       };
     },
     {
@@ -661,12 +711,21 @@ export const usePlayerStore = create<PlayerStore>()(
         recentPlayHours: state.recentPlayHours,
         monthlyPlayDays: state.monthlyPlayDays,
         hasShownPreListenWarning: state.hasShownPreListenWarning,
+        showMetadataBadgesInLists: state.showMetadataBadgesInLists,
+        showMetadataBadgesInFooter: state.showMetadataBadgesInFooter,
+        showPlayHistoryInLists: state.showPlayHistoryInLists,
+        showPlayHistoryInFooter: state.showPlayHistoryInFooter,
+        sortField: state.sortField,
+        sortOrder: state.sortOrder,
+        filters: state.filters,
+        showFilters: state.showFilters,
         songLists: state.songLists,
+        showLists: state.showLists,
         selectedListId: state.selectedListId,
-        metadata: state.metadata,
         customMetadata: state.customMetadata,
         standardMetadataFields: state.standardMetadataFields,
         practiceMode: state.practiceMode,
+        metadata: state.metadata, // Add metadata to persisted state
         selectedFolderNames: state.selectedFolderNames
       }),
       onRehydrateStorage: () => (state) => {

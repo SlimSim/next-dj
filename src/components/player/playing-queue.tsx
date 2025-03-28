@@ -161,7 +161,7 @@ export function PlayingQueue() {
   if (!isQueueVisible) return null;
 
   return (
-    <div className="absolute bottom-full w-full bg-background/80 backdrop-blur-sm border-t transform transition-transform duration-300 ease-in-out">
+    <div className="absolute bottom-full w-full bg-background/80 backdrop-blur-sm border-t transform transition-transform duration-300 ease-in-out z-50">
       <div className="container max-w-2xl mx-auto">
         <div
           className="h-8 flex items-center justify-center cursor-grab touch-pan-y"

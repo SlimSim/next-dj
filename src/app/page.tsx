@@ -19,6 +19,7 @@ import {
   FilterCriteria,
   FilterValue,
 } from "@/components/player/playlist-controls";
+import { HistoryControls } from "@/components/player/history-controls";
 import { getRemovedSongs } from "@/db/audio-operations";
 import { usePlayerStore } from "@/lib/store";
 import { FilterIcon, CheckSquare } from "lucide-react";
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { ListMusic } from "lucide-react";
 import { ListsPanel } from "@/components/player/lists-panel";
 import { MusicMetadata } from "@/lib/types/types";
+import { PlayHistoryView } from "@/components/player/play-history-view";
 
 export default function Home() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -43,11 +45,45 @@ export default function Home() {
   const toggleFilters = usePlayerStore((state) => state.toggleFilters);
   const showFilters = usePlayerStore((state) => state.showFilters);
   const toggleLists = usePlayerStore((state) => state.toggleLists);
+  const showLists = usePlayerStore((state) => state.showLists);
   const currentTrack = usePlayerStore((state) => state.currentTrack);
   const volume = usePlayerStore((state) => state.volume);
   const metadata = usePlayerStore((state) => state.metadata);
   const selectedListId = usePlayerStore((state) => state.selectedListId);
   const songLists = usePlayerStore((state) => state.songLists);
+  const showHistory = usePlayerStore((state) => state.showHistory);
+  const hasActiveFilters = usePlayerStore((state) => {
+    // Check for regular filters (arrays of values)
+    const hasRegularFilters = state.filters && Object.entries(state.filters).some(([key, filter]) => {
+      if (key === 'advanced') return false; // Skip advanced, we'll check it separately
+      return filter && 
+        typeof filter === 'object' && 
+        'values' in filter && 
+        Array.isArray(filter.values) && 
+        filter.values.length > 0;
+    });
+
+    // Check for advanced filters
+    const advancedFilters = state.filters?.advanced;
+    const hasAdvancedFilters = advancedFilters && Object.values(advancedFilters).some(
+      (filter) => filter?.enabled
+    );
+
+    return hasRegularFilters || hasAdvancedFilters;
+  });
+  
+  // Add history-related state
+  const historyTimeFilter = usePlayerStore((state) => state.historyTimeFilter);
+  const historySortOrder = usePlayerStore((state) => state.historySortOrder);
+  
+  // Create handler functions for history controls
+  const handleHistoryTimeFilterChange = (value: string) => {
+    usePlayerStore.setState({ historyTimeFilter: value });
+  };
+  
+  const handleHistorySortOrderChange = (order: "asc" | "desc") => {
+    usePlayerStore.setState({ historySortOrder: order });
+  };
 
   const [playerCurrentVolume, setPlayerCurrentVolume] = useState<number>(0);
 
@@ -127,13 +163,6 @@ export default function Home() {
     setSortOrder(order);
   };
 
-  const hasActiveFilters = Object.values(filters).some(
-    (filter) => {
-      const filterValue = filter as FilterValue | undefined;
-      return filterValue?.values && filterValue.values.length > 0
-    }
-  );
-
   const getNormalizedVolume = (globalVolume: number, songVolume: number) => {
     return globalVolume * songVolume;
   };
@@ -144,7 +173,7 @@ export default function Home() {
       <main className="flex h-dvh flex-col bg-white dark:bg-neutral-950">
         <div className="flex flex-1 overflow-hidden">
           <ListsPanel />
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 relative">
             <header className="flex-none flex flex-col border-b z-20 bg-white/95 dark:bg-neutral-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-neutral-950/60">
               <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4 flex justify-between items-center">
                 <div
@@ -153,17 +182,42 @@ export default function Home() {
                     isSearchFocused ? "hidden sm:flex" : "flex"
                   )}
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => playlistRef.current?.handleSelectAll()}
-                    title={`Select all`}
-                    className="h-8 w-8 -ml-4"
-                  >
-                    <CheckSquare className="h-4 w-4" />
-                  </Button>
+                  {!showHistory && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => playlistRef.current?.handleSelectAll()}
+                      title={`Select all`}
+                      className="h-8 w-8 -ml-4"
+                    >
+                      <CheckSquare className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {showHistory && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        // Get reference to the PlayHistoryView component through React refs
+                        if (typeof window !== 'undefined') {
+                          // Use a custom event to trigger the select all function in PlayHistoryView
+                          const selectAllEvent = new CustomEvent('selectAllHistory');
+                          window.dispatchEvent(selectAllEvent);
+                        }
+                      }}
+                      title={`Select all history items`}
+                      className="h-8 w-8 -ml-4"
+                    >
+                      <CheckSquare className="h-4 w-4" />
+                    </Button>
+                  )}
                   <h1 className="text-xl sm:text-2xl font-bold text-red-500">
                     Next DJ
+                    {showHistory && (
+                      <div className="text-sm font-normal text-muted-foreground">
+                        history
+                      </div>
+                    )}
                   </h1>
                 </div>
                 <div
@@ -174,7 +228,7 @@ export default function Home() {
                 >
                   <SearchInput
                     type="search"
-                    placeholder="Search tracks..."
+                    placeholder={showHistory ? "Search history..." : "Search tracks..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
@@ -191,20 +245,40 @@ export default function Home() {
                     isSearchFocused ? "hidden sm:flex" : "flex"
                   )}
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleFilters}
-                    className={cn(
-                      "transition-colors relative",
-                      showFilters && "bg-accent"
-                    )}
-                  >
-                    <FilterIcon className="h-6 w-6" />
-                    {hasActiveFilters && (
-                      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
-                    )}
-                  </Button>
+                  {/* Show filter icon for regular playlist view */}
+                  {!showHistory && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleFilters}
+                      className={cn(
+                        "transition-colors relative",
+                        showFilters && "bg-accent"
+                      )}
+                    >
+                      <FilterIcon className="h-6 w-6" />
+                      {hasActiveFilters && (
+                        <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </Button>
+                  )}
+                  {/* Add filter button for history view */}
+                  {showHistory && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleFilters}
+                      className={cn(
+                        "transition-colors relative",
+                        showFilters && "bg-accent"
+                      )}
+                    >
+                      <FilterIcon className="h-6 w-6" />
+                      {hasActiveFilters && (
+                        <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -216,39 +290,53 @@ export default function Home() {
                   <SettingsDialog />
                 </div>
               </div>
-              <PlaylistControls
-                sortField={sortField}
-                sortOrder={sortOrder}
-                filters={filters}
-                onSortChange={handleSortChange}
-                onFilterChange={setFilters}
-              />
+
+              {showFilters && (
+                <div className="border-t">
+                  {showHistory ? (
+                    <HistoryControls
+                      timeFilter={historyTimeFilter}
+                      sortOrder={historySortOrder}
+                      onTimeFilterChange={handleHistoryTimeFilterChange}
+                      onSortOrderChange={handleHistorySortOrderChange}
+                    />
+                  ) : (
+                    <PlaylistControls
+                      sortField={sortField as SortField}
+                      sortOrder={sortOrder as SortOrder}
+                      filters={filters}
+                      onSortChange={handleSortChange}
+                      onFilterChange={setFilters}
+                    />
+                  )}
+                </div>
+              )}
             </header>
 
-            <div className="flex-1 overflow-y-auto">
-              <div className="flex flex-col">
-                <div className="flex-1 container mx-auto p-0">
-                  <FolderScanner />
-                  <Playlist
-                    ref={playlistRef}
-                    data-testid="playlist-component"
-                    searchQuery={searchQuery}
-                    prelistenRef={prelistenRef}
-                    sortField={sortField}
-                    sortOrder={sortOrder}
-                    filters={filters}
-                  />
-                </div>
-              </div>
-              <PrelistenAudioPlayer ref={prelistenRef} />
+            <div className="flex-1 overflow-y-auto relative">
+              {showHistory ? (
+                <PlayHistoryView searchQuery={searchQuery} />
+              ) : (
+                <Playlist
+                  ref={playlistRef}
+                  searchQuery={searchQuery}
+                  prelistenRef={prelistenRef}
+                  sortField={sortField as SortField}
+                  sortOrder={sortOrder as SortOrder}
+                  filters={filters}
+                />
+              )}
             </div>
 
-            <footer className="flex-none border-t bg-white/95 dark:bg-neutral-950/95 w-full relative">
+            <div className="flex-none border-t bg-card relative">
               <AudioPlayer />
-            </footer>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Separate audio element for prelistening */}
+      <PrelistenAudioPlayer ref={prelistenRef} />
     </>
   );
 }

@@ -24,8 +24,6 @@ export function useTrackList(searchQuery: string) {
       // Always get fresh metadata directly from the database, don't use cached data
       const metadata = await getAllMetadata();
       
-      console.log('Loaded tracks:', metadata?.length || 0);
-      
       // Don't throw an error for empty library, just set empty tracks
       if (!metadata || metadata.length === 0) {
         setTracks([]);

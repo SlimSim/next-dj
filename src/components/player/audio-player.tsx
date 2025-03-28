@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAudioPlayer } from "../../features/audio/hooks/useAudioPlayer";
 import { useAudioControls } from "../../features/audio/hooks/useAudioControls";
 import { usePlaybackControl } from "@/features/audio/playback/usePlaybackControl";
@@ -8,6 +8,8 @@ import { recordPlayEvent } from "@/db/metadata-operations";
 import { initializeEQ } from "@/features/audio/eq";
 import { MusicMetadata } from "@/lib/types/types";
 import { getAllMetadata } from "@/db/metadata-operations";
+import { PlayerControlsMenu } from './player-controls-menu';
+import { PlayingQueue } from './playing-queue';
 
 export const AudioPlayer = () => {
   const {
@@ -35,6 +37,8 @@ export const AudioPlayer = () => {
     setQueue,
     setHistory,
     history,
+    isQueueVisible,
+    isControlsMenuVisible
   } = usePlayerStore();
 
   const lastTrackRef = useRef<string | null>(null);
@@ -183,12 +187,30 @@ export const AudioPlayer = () => {
       isMuted={isMuted}
     >
       <audio
-        ref={audioRef}
         id="main-audio"
-        preload="auto"
+        ref={audioRef}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        preload="auto"
+        playsInline
       />
+      
+      {isControlsMenuVisible && (
+        <PlayerControlsMenu
+          audioRef={audioRef}
+          isLoading={isLoading}
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          handleVolumeChange={handleVolumeChange}
+          handleSeek={handleSeek}
+        />
+      )}
+      
+      {isQueueVisible && (
+        <PlayingQueue />
+      )}
     </PlayerLayout>
   );
 };
+
+export default AudioPlayer;

@@ -62,10 +62,10 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
           const tracksToQueue = history.slice(historyIndex + 1);
           
           // Remove all these tracks from history
-          tracksToQueue.forEach(t => removeFromHistory(t.queueId));
+          tracksToQueue.forEach(t => removeFromHistory(t.queueId, t.playHistory[t.playHistory.length - 1].timestamp));
           
           // Remove the selected track from history
-          removeFromHistory(track.queueId);
+          removeFromHistory(track.queueId, track.playHistory[track.playHistory.length - 1].timestamp);
           
           // If there's a current track, add it to the tracks that will go to queue
           const newQueueTracks = currentTrack ? [...tracksToQueue, currentTrack] : tracksToQueue;
@@ -136,7 +136,7 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
   const handleRemove = useCallback(() => {
     try {
       if (isHistory) {
-        removeFromHistory(track.queueId);
+        removeFromHistory(track.queueId, track.playHistory[track.playHistory.length - 1].timestamp);
       } else {
         removeFromQueue(track.queueId);
       }

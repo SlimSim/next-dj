@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Plus, Pencil, Trash2, MoreVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, MoreVertical, History } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,10 +46,12 @@ export function ListsPanel() {
   const showLists = usePlayerStore((state) => state.showLists);
   const songLists = usePlayerStore((state) => state.songLists);
   const selectedListId = usePlayerStore((state) => state.selectedListId);
+  const showHistory = usePlayerStore((state) => state.showHistory);
   const toggleLists = usePlayerStore((state) => state.toggleLists);
   const removeSongList = usePlayerStore((state) => state.removeSongList);
   const renameSongList = usePlayerStore((state) => state.renameSongList);
   const setSelectedListId = usePlayerStore((state) => state.setSelectedListId);
+  const setShowHistory = usePlayerStore((state) => state.setShowHistory);
 
   const handleRenameList = (list: SongList, newName: string) => {
     if (newName.trim() && newName !== list.name) {
@@ -74,13 +76,32 @@ export function ListsPanel() {
           <div
             className={cn(
               "flex items-center justify-between p-2 rounded-md cursor-pointer",
-              !selectedListId ? "bg-accent" : "hover:bg-accent/50"
+              !selectedListId && !showHistory ? "bg-accent" : "hover:bg-accent/50"
             )}
-            onClick={() => setSelectedListId(null)}
+            onClick={() => {
+              setSelectedListId(null);
+              setShowHistory(false);
+            }}
           >
             <span className="flex-1">All Songs</span>
             <span className="text-sm text-muted-foreground">
               {/* You could add total song count here if needed */}
+            </span>
+          </div>
+
+          <div
+            className={cn(
+              "flex items-center justify-between p-2 rounded-md cursor-pointer",
+              showHistory ? "bg-accent" : "hover:bg-accent/50"
+            )}
+            onClick={() => {
+              setSelectedListId(null);
+              setShowHistory(true);
+            }}
+          >
+            <span className="flex-1 flex items-center">
+              <History className="h-4 w-4 mr-2" />
+              History
             </span>
           </div>
 
@@ -89,11 +110,12 @@ export function ListsPanel() {
               key={list.id}
               className={cn(
                 "flex items-center justify-between p-2 rounded-md cursor-pointer",
-                selectedListId === list.id ? "bg-accent" : "hover:bg-accent/50"
+                selectedListId === list.id && !showHistory ? "bg-accent" : "hover:bg-accent/50"
               )}
-              onClick={() =>
-                setSelectedListId(selectedListId === list.id ? null : list.id)
-              }
+              onClick={() => {
+                setSelectedListId(selectedListId === list.id && !showHistory ? null : list.id);
+                setShowHistory(false);
+              }}
             >
               {editingListId === list.id ? (
                 <Input
