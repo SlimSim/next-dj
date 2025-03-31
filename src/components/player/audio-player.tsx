@@ -51,24 +51,14 @@ export const AudioPlayer = () => {
 
   useEffect(() => {
     if (!audioRef.current || isLoading) {
-      console.log('AudioPlayer: Skip play/pause - audio not ready:', { 
-        hasAudioRef: !!audioRef.current, 
-        isLoading 
-      });
       return;
     }
 
     if (isPlaying && currentTrack) {
-      console.log('AudioPlayer: Attempting to play:', { 
-        trackId: currentTrack.id,
-        trackTitle: currentTrack.title,
-        audioSrc: audioRef.current.src
-      });
       
       audioRef.current
         .play()
         .then(() => {
-          console.log('AudioPlayer: Playback started successfully');
           if (currentTrack.id !== lastTrackRef.current) {
             recordPlayEvent(currentTrack.id)
               .then(async () => {
@@ -99,19 +89,10 @@ export const AudioPlayer = () => {
           }
         })
         .catch((error) => {
-          console.error("Error playing audio:", error);
-          console.log('AudioPlayer: Play error details:', { 
-            errorName: error.name,
-            errorMessage: error.message,
-            trackId: currentTrack.id
-          });
+          console.error("Error playing audio with id ", currentTrack.id, ", error:", error);
           setIsPlaying(false);
         });
     } else {
-      console.log('AudioPlayer: Pausing playback:', { 
-        isPlaying, 
-        hasCurrentTrack: !!currentTrack 
-      });
       audioRef.current.pause();
       lastTrackRef.current = null;
     }

@@ -87,9 +87,7 @@ export function usePlaylistActions(prelistenRef: RefObject<PrelistenAudioRef>) {
   };
 
   const handleSaveTrack = async (updatedTrack: MusicMetadata) => {
-    try {
-      console.log('Saving track in usePlaylistActions:', updatedTrack.title);
-      
+    try {      
       // First update the track in the database
       await updateAudioMetadata(updatedTrack);
       
@@ -99,7 +97,6 @@ export function usePlaylistActions(prelistenRef: RefObject<PrelistenAudioRef>) {
       // Trigger a refresh to ensure all UI components update
       triggerRefresh();
       
-      console.log('Track saved successfully');
     } catch (error) {
       console.error('Failed to save track:', error);
       handleError(new AudioError(

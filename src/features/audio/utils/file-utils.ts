@@ -18,7 +18,6 @@ export function isAudioFile(file: File): boolean {
   
   // If MIME type is recognized as audio, return true
   if (audioTypes.includes(file.type)) {
-    console.log(`File ${file.name} recognized as audio by MIME type: ${file.type}`);
     return true;
   }
   
@@ -32,10 +31,8 @@ export function isAudioFile(file: File): boolean {
   const hasAudioExtension = audioExtensions.some(ext => fileName.endsWith(ext));
   
   if (hasAudioExtension) {
-    console.log(`File ${file.name} recognized as audio by extension, despite MIME type: ${file.type}`);
     return true;
   }
   
-  console.log(`File ${file.name} not recognized as audio. MIME type: ${file.type}`);
   return false;
 }

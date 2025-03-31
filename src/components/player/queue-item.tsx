@@ -186,7 +186,6 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
       // Update each track in the database first
       for (const updatedTrack of tracksArray) {
         if (updatedTrack && updatedTrack.id) {
-          console.log('Updating track in database:', updatedTrack.id);
           
           // Import on demand to avoid circular dependencies
           const { updateAudioMetadata } = await import('@/db/audio-operations');
@@ -259,7 +258,6 @@ export function QueueItem({ track, isPlaying, isHistory }: QueueItemProps) {
           // This is called when tracks are modified in the dialog but not yet saved
           if (Array.isArray(updatedTracks) && updatedTracks.length > 0) {
             // Just use the first track for preview if multiple are selected
-            console.log('Track changed in dialog:', updatedTracks[0]);
           }
         }}
         onSave={handleSaveTrack}

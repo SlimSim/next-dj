@@ -148,10 +148,8 @@ export default function Home() {
   // Check for removed songs on initial load
   useEffect(() => {
     const checkRemovedSongs = async () => {
-      console.log("Initial check for removed songs");
       const removedSongs = await getRemovedSongs();
       if (removedSongs.length > 0) {
-        console.log("Found removed songs on initial load:", removedSongs);
         triggerRefresh();
       }
     };

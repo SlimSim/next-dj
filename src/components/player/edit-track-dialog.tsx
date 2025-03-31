@@ -131,7 +131,6 @@ export function EditTrackDialog({
             // Apply the EQ change immediately
             updateEQBand(index, finalValue);
           });
-          console.log('Applied EQ changes in real-time to currently playing track');
         }).catch(err => {
           console.error('Failed to apply EQ changes in real-time:', err);
         });
@@ -168,11 +167,6 @@ export function EditTrackDialog({
         ...editedValues, // Apply all edited values
       }));
 
-      console.log('Saving tracks with edited values:', {
-        editedValues,
-        updatedTracks
-      }); // Debug log
-
       // Import the necessary database function
       const { updateAudioMetadata } = await import('@/db/audio-operations');
       
@@ -180,9 +174,6 @@ export function EditTrackDialog({
       for (const track of updatedTracks) {
         if (track && track.id) {
           await updateAudioMetadata(track);
-          console.log(`Track ${track.id} (${track.title}) saved to database`);
-          
-          // Then update the global store
           updateTrackMetadata(track.id, track);
         }
       }

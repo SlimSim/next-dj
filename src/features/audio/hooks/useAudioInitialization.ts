@@ -150,13 +150,10 @@ export const useAudioInitialization = (
 
             // Now that everything is set up, start playback if needed
             if (isPlaying) {
-              console.log('AudioInit: Starting playback after canplay event');
               try {
                 // First try to initialize EQ
                 await initializeEQ(audioRef.current);
-                console.log('AudioInit: EQ initialized, starting playback');
                 await audioRef.current.play();
-                console.log('AudioInit: Playback started successfully');
               } catch (error) {
                 console.error('AudioInit: Failed to start playback:', error);
                 handleError(new AudioError('Failed to start playback', AudioErrorCode.PLAYBACK_FAILED));

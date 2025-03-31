@@ -100,28 +100,16 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
   playNextTrack: () => {
     const { queue: currentQueue, currentTrack, shuffle, repeat, isPlaying } = get();
     
-    console.log('Playback: PlayNextTrack called:', {
-      currentTrack: currentTrack?.title,
-      queueLength: currentQueue.length,
-      nextTrack: currentQueue[0]?.title,
-      shuffle,
-      repeat,
-      isPlaying
-    });
-
     // Handle empty queue case
     if (!currentQueue.length) {
-      console.log('Playback: Queue is empty, handling repeat logic');
       if (repeat === "all" && currentTrack) {
         // When repeating, generate a new queueId to ensure uniqueness
         const trackWithNewId = { ...currentTrack, queueId: uuidv4() };
-        console.log('Playback: Repeating all - recycling current track:', currentTrack.title);
         set({ 
           currentTrack: trackWithNewId,
           history: currentTrack ? [...get().history, currentTrack] : get().history 
         });
       } else {
-        console.log('Playback: No more tracks to play');
         set({ 
           currentTrack: null,
           history: currentTrack ? [...get().history, currentTrack] : get().history 
@@ -139,27 +127,11 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
       nextTrack = { ...currentQueue[randomIndex], queueId: uuidv4() };
       newQueue = [...currentQueue];
       newQueue.splice(randomIndex, 1);
-      console.log('Playback: Shuffle mode - selected random track:', {
-        selectedTrack: nextTrack.title,
-        randomIndex,
-        remainingQueueLength: newQueue.length
-      });
     } else {
       // Ensure the next track has a new unique queueId
       [nextTrack, ...newQueue] = [...currentQueue];
       nextTrack = { ...nextTrack, queueId: uuidv4() };
-      console.log('Playback: Normal mode - taking next track in queue:', {
-        nextTrack: nextTrack.title,
-        remainingQueueLength: newQueue.length
-      });
     }
-
-    console.log('Playback: Updating state with next track:', {
-      newCurrentTrack: nextTrack.title,
-      oldCurrentTrack: currentTrack?.title,
-      newQueueLength: newQueue.length,
-      historyLength: get().history.length + (currentTrack ? 1 : 0)
-    });
 
     // Update all state in a single operation
     set({ 
@@ -170,23 +142,12 @@ export const createPlaybackActions = (set: any, get: () => PlayerState) => ({
   },
 
   playPreviousTrack: () => {
-    const { history, currentTrack, queue, isPlaying } = get();
-    console.log('Playback: PlayPreviousTrack called:', {
-      historyLength: history.length,
-      currentTrack: currentTrack?.title,
-      queueLength: queue.length
-    });
+    const { history, currentTrack } = get();
 
     if (!history.length) return;
 
     const previousTrack = history[history.length - 1];
     const newHistory = history.slice(0, -1);
-
-    console.log('Playback: Moving to previous track:', {
-      previousTrack: previousTrack.title,
-      newHistoryLength: newHistory.length,
-      currentTrackMovingToQueue: currentTrack?.title
-    });
 
     if (currentTrack) {
       const trackWithQueueId = { ...currentTrack, queueId: uuidv4() };

@@ -109,23 +109,15 @@ export async function addAudioFile(
 }
 
 export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
-  console.log("Getting audio file for id:", id);
   const db = await initMusicDB();
   const audioFile = await db.get("audioFiles", id);
-  console.log("Found audio file:", audioFile);
 
   if (audioFile?.isReference && audioFile.fileHandle) {
     try {
-      console.log("Attempting to access referenced file");
       const file = await audioFile.fileHandle.getFile();
-      console.log("Successfully accessed file:", file.name);
       
       // Check if the stored blob is empty (reference-only mode)
       const isEmptyBlob = audioFile.file && audioFile.file.size === 0;
-      
-      if (isEmptyBlob) {
-        console.log("File was stored in reference-only mode, loading content from file system");
-      }
       
       // Always return a fresh blob from the file system for referenced files
       return {
@@ -137,7 +129,6 @@ export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
       // When file is not found, mark it as removed in metadata
       const metadata = await db.get("metadata", id);
       if (metadata && !metadata.removed) {
-        console.log("Marking file as removed in metadata");
         metadata.removed = true;
         const tx = db.transaction("metadata", "readwrite");
         await tx.store.put(metadata);
@@ -159,16 +150,12 @@ export async function getRemovedSongs(): Promise<MusicMetadata[]> {
 }
 
 export async function getAllMetadata(): Promise<MusicMetadata[]> {
-  console.log("getAllMetadata: Starting to fetch all metadata");
   const db = await initMusicDB();
-  console.log("getAllMetadata: Database initialized");
   
   try {
     const metadata = await db.getAll("metadata");
-    console.log(`getAllMetadata: Retrieved ${metadata.length} total tracks from database`);
     
     const nonRemovedTracks = metadata.filter(track => !track.removed);
-    console.log(`getAllMetadata: Filtered to ${nonRemovedTracks.length} non-removed tracks`);
     
     return nonRemovedTracks;
   } catch (error) {
@@ -209,7 +196,6 @@ export async function getUniqueValues(): Promise<{
 }
 
 export async function updateAudioMetadata(metadata: MusicMetadata): Promise<void> {
-  console.log('Updating metadata for track:', metadata.id); // Debug log
   
   if (!metadata?.id) {
     console.error('Invalid metadata: missing id', metadata); // Debug log
@@ -238,10 +224,8 @@ export async function updateAudioMetadata(metadata: MusicMetadata): Promise<void
       removed: existingTrack.removed,
     };
 
-    console.log('Updating track with data:', updatedTrack); // Debug log
     await tx.store.put(updatedTrack);
     await tx.done; // Wait for transaction to complete
-    console.log('Successfully updated track:', metadata.id); // Debug log
   } catch (error) {
     console.error('Error updating track:', metadata.id, error); // Debug log
     await tx.abort(); // Abort transaction on error

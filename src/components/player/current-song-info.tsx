@@ -70,8 +70,6 @@ const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
     if (!track || !isNext) return;
 
     try {
-      console.log('Playing next track now:', track.title);
-      
       // If there's a current track, add it to history
       if (currentTrack) {
         addToHistory(currentTrack);
@@ -102,7 +100,6 @@ const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
     if (!updatedTracks.length) return;
     
     const updatedTrack = updatedTracks[0];
-    console.log('Saving track from footer:', updatedTrack.title);
     
     try {
       // Import the database function to directly update the track in the database
@@ -117,7 +114,6 @@ const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
       // Force a refresh to ensure all components reload their data
       triggerRefresh();
       
-      console.log('Track metadata updated successfully from footer');
     } catch (error) {
       console.error('Error updating track metadata from footer:', error);
     }
@@ -159,7 +155,6 @@ const CurrentSongInfo: React.FC<CurrentSongInfoProps> = ({
           }}
           onTrackChange={(updatedTracks) => {
             // This is called when tracks change in the dialog
-            console.log('Track changed in dialog');
           }}
           onSave={handleSaveTrack}
         />

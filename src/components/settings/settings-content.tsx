@@ -49,20 +49,13 @@ export function SettingsContent({
   const refreshTrigger = usePlayerStore((state) => state.refreshTrigger);
 
   const checkForRemovedSongs = useCallback(async () => {
-    console.log("SettingsContent: Checking for removed songs...");
     const removedSongs = await getRemovedSongs();
-    console.log("SettingsContent: Found removed songs:", removedSongs.length > 0 ? removedSongs : "none");
     setHasRemovedSongs(removedSongs.length > 0);
   }, [setHasRemovedSongs]);
 
   useEffect(() => {
-    console.log("SettingsContent: Effect triggered, checking for removed songs");
     checkForRemovedSongs();
   }, [checkForRemovedSongs, refreshTrigger]);
-
-  useEffect(() => {
-    console.log("SettingsContent: hasRemovedSongs changed to:", hasRemovedSongs);
-  }, [hasRemovedSongs]);
 
   const handlePreListenChange = async (checked: boolean) => {
     if (checked) {

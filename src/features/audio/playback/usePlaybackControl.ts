@@ -23,7 +23,6 @@ export const usePlaybackControl = (): PlaybackControls => {
   } = usePlayerStore();
 
   const playNextTrack = useCallback(() => {
-    console.log('Executing playNextTrack');
     if (!currentTrack) {
       throw new AudioError(
         'No track is currently playing',
@@ -71,7 +70,6 @@ export const usePlaybackControl = (): PlaybackControls => {
   }, [currentTrack, queue, history, shuffle, repeat, setCurrentTrack, setIsPlaying, addToHistory, setQueue]);
 
   const playPreviousTrack = useCallback(() => {
-    console.log('Executing playPreviousTrack');
     if (!currentTrack) {
       throw new AudioError(
         'No track is currently playing',
@@ -89,12 +87,10 @@ export const usePlaybackControl = (): PlaybackControls => {
   }, [currentTrack, history, setCurrentTrack]);
 
   const togglePlay = useCallback(() => {
-    console.log('Executing togglePlay');
     setIsPlaying(!isPlaying);
   }, [isPlaying, setIsPlaying]);
 
   const setTrack = useCallback((track: MusicMetadata | null) => {
-    console.log('Executing setTrack');
     setCurrentTrack(track);
   }, [setCurrentTrack]);
 

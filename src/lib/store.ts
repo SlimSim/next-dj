@@ -138,14 +138,10 @@ export const usePlayerStore = create<PlayerStore>()(
       // Only try to initialize metadata in browser environment
       if (typeof window !== 'undefined') {
         // Delay metadata loading to ensure it runs after hydration
-        console.log("Store initialization: Setting up metadata loading after hydration");
         Promise.resolve().then(() => {
-          console.log("Store initialization: Loading metadata from database");
           getAllMetadata()
             .then((metadata) => {
-              console.log(`Store initialization: Loaded ${metadata.length} tracks from database`);
               set({ metadata });
-              console.log("Store initialization: Updated store with metadata");
             })
             .catch(error => {
               console.error("Store initialization: Error loading metadata:", error);
@@ -629,27 +625,20 @@ export const usePlayerStore = create<PlayerStore>()(
         },
 
         setMetadata: (metadata: MusicMetadata[]) => {
-          console.log('Updating global store metadata:', metadata.length);
           set({ metadata });
         },
 
         handleSelectAll: (trackIds: string[]) => {
-          console.log('handleSelectAll called with trackIds:', trackIds);
           
           const currentSelected = get().selectedTracks || [];
-          console.log('Current selected tracks:', currentSelected);
-          
+
           const allSelected = trackIds.length > 0 && trackIds.every(id => currentSelected.includes(id));
-          console.log('All tracks already selected?', allSelected);
           
           if (allSelected) {
-            console.log('Clearing selection');
             set({ selectedTracks: [] });
           } else {
-            console.log('Setting new selection');
             const hiddenSelected = currentSelected.filter(id => !trackIds.includes(id));
             const newSelection = [...hiddenSelected, ...trackIds];
-            console.log('New selection:', newSelection);
             set({ selectedTracks: newSelection });
           }
         },
