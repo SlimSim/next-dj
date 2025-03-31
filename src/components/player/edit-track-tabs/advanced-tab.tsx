@@ -3,6 +3,9 @@ import { InputWithDefault } from "@/components/ui/input-with-default";
 import { Label } from "@/components/ui/label";
 import { MusicMetadata } from "@/lib/types/types";
 import { EQControls } from "../eq-controls";
+import { usePlayerStore } from "@/lib/store";
+import { updateEQBand } from "@/features/audio/eq";
+import { useEffect } from "react";
 
 interface AdvancedTabProps {
   track: MusicMetadata;
@@ -21,6 +24,38 @@ export function AdvancedTab({
   handleTrackChange,
   commonValues,
 }: AdvancedTabProps) {
+  const { currentTrack, eqValues } = usePlayerStore();
+  
+  // Apply EQ changes in real-time if this is the currently playing track
+  useEffect(() => {
+    if (currentTrack && track.id === currentTrack.id) {
+      // Get the effective EQ values (either from editedValues or from track)
+      const effectiveEq = {
+        a: editedValues.eq?.a ?? track.eq?.a ?? 70,
+        b: editedValues.eq?.b ?? track.eq?.b ?? 70,
+        c: editedValues.eq?.c ?? track.eq?.c ?? 70,
+        d: editedValues.eq?.d ?? track.eq?.d ?? 70,
+        e: editedValues.eq?.e ?? track.eq?.e ?? 70,
+      };
+      
+      // Calculate final EQ values and apply them
+      const bands = ['a', 'b', 'c', 'd', 'e'] as const;
+      bands.forEach((band, index) => {
+        const songValue = effectiveEq[band];
+        const globalValue = eqValues[band];
+        const finalValue = calculateFinalEQ(songValue, globalValue);
+        updateEQBand(index, finalValue);
+      });
+    }
+  }, [currentTrack, track.id, editedValues.eq, eqValues]);
+  
+  // Helper function to calculate final EQ values
+  const calculateFinalEQ = (songEQ: number, globalEQ: number): number => {
+    const clampedSongEQ = Math.max(0, Math.min(100, songEQ));
+    const clampedGlobalEQ = Math.max(0, Math.min(100, globalEQ));
+    return Math.round((clampedSongEQ * clampedGlobalEQ) / 100);
+  };
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-4 items-center gap-4">

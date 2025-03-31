@@ -113,6 +113,29 @@ export function EditTrackDialog({
         ...changes
       };
       updateTrackMetadata(track.id, updates);
+      
+      // Apply EQ changes in real-time if this is the currently playing track
+      if (currentTrack && track.id === currentTrack.id && changes.eq) {
+        // Import and use the updateEQBand function
+        import('@/features/audio/eq').then(({ updateEQBand }) => {
+          const bands = ['a', 'b', 'c', 'd', 'e'] as const;
+          bands.forEach((band, index) => {
+            const songValue = changes.eq?.[band] ?? track.eq?.[band] ?? 70;
+            const globalValue = usePlayerStore.getState().eqValues[band];
+            
+            // Calculate final EQ value (song EQ * global EQ / 100)
+            const clampedSongEQ = Math.max(0, Math.min(100, songValue));
+            const clampedGlobalEQ = Math.max(0, Math.min(100, globalValue));
+            const finalValue = Math.round((clampedSongEQ * clampedGlobalEQ) / 100);
+            
+            // Apply the EQ change immediately
+            updateEQBand(index, finalValue);
+          });
+          console.log('Applied EQ changes in real-time to currently playing track');
+        }).catch(err => {
+          console.error('Failed to apply EQ changes in real-time:', err);
+        });
+      }
     });
 
     // Update parent with the changes

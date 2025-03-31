@@ -6,6 +6,7 @@ import { EQValues } from '@/lib/types/player'
 import { cn } from '@/lib/utils/common'
 import { Button } from '../ui/button'
 import { RotateCcw } from 'lucide-react'
+import { updateEQBand } from '@/features/audio/eq'
 
 interface EQControlsProps {
   track?: MusicMetadata;
@@ -15,10 +16,16 @@ interface EQControlsProps {
 type SliderKey = keyof EQValues;
 
 export function EQControls({ track, onTrackChange }: EQControlsProps) {
-  const { eqValues, setEQValue, eqMode } = usePlayerStore()
+  const { eqValues, setEQValue, eqMode, currentTrack } = usePlayerStore()
 
   const calculateIntermediateValue = (value1: number, value2: number) => {
     return Math.round((value1 + value2) / 2);
+  }
+
+  const calculateFinalEQ = (songEQ: number, globalEQ: number): number => {
+    const clampedSongEQ = Math.max(0, Math.min(100, songEQ));
+    const clampedGlobalEQ = Math.max(0, Math.min(100, globalEQ));
+    return Math.round((clampedSongEQ * clampedGlobalEQ) / 100);
   }
 
   const handleValueChange = (sliderId: SliderKey, value: number) => {
@@ -43,6 +50,22 @@ export function EQControls({ track, onTrackChange }: EQControlsProps) {
       }
 
       onTrackChange({ eq: newEq })
+      
+      // Apply EQ changes in real-time if this is the currently playing track
+      if (currentTrack && track.id === currentTrack.id) {
+        const bands = ['a', 'b', 'c', 'd', 'e'] as const;
+        bands.forEach((band, index) => {
+          // Only update the band that changed and any calculated intermediate bands
+          if (band === sliderId || 
+              (eqMode === '3-band' && band === 'b' && (sliderId === 'a' || sliderId === 'c')) ||
+              (eqMode === '3-band' && band === 'd' && (sliderId === 'c' || sliderId === 'e'))) {
+            const globalValue = eqValues[band];
+            const songValue = newEq[band];
+            const finalValue = calculateFinalEQ(songValue, globalValue);
+            updateEQBand(index, finalValue);
+          }
+        });
+      }
     } else {
       // For global EQ values
       setEQValue(sliderId, value)
