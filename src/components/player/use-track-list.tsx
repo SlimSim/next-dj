@@ -23,26 +23,33 @@ export function useTrackList(searchQuery: string) {
       
       // Always get fresh metadata directly from the database, don't use cached data
       const metadata = await getAllMetadata();
+      console.log(`Retrieved ${metadata?.length || 0} tracks from database`);
       
       // Don't throw an error for empty library, just set empty tracks
       if (!metadata || metadata.length === 0) {
+        console.log('No tracks found in database');
         setTracks([]);
         return;
       }
 
       // Update the tracks in state to refresh the UI
       setTracks(metadata);
+      console.log(`Set ${metadata.length} tracks in state`);
       
       // Update the global store's metadata array to ensure consistency
       const { setMetadata } = usePlayerStore.getState();
       if (typeof setMetadata === 'function') {
         setMetadata(metadata);
+        console.log('Updated metadata in global store');
+      } else {
+        console.warn('setMetadata function not found in store');
       }
       
       // Set first track as prelistenTrack if there isn't one and there are tracks available
       if (!prelistenTrack && metadata.length > 0) {
         setPrelistenTrack(metadata[0]);
         setIsPrelistening(false);
+        console.log('Set first track as prelisten track');
       }
     } catch (error) {
       // Only handle unexpected errors

@@ -32,68 +32,77 @@ export async function addAudioFile(
   let fileMetadata: any;
   let audioFile: AudioFile;
 
-  if (file instanceof File) {
-    fileMetadata = await readAudioMetadata(file);
-    audioFile = {
-      id,
-      file: new Blob([await file.arrayBuffer()], { type: file.type }),
-      isReference: false,
-      metadata: {
-        ...fileMetadata,
-        ...metadata,
-        id,
-        queueId: uuidv4(),
-      },
-    };
-  } else {
-    const actualFile = await file.getFile();
-    fileMetadata = await readAudioMetadata(actualFile);
-    audioFile = {
-      id,
-      isReference: true,
-      fileHandle: file,
-      file: new Blob([await actualFile.arrayBuffer()], {
-        type: actualFile.type,
-      }),
-      metadata: {
-        ...fileMetadata,
-        ...metadata,
-        id,
-        queueId: uuidv4(),
-      },
-    };
-  }
-
-  const metadataEntry: MusicMetadata & { isReference?: boolean } = {
-    id,
-    title:
-      fileMetadata.title ||
-      metadata.title ||
-      (file instanceof File ? file.name : "Unknown Title"),
-    artist: fileMetadata.artist || metadata.artist || "Unknown Artist",
-    album: fileMetadata.album || metadata.album || "Unknown Album",
-    duration: fileMetadata.duration || metadata.duration || 0,
-    tempo: fileMetadata.tempo || metadata.tempo,
-    rating: fileMetadata.rating || metadata.rating,
-    comment: fileMetadata.comment || metadata.comment,
-    track: fileMetadata.track || metadata.track,
-    bpm: fileMetadata.bpm || metadata.bpm,
-    year: fileMetadata.year || metadata.year,
-    genre: fileMetadata.genre || metadata.genre,
-    playCount: 0,
-    playHistory: [],  // Initialize empty play history
-    path: metadata.path,
-    coverArt: metadata.coverArt,
-    isReference,
-    removed: false,
-    queueId: uuidv4(),
-  };
-
   try {
-    await db.put("audioFiles", audioFile);
-    await db.put("metadata", metadataEntry);
-    return id;
-  } catch (error) {
+    if (file instanceof File) {
+      // For regular files (from Add Files button), store the full content
+      fileMetadata = await readAudioMetadata(file);
+      audioFile = {
+        id,
+        file: new Blob([await file.arrayBuffer()], { type: file.type }),
+        isReference: false,
+        metadata: {
+          ...fileMetadata,
+          ...metadata,
+          id,
+          queueId: uuidv4(),
+        },
+      };
+    } else {
+      // For files from the file system, only store the reference
+      const actualFile = await file.getFile();
+      fileMetadata = await readAudioMetadata(actualFile);
+      
+      // Create a minimal empty blob as a placeholder (for type compatibility)
+      const emptyBlob = new Blob([], { type: actualFile.type });
+      
+      audioFile = {
+        id,
+        isReference: true,
+        fileHandle: file,
+        file: emptyBlob, // Just a placeholder, not the actual content
+        metadata: {
+          ...fileMetadata,
+          ...metadata,
+          id,
+          queueId: uuidv4(),
+        },
+      };
+    }
+
+    const metadataEntry: MusicMetadata & { isReference?: boolean } = {
+      id,
+      title:
+        fileMetadata.title ||
+        metadata.title ||
+        (file instanceof File ? file.name : "Unknown Title"),
+      artist: fileMetadata.artist || metadata.artist || "Unknown Artist",
+      album: fileMetadata.album || metadata.album || "Unknown Album",
+      duration: fileMetadata.duration || metadata.duration || 0,
+      tempo: fileMetadata.tempo || metadata.tempo,
+      rating: fileMetadata.rating || metadata.rating,
+      comment: fileMetadata.comment || metadata.comment,
+      track: fileMetadata.track || metadata.track,
+      bpm: fileMetadata.bpm || metadata.bpm,
+      year: fileMetadata.year || metadata.year,
+      genre: fileMetadata.genre || metadata.genre,
+      playCount: 0,
+      playHistory: [],  // Initialize empty play history
+      path: metadata.path,
+      coverArt: metadata.coverArt,
+      isReference,
+      removed: false,
+      queueId: uuidv4(),
+    };
+
+    try {
+      await db.put("audioFiles", audioFile);
+      await db.put("metadata", metadataEntry);
+      return id;
+    } catch (error: any) {
+      console.error("Error adding file:", error);
+      throw error;
+    }
+  } catch (error: any) {
     console.error("Error adding file:", error);
     throw error;
   }
@@ -110,6 +119,15 @@ export async function getAudioFile(id: string): Promise<AudioFile | undefined> {
       console.log("Attempting to access referenced file");
       const file = await audioFile.fileHandle.getFile();
       console.log("Successfully accessed file:", file.name);
+      
+      // Check if the stored blob is empty (reference-only mode)
+      const isEmptyBlob = audioFile.file && audioFile.file.size === 0;
+      
+      if (isEmptyBlob) {
+        console.log("File was stored in reference-only mode, loading content from file system");
+      }
+      
+      // Always return a fresh blob from the file system for referenced files
       return {
         ...audioFile,
         file: new Blob([await file.arrayBuffer()], { type: file.type }),
@@ -141,9 +159,22 @@ export async function getRemovedSongs(): Promise<MusicMetadata[]> {
 }
 
 export async function getAllMetadata(): Promise<MusicMetadata[]> {
+  console.log("getAllMetadata: Starting to fetch all metadata");
   const db = await initMusicDB();
-  const metadata = await db.getAll("metadata");
-  return metadata.filter(track => !track.removed);
+  console.log("getAllMetadata: Database initialized");
+  
+  try {
+    const metadata = await db.getAll("metadata");
+    console.log(`getAllMetadata: Retrieved ${metadata.length} total tracks from database`);
+    
+    const nonRemovedTracks = metadata.filter(track => !track.removed);
+    console.log(`getAllMetadata: Filtered to ${nonRemovedTracks.length} non-removed tracks`);
+    
+    return nonRemovedTracks;
+  } catch (error) {
+    console.error("getAllMetadata: Error fetching metadata:", error);
+    return [];
+  }
 }
 
 export async function getUniqueValues(): Promise<{

@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/common/theme-provider";
 import { StoreProvider } from "@/components/common/store-provider";
 import { SettingsProvider } from "@/components/settings/settings-context";
 import { SettingsDialogProvider } from "@/components/settings/settings-dialog-context";
+import { FileSystemPermissionChecker } from "@/components/common/file-system-permission-checker";
+import { FolderScanner } from "@/components/common/folder-scanner";
 import "./globals.css";
 import { cn } from "@/lib/utils/common";
 
@@ -50,6 +52,8 @@ export default function RootLayout({
           <StoreProvider>
             <SettingsProvider>
               <SettingsDialogProvider>
+                <FileSystemPermissionChecker />
+                <FolderScanner />
                 {children}
                 <Toaster />
               </SettingsDialogProvider>

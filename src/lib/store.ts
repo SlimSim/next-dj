@@ -138,12 +138,18 @@ export const usePlayerStore = create<PlayerStore>()(
       // Only try to initialize metadata in browser environment
       if (typeof window !== 'undefined') {
         // Delay metadata loading to ensure it runs after hydration
+        console.log("Store initialization: Setting up metadata loading after hydration");
         Promise.resolve().then(() => {
+          console.log("Store initialization: Loading metadata from database");
           getAllMetadata()
             .then((metadata) => {
+              console.log(`Store initialization: Loaded ${metadata.length} tracks from database`);
               set({ metadata });
+              console.log("Store initialization: Updated store with metadata");
             })
-            .catch(console.error);
+            .catch(error => {
+              console.error("Store initialization: Error loading metadata:", error);
+            });
         });
       }
 
