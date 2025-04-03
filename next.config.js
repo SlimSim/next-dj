@@ -4,7 +4,7 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   // Add these settings for better Vercel compatibility
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [/middleware-manifest\.json$/, /app-build-manifest\.json$/],
   // Ensure service worker is properly generated
   runtimeCaching: [
     {
