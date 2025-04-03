@@ -13,8 +13,7 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (
       typeof window !== 'undefined' &&
-      'serviceWorker' in navigator &&
-      window.workbox !== undefined
+      'serviceWorker' in navigator
     ) {
       const registerServiceWorker = async () => {
         try {
