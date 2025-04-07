@@ -275,7 +275,13 @@ export function BasicInfoTab({
             min={0}
             max={5}
             step={1}
-            value={[editedValues.rating ?? (commonValues.rating === null ? 0 : (Math.round((commonValues.rating || 0) * 5)))]}
+            value={[
+              editedValues.rating !== undefined
+                ? Math.round(editedValues.rating * 5)
+                : commonValues.rating === null
+                ? 0
+                : Math.round((commonValues.rating || 0) * 5)
+            ]}
             onValueChange={([value]) =>
               handleTrackChange({
                 rating: value / 5,
@@ -283,7 +289,11 @@ export function BasicInfoTab({
             }
           />
           <span className="w-12 text-sm">
-            {editedValues.rating ?? (commonValues.rating === null ? 0 : (Math.round((commonValues.rating || 0) * 5)))}
+            {editedValues.rating !== undefined
+              ? Math.round(editedValues.rating * 5)
+              : commonValues.rating === null
+              ? 0
+              : Math.round((commonValues.rating || 0) * 5)}
           </span>
           {commonValues.rating === null && !editedValues.rating && (
             <Button
