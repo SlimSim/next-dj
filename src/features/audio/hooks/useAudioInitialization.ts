@@ -20,7 +20,7 @@ export const useAudioInitialization = (
   const currentFileRef = useRef<Blob | null>(null);
   const currentUrlRef = useRef<string | null>(null);
 
-  const { setDuration, setPrelistenDuration, playNextTrack } = usePlayerStore();
+  const { setDuration, setPrelistenDuration, playNextTrack, setCurrentTrack, setPrelistenTrack } = usePlayerStore();
   const isPlaying = usePlayerStore((state) => state.isPlaying);
 
   // Initialize mountedRef
@@ -78,22 +78,43 @@ export const useAudioInitialization = (
       // Clean up previous track first
       cleanupCurrentTrack();
 
+      // Silently handle removed tracks by clearing them and moving to next track
       if (track.removed) {
-        throw new AudioError(`Track ${track.title} has been removed`, AudioErrorCode.TRACK_NOT_FOUND);
+        console.log(`Track ${track.title} has been removed, skipping without error`);
+        if (trackProp === "currentTrack") {
+          setCurrentTrack(null);
+          playNextTrack();
+        } else {
+          setPrelistenTrack(null);
+        }
+        return;
       }
 
-      const audioFile = await withErrorHandler(
-        () => getAudioFile(track.id),
-        'getAudioFile',
-        true,
-        true
-      );
+      // Try to get the audio file, but don't throw an error if it fails
+      let audioFile;
+      try {
+        audioFile = await getAudioFile(track.id);
+      } catch (error) {
+        console.log(`Failed to get audio file for ${track.title}, skipping without error`);
+        if (trackProp === "currentTrack") {
+          setCurrentTrack(null);
+          playNextTrack();
+        } else {
+          setPrelistenTrack(null);
+        }
+        return;
+      }
 
+      // If no file was found, silently move to next track
       if (!audioFile?.file) {
-        throw new AudioError(
-          `No audio file found for ${track.title}`,
-          AudioErrorCode.FILE_NOT_FOUND
-        );
+        console.log(`No audio file found for ${track.title}, skipping without error`);
+        if (trackProp === "currentTrack") {
+          setCurrentTrack(null);
+          playNextTrack();
+        } else {
+          setPrelistenTrack(null);
+        }
+        return;
       }
 
       if (!mountedRef.current) return;
@@ -186,9 +207,28 @@ export const useAudioInitialization = (
       });
 
     } catch (error) {
-      handleError(error);
+      // Only log errors that aren't related to missing files
+      if (error instanceof AudioError && 
+          (error.code !== AudioErrorCode.FILE_NOT_FOUND && 
+           error.code !== AudioErrorCode.TRACK_NOT_FOUND)) {
+        console.error('Audio initialization error:', error);
+      } else {
+        console.log('Non-critical audio error:', error);
+      }
+      
       if (trackProp === "currentTrack") {
+        // Clear current track if it's a file not found error
+        if (error instanceof AudioError && 
+            (error.code === AudioErrorCode.FILE_NOT_FOUND || 
+             error.code === AudioErrorCode.TRACK_NOT_FOUND)) {
+          setCurrentTrack(null);
+        }
         playNextTrack();
+      } else if (trackProp === "prelistenTrack" && 
+                error instanceof AudioError && 
+                (error.code === AudioErrorCode.FILE_NOT_FOUND || 
+                 error.code === AudioErrorCode.TRACK_NOT_FOUND)) {
+        setPrelistenTrack(null);
       }
     } finally {
       loadingRef.current = false;

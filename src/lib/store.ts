@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { PlayerStore, PlayerState, SongList } from "./types/player";
-import { MusicMetadata } from "./types/types";
+import { MusicMetadata, AudioFile } from "./types/types";
 import { CustomMetadataState, CustomMetadataField } from './types/customMetadata';
 import { StandardMetadataField } from './types/settings';
 import { AudioError, AudioErrorCode } from "@/features/audio/types";
@@ -12,7 +12,7 @@ import {
 } from "../features/audio/utils/playerActions";
 import { clearHandles, storeHandle } from "@/db/handle-operations";
 import { initMusicDB } from "@/db/schema";
-import { getRemovedSongs, deleteAudioFile, getAllMetadata } from "@/db/audio-operations";
+import { getRemovedSongs, deleteAudioFile, getAllMetadata, getAudioFile } from "@/db/audio-operations";
 import { FilterCriteria } from "@/components/player/playlist-controls";
 
 const initialState: PlayerState = {
@@ -727,6 +727,46 @@ export const usePlayerStore = create<PlayerStore>()(
         // Initialize DB after store is rehydrated
         if (typeof window !== 'undefined') {
           initMusicDB().catch(console.error);
+          
+          // Check if the current track exists in storage
+          if (state?.currentTrack?.id) {
+            const currentTrack = state.currentTrack; // Store reference to avoid null checks
+            // Use a timeout to ensure this runs after the store is fully initialized
+            setTimeout(() => {
+              // Check if the track exists in storage
+              getAudioFile(currentTrack.id)
+                .then((audioFile: AudioFile | undefined) => {
+                  // If no file exists, clear the current track
+                  if (!audioFile?.file) {
+                    console.log(`Startup: No audio file found for ${currentTrack.title}, clearing current track`);
+                    state.setCurrentTrack(null);
+                  }
+                })
+                .catch(() => {
+                  // If there's an error retrieving the file, clear the current track
+                  console.log(`Startup: Error retrieving audio file for ${currentTrack.title}, clearing current track`);
+                  state.setCurrentTrack(null);
+                });
+            }, 500);
+          }
+          
+          // Also check the prelisten track
+          if (state?.prelistenTrack?.id) {
+            const prelistenTrack = state.prelistenTrack; // Store reference to avoid null checks
+            setTimeout(() => {
+              getAudioFile(prelistenTrack.id)
+                .then((audioFile: AudioFile | undefined) => {
+                  if (!audioFile?.file) {
+                    console.log(`Startup: No audio file found for prelisten track ${prelistenTrack.title}, clearing it`);
+                    state.setPrelistenTrack(null);
+                  }
+                })
+                .catch(() => {
+                  console.log(`Startup: Error retrieving prelisten track ${prelistenTrack.title}, clearing it`);
+                  state.setPrelistenTrack(null);
+                });
+            }, 500);
+          }
         }
       },
     }
