@@ -7,6 +7,7 @@ import { SettingsProvider } from "@/components/settings/settings-context";
 import { SettingsDialogProvider } from "@/components/settings/settings-dialog-context";
 import { FolderScanner } from "@/components/common/folder-scanner";
 import { ServiceWorkerRegister } from "./sw-register";
+import { FirebaseProvider } from "@/lib/firebase/firebase-provider";
 import "./globals.css";
 import { cn } from "@/lib/utils/common";
 
@@ -50,14 +51,16 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <StoreProvider>
-            <SettingsProvider>
-              <SettingsDialogProvider>
-                <ServiceWorkerRegister />
-                <FolderScanner />
-                {children}
-                <Toaster />
-              </SettingsDialogProvider>
-            </SettingsProvider>
+            <FirebaseProvider>
+              <SettingsProvider>
+                <SettingsDialogProvider>
+                  <ServiceWorkerRegister />
+                  <FolderScanner />
+                  {children}
+                  <Toaster />
+                </SettingsDialogProvider>
+              </SettingsProvider>
+            </FirebaseProvider>
           </StoreProvider>
         </ThemeProvider>
       </body>

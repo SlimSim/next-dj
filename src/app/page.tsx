@@ -28,6 +28,7 @@ import { ListMusic } from "lucide-react";
 import { ListsPanel } from "@/components/player/lists-panel";
 import { MusicMetadata } from "@/lib/types/types";
 import { PlayHistoryView } from "@/components/player/play-history-view";
+import { AuthButton } from "@/components/common/auth-button";
 
 export default function Home() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -285,6 +286,7 @@ export default function Home() {
                   >
                     <ListMusic className="h-6 w-6" />
                   </Button>
+                  <AuthButton />
                   <SettingsDialog />
                 </div>
               </div>

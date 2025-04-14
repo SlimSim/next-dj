@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePlayerStore } from "@/lib/store";
 import { MusicMetadata } from "@/lib/types/types";
 import { useEffect, useMemo, useState } from "react";
+import { useFirebase } from "@/lib/firebase/firebase-provider";
 import { useForm } from "react-hook-form";
 import { BasicInfoTab } from "./edit-track-tabs/basic-info-tab";
 import { CustomTagsTab } from "./edit-track-tabs/custom-tags-tab";
@@ -43,6 +44,9 @@ export function EditTrackDialog({
     currentTrack,
     setCurrentTrack,
   } = usePlayerStore();
+  
+  // Get Firebase context for immediate cloud sync
+  const { forceSyncToCloud } = useFirebase();
 
   // Convert single track to array if needed
   const tracks = useMemo(() => {
@@ -182,6 +186,14 @@ export function EditTrackDialog({
       onSave(updatedTracks);
       onOpenChange(false);
       setEditedValues({}); // Reset edited values
+      
+      // Force immediate sync to cloud after metadata edit
+      if (forceSyncToCloud) {
+        console.log('Forcing immediate cloud sync after metadata edit');
+        forceSyncToCloud().catch(err => {
+          console.error('Error syncing edited metadata to cloud:', err);
+        });
+      }
       
       // Trigger a refresh to ensure ALL UI components update properly
       triggerRefresh();
