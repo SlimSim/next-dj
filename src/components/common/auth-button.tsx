@@ -103,7 +103,7 @@ export function AuthButton() {
             Signing in...
           </>
         ) : (
-          'Sign in'
+          'Sign in 2'
         )}
       </Button>
     );
