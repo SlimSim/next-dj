@@ -125,6 +125,13 @@ const convertFromFirestoreMetadata = (firestoreMetadata: FirestoreMetadata): Mus
   
   return {
     ...metadataWithoutUserId,
+    // Required properties with defaults for MusicMetadata
+    artist: firestoreMetadata.artist || '',      // Default to empty string if undefined
+    album: firestoreMetadata.album || '',        // Default to empty string if undefined
+    title: firestoreMetadata.title || '',        // Default to empty string if undefined
+    duration: 0,                                // Will be updated when audio file is loaded locally
+    queueId: firestoreMetadata.id,              // Use the same ID as the track ID
+    // Other properties with defaults
     lastPlayed: firestoreMetadata.lastPlayed ? new Date(firestoreMetadata.lastPlayed) : undefined,
     playCount: firestoreMetadata.playCount || 0,
     playHistory: firestoreMetadata.playHistory || [],
@@ -301,8 +308,9 @@ export const fetchSongListsFromFirestore = async (): Promise<SongList[]> => {
       songLists.push({
         id: firestoreSongList.id,
         name: firestoreSongList.name,
-        songs: firestoreSongList.songs,
-        created: firestoreSongList.created,
+        songs: firestoreSongList.songs || [], // Ensure songs is always an array
+        created: firestoreSongList.created || Date.now(),
+        modified: firestoreSongList.lastModified?.toMillis() || firestoreSongList.created || Date.now(), // Use lastModified timestamp or fallback to created date
       });
     });
 
