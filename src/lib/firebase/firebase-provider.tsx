@@ -210,17 +210,25 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     );
     
     const metadataUnsubscribe = onSnapshot(metadataQuery, (snapshot) => {
-      console.log("metadataUnsubscribe -> snapshot", snapshot);
-      console.log("snapshot hasPendingWrites", snapshot.metadata.hasPendingWrites);
+      // Only log once to reduce console spam
+      if (cloudUpdateTracker.current.lastLogTime + 5000 < Date.now()) {
+        console.log("Firestore metadata update received");
+        cloudUpdateTracker.current.lastLogTime = Date.now();
+      }
+      
       // Skip local writes
-      if (snapshot.metadata.hasPendingWrites) return;
+      if (snapshot.metadata.hasPendingWrites) {
+        console.log("Skipping local writes");
+        return;
+      }
       
       snapshot.docChanges().forEach(change => {
-        console.log("metadataUnsubscribe -> change", change);
         const data = change.doc.data() as any;
-        console.log("metadataUnsubscribe -> data", data);
         
-        if (!data.id || !data.path) return;
+        if (!data.id || !data.path) {
+          console.log("Skipping invalid metadata record (missing id or path)");
+          return;
+        }
         
         if (change.type === 'added' || change.type === 'modified') {
           // Convert to app's metadata format
@@ -251,17 +259,21 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           // Find existing metadata to preserve any fields we don't get from Firestore
           const existingMetadata = state.metadata.find(m => m.id === data.id);
           
-          // Log the actual change details
-          // Simplified log
-          console.log('Cloud update received for:', data.title);
-          
           // Set flag to prevent automatic sync back to cloud while processing cloud updates
           cloudUpdateTracker.current.isProcessingCloudUpdate = true;
           cloudUpdateTracker.current.lastProcessedIds.add(data.id);
           cloudUpdateTracker.current.blockSyncUntil = Date.now() + 5000; // Block for 5 seconds
           
-          // Simplified log
-          console.log('Received cloud update for track:', data.id);
+          // Log meaningful information about the update
+          console.log(`Cloud update received for: ${data.title} (${data.id})`);
+          
+          // If updating customMetadata, show what changed
+          if (data.customMetadata && existingMetadata?.customMetadata) {
+            console.log('Custom metadata update detected:', { 
+              cloud: JSON.stringify(data.customMetadata),
+              local: JSON.stringify(existingMetadata.customMetadata)
+            });
+          }
           
           try {
             // For modified documents, prioritize the cloud data over local data
@@ -304,11 +316,24 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
               const originalUpdateTrackMetadata = usePlayerStore.getState().updateTrackMetadata;
               originalUpdateTrackMetadata(data.id, mergedMetadata);
               
-              // Force a refresh trigger to ensure UI updates
-              setTimeout(() => {
-                // Just trigger refresh without logging
-                usePlayerStore.getState().triggerRefresh();
-              }, 200);
+              // Force an immediate refresh to ensure UI updates
+              usePlayerStore.getState().triggerRefresh();
+              
+              console.log(`Successfully applied cloud update for: ${data.title}`);
+              
+              // Notify user of the update with a toast if this is a significant change
+              if (existingMetadata && 
+                  JSON.stringify(existingMetadata.customMetadata) !== JSON.stringify(data.customMetadata)) {
+                try {
+                  // Import toast dynamically to avoid issues
+                  import('sonner').then(({ toast }) => {
+                    toast.info('Metadata updated from cloud', {
+                      description: `${data.title} metadata has been updated from another device`,
+                      duration: 3000
+                    });
+                  }).catch(() => {/* Ignore import errors */});
+                } catch (e) {/* Ignore toast errors */}
+              }
             })().catch(error => {
               console.error('Error in async IndexedDB update:', error);
             });
@@ -338,6 +363,12 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     );
     
     const songListsUnsubscribe = onSnapshot(songListsQuery, (snapshot) => {
+      // Log initial connection
+      if (cloudUpdateTracker.current.lastLogTime + 5000 < Date.now()) {
+        console.log("Firestore song lists update received");
+        cloudUpdateTracker.current.lastLogTime = Date.now();
+      }
+      
       // Skip local writes
       if (snapshot.metadata.hasPendingWrites) return;
       

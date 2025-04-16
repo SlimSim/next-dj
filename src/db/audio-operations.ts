@@ -3,6 +3,46 @@ import { initMusicDB } from "./schema";
 import { readAudioMetadata } from "@/lib/metadata";
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Generates a consistent ID based on file properties
+ * This ensures the same file gets the same ID across different devices
+ */
+function generateConsistentId(source: string): string {
+  try {
+    // We need to generate a deterministic ID that's compatible with UUID format
+    // but is completely derived from the source string
+    
+    // First, normalize the source string (trim and lowercase)
+    const normalizedSource = source.trim().toLowerCase();
+    
+    // Generate multiple hash values from the same source using different seeds
+    // This gives us enough pseudo-random but deterministic values for a UUID
+    function hashWithSeed(str: string, seed: number): number {
+      let hash = seed;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return Math.abs(hash);
+    }
+    
+    // Generate 5 different hash segments with different seeds
+    const hash1 = hashWithSeed(normalizedSource, 1).toString(16).padStart(8, '0');
+    const hash2 = hashWithSeed(normalizedSource, 2).toString(16).padStart(4, '0');
+    const hash3 = hashWithSeed(normalizedSource, 3).toString(16).padStart(4, '0');
+    const hash4 = hashWithSeed(normalizedSource, 4).toString(16).padStart(4, '0');
+    const hash5 = hashWithSeed(normalizedSource, 5).toString(16).padStart(12, '0');
+    
+    // Format as UUID (8-4-4-4-12)
+    return `${hash1}-${hash2}-${hash3}-${hash4}-${hash5}`;
+  } catch (error) {
+    console.error('Error generating consistent ID:', error);
+    // Fallback to random UUID if hashing fails
+    return uuidv4();
+  }
+}
+
 export async function deleteAudioFile(id: string): Promise<void> {
   const db = await initMusicDB();
   await db.delete("audioFiles", id);
@@ -28,23 +68,33 @@ export async function addAudioFile(
     }
   }
 
-  const id = uuidv4();
+  // Instead of random UUID, generate a consistent hash based on file properties
   let fileMetadata: any;
+  let hashSource = '';
   let audioFile: AudioFile;
 
   try {
     if (file instanceof File) {
       // For regular files (from Add Files button), store the full content
       fileMetadata = await readAudioMetadata(file);
+      
+      // Create a hash source from stable file properties
+      hashSource = `${file.name}-${file.size}-${fileMetadata.duration}-${fileMetadata.artist || ''}-${fileMetadata.album || ''}-${fileMetadata.title || ''}`;
+      console.log('Hash source (File):', hashSource);
+      
+      // Generate a consistent ID based on file properties
+      const fileId = generateConsistentId(hashSource);
+      console.log('Generated ID from hash:', fileId);
+      
       audioFile = {
-        id,
+        id: fileId,
         file: new Blob([await file.arrayBuffer()], { type: file.type }),
         isReference: false,
         metadata: {
           ...fileMetadata,
           ...metadata,
-          id,
-          queueId: uuidv4(),
+          id: fileId,
+          queueId: fileId, // Use the same ID for consistency
         },
       };
     } else {
@@ -52,25 +102,37 @@ export async function addAudioFile(
       const actualFile = await file.getFile();
       fileMetadata = await readAudioMetadata(actualFile);
       
+      // Create a hash source from stable file properties
+      // Use path if available as it's the most stable identifier for file system files
+      hashSource = metadata.path ? 
+        metadata.path : 
+        `${actualFile.name}-${actualFile.size}-${fileMetadata.duration}-${fileMetadata.artist || ''}-${fileMetadata.album || ''}-${fileMetadata.title || ''}`;
+      
+      console.log('Hash source (FileSystemHandle):', hashSource);
+      
+      // Generate a consistent ID based on file properties
+      const fileId = generateConsistentId(hashSource);
+      console.log('Generated ID from hash:', fileId);
+      
       // Create a minimal empty blob as a placeholder (for type compatibility)
       const emptyBlob = new Blob([], { type: actualFile.type });
       
       audioFile = {
-        id,
+        id: fileId,
         isReference: true,
         fileHandle: file,
         file: emptyBlob, // Just a placeholder, not the actual content
         metadata: {
           ...fileMetadata,
           ...metadata,
-          id,
-          queueId: uuidv4(),
+          id: fileId,
+          queueId: fileId, // Use the same ID for consistency
         },
       };
     }
 
     const metadataEntry: MusicMetadata & { isReference?: boolean } = {
-      id,
+      id: audioFile.id,
       title:
         fileMetadata.title ||
         metadata.title ||
@@ -91,13 +153,13 @@ export async function addAudioFile(
       coverArt: metadata.coverArt,
       isReference,
       removed: false,
-      queueId: uuidv4(),
+      queueId: audioFile.id, // Use the same ID for consistency
     };
 
     try {
       await db.put("audioFiles", audioFile);
       await db.put("metadata", metadataEntry);
-      return id;
+      return audioFile.id;
     } catch (error: any) {
       console.error("Error adding file:", error);
       throw error;
